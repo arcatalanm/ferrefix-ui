@@ -11,7 +11,7 @@ function Navbar() {
   const toggleAccount = () => setIsAccountOpen(!isAccountOpen);
 
   return (
-    <nav className="navbar navbar-expand-lg bg-white border-bottom border-light-subtle py-3">
+    <nav className="navbar navbar-expand-lg bg-platino border-bottom border-light-subtle py-3">
       <div className="container">
         {/* Logo */}
         <a className="navbar-brand d-flex align-items-center gap-2 m-0 p-0" href="/">
