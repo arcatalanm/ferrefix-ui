@@ -3,18 +3,18 @@ import { useState, useEffect } from 'react';
 const IMAGENES = [
   {
     id: 1,
-    url: '',
-    alt: ''
+    url: '../src/assets/dewalt.webp',
+    alt: 'Publicidad de producto DeWalt'
   },
   {
     id: 2,
-    url: '',
-    alt: ''
+    url: '../src/assets/makita.webp',
+    alt: 'Publicidad de producto Makita'
   },
   {
     id: 3,
-    url: '',
-    alt: ''
+    url: '../src/assets/bosch.webp',
+    alt: 'Publicidad de producto Bosch'
   }
 ];
 
