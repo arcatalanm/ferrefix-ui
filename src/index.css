@@ -1,3 +1,18 @@
+:root {
+    --color-oscuro: #1C2226;
+    --color-dorado: #F2B705;
+    --color-ambar: #F2A007;
+    --color-bronce: #A66D05;
+    --color-platino: #F2F2F2;
+}
+
+.bg-oscuro   { background-color: var(--color-oscuro); }
+.bg-dorado   { background-color: var(--color-dorado); }
+.bg-ambar    { background-color: var(--color-ambar); }
+.bg-bronce   { background-color: var(--color-bronce); }
+.bg-platino  { background-color: var(--color-platino); }
+
+
 /* Navbar */
 
 .banner-ferrefix {
