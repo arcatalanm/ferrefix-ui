@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import banner from '../assets/banner-web.webp';
 
 function Footer() {
@@ -9,11 +10,13 @@ function Footer() {
           {/* Banner, Descripción y Redes Sociales */}
           <div className="col-12 col-md-6 col-lg-4">
             <div className="footer-logo-container mb-3">
-              <img 
-                src={banner} 
-                alt="Banner ferrefix" 
-                className="footer-logo-img d-block" 
-              />
+              <Link to="/">
+                <img 
+                  src={banner} 
+                  alt="Banner ferrefix" 
+                  className="footer-logo-img d-block" 
+                />
+              </Link>
             </div>
 
             {/* Descripción */}
@@ -62,16 +65,16 @@ function Footer() {
             </h6>
             <ul className="list-unstyled d-flex flex-column gap-2 mb-0">
               <li>
-                <a href="#catalogo" className="footer-link">Catálogo</a>
+                <Link to="/catalogo" className="footer-link">Catálogo</Link>
               </li>
               <li>
-                <a href="#arriendos" className="footer-link">Arriendos</a>
+                <Link to="/arriendos" className="footer-link">Arriendos</Link>
               </li>
               <li>
-                <a href="#proveedores" className="footer-link">Proveedores</a>
+                <Link to="/proveedores" className="footer-link">Proveedores</Link>
               </li>
               <li>
-                <a href="#nosotros" className="footer-link">Nosotros</a>
+                <Link to="/nosotros" className="footer-link">Nosotros</Link>
               </li>
             </ul>
           </div>
@@ -83,16 +86,16 @@ function Footer() {
             </h6>
             <ul className="list-unstyled d-flex flex-column gap-2 mb-0">
               <li>
-                <a href="#cotizaciones" className="footer-link">Cotizaciones</a>
+                <Link to="/cotizaciones" className="footer-link">Cotizaciones</Link>
               </li>
               <li>
-                <a href="#fletes" className="footer-link">Fletes y Despacho</a>
+                <Link to="/fletes" className="footer-link">Fletes y Despacho</Link>
               </li>
               <li>
-                <a href="#postventa" className="footer-link">Garantías</a>
+                <Link to="/garantias" className="footer-link">Garantías</Link>
               </li>
               <li>
-                <a href="#preguntas-frecuentes" className="footer-link">Preguntas Frecuentes</a>
+                <Link to="/faq" className="footer-link">Preguntas Frecuentes</Link>
               </li>
             </ul>
           </div>
@@ -135,8 +138,8 @@ function Footer() {
             &copy; {new Date().getFullYear()} Ferrefix. Todos los derechos reservados.
           </p>
           <div className="d-flex gap-3">
-            <a href="#terminos" className="footer-link">Términos y Condiciones</a>
-            <a href="#privacidad" className="footer-link">Privacidad</a>
+            <Link to="/terminos" className="footer-link">Términos y Condiciones</Link>
+            <Link to="/privacidad" className="footer-link">Privacidad</Link>
           </div>
         </div>
 
