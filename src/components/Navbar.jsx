@@ -55,7 +55,7 @@ function Navbar() {
               </a>
             </li>
             <li className="nav-item">
-              <a className="nav-link clever-nav-link" href="#nosotro">
+              <a className="nav-link clever-nav-link" href="#nosotros">
                 Nosotros
               </a>
             </li>
