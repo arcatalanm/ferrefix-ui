@@ -1,6 +1,28 @@
+import construccionImg from '../assets/categories/construccion.webp';
+import maderasImg from '../assets/categories/maderas.webp';
+import herramientasImg from '../assets/categories/herramientas.webp';
+import fijacionesImg from '../assets/categories/fijaciones.webp';
+import gasfiteriaImg from '../assets/categories/gasfiteria.webp';
+import electricidadImg from '../assets/categories/electricidad.webp';
+import pinturasImg from '../assets/categories/pinturas.webp';
+import ceramicasImg from '../assets/categories/ceramicas.webp';
+import seguridadImg from '../assets/categories/seguridad.webp';
+
+const CATEGORIAS = [
+  { id: 'construccion', nombre: 'Construcción', img: construccionImg },
+  { id: 'maderas', nombre: 'Maderas', img: maderasImg },
+  { id: 'herramientas', nombre: 'Herramientas', img: herramientasImg },
+  { id: 'fijaciones', nombre: 'Fijaciones', img: fijacionesImg },
+  { id: 'gasfiteria', nombre: 'Gasfitería', img: gasfiteriaImg },
+  { id: 'electricidad', nombre: 'Electricidad', img: electricidadImg },
+  { id: 'pinturas', nombre: 'Pinturas', img: pinturasImg },
+  { id: 'ceramicas', nombre: 'Cerámicas', img: ceramicasImg },
+  { id: 'seguridad', nombre: 'Seguridad', img: seguridadImg }
+];
+
 function Categories() {
   return (
-    <section className="py-1">
+    <section id="catalogo" className="py-1">
       <div className="container">
 
         {/* Encabezado */}
@@ -16,115 +38,25 @@ function Categories() {
         {/* Contenedor Categorías */}
         <div className="categorias-banner-capsula rounded-5 bg-platino py-4 px-3 px-lg-4">
           <div className="row row-cols-3 row-cols-md-5 row-cols-xl-auto justify-content-center justify-content-xl-between flex-xl-nowrap g-3 g-xl-2 align-items-start">
-
-            {/* 1. Categoría: Construcción */}
-            <div className="col">
-              <a href="#" className="categoria-item-enlace text-decoration-none text-center d-block">
-                <div className="categoria-circulo-wrapper ratio ratio-1x1 rounded-circle overflow-hidden mx-auto shadow-sm">
-                  <img src="../src/assets/categories/construccion.webp" alt="Construcción" className="w-100 h-100 object-fit-cover" />
-                </div>
-                <div className="categoria-badge-pill rounded-pill shadow-sm py-2 px-2 mt-2 mx-auto">
-                  <span className="categoria-texto-label fw-medium d-block text-truncate">Construcción</span>
-                </div>
-              </a>
-            </div>
-
-            {/* 2. Categoría: Maderas */}
-            <div className="col">
-              <a href="#" className="categoria-item-enlace text-decoration-none text-center d-block">
-                <div className="categoria-circulo-wrapper ratio ratio-1x1 rounded-circle overflow-hidden mx-auto shadow-sm">
-                  <img src="../src/assets/categories/maderas.webp" alt="Maderas" className="w-100 h-100 object-fit-cover" />
-                </div>
-                <div className="categoria-badge-pill rounded-pill shadow-sm py-2 px-2 mt-2 mx-auto">
-                  <span className="categoria-texto-label fw-medium d-block text-truncate">Maderas</span>
-                </div>
-              </a>
-            </div>
-
-            {/* 3. Categoría: Herramientas */}
-            <div className="col">
-              <a href="#" className="categoria-item-enlace text-decoration-none text-center d-block">
-                <div className="categoria-circulo-wrapper ratio ratio-1x1 rounded-circle overflow-hidden mx-auto shadow-sm">
-                  <img src="../src/assets/categories/herramientas.webp" alt="Herramientas" className="w-100 h-100 object-fit-cover" />
-                </div>
-                <div className="categoria-badge-pill rounded-pill shadow-sm py-2 px-2 mt-2 mx-auto">
-                  <span className="categoria-texto-label fw-medium d-block text-truncate">Herramientas</span>
-                </div>
-              </a>
-            </div>
-
-            {/* 4. Categoría: Fijaciones */}
-            <div className="col">
-              <a href="#" className="categoria-item-enlace text-decoration-none text-center d-block">
-                <div className="categoria-circulo-wrapper ratio ratio-1x1 rounded-circle overflow-hidden mx-auto shadow-sm">
-                  <img src="../src/assets/categories/fijaciones.webp" alt="Fijaciones" className="w-100 h-100 object-fit-cover" />
-                </div>
-                <div className="categoria-badge-pill rounded-pill shadow-sm py-2 px-2 mt-2 mx-auto">
-                  <span className="categoria-texto-label fw-medium d-block text-truncate">Fijaciones</span>
-                </div>
-              </a>
-            </div>
-
-            {/* 5. Categoría: Gasfitería */}
-            <div className="col">
-              <a href="#" className="categoria-item-enlace text-decoration-none text-center d-block">
-                <div className="categoria-circulo-wrapper ratio ratio-1x1 rounded-circle overflow-hidden mx-auto shadow-sm">
-                  <img src="../src/assets/categories/gasfiteria.webp" alt="Gasfitería" className="w-100 h-100 object-fit-cover" />
-                </div>
-                <div className="categoria-badge-pill rounded-pill shadow-sm py-2 px-2 mt-2 mx-auto">
-                  <span className="categoria-texto-label fw-medium d-block text-truncate">Gasfitería</span>
-                </div>
-              </a>
-            </div>
-
-            {/* 6. Categoría: Electricidad */}
-            <div className="col">
-              <a href="#" className="categoria-item-enlace text-decoration-none text-center d-block">
-                <div className="categoria-circulo-wrapper ratio ratio-1x1 rounded-circle overflow-hidden mx-auto shadow-sm">
-                  <img src="../src/assets/categories/electricidad.webp" alt="Electricidad" className="w-100 h-100 object-fit-cover" />
-                </div>
-                <div className="categoria-badge-pill rounded-pill shadow-sm py-2 px-2 mt-2 mx-auto">
-                  <span className="categoria-texto-label fw-medium d-block text-truncate">Electricidad</span>
-                </div>
-              </a>
-            </div>
-
-            {/* 7. Categoría: Pinturas */}
-            <div className="col">
-              <a href="#" className="categoria-item-enlace text-decoration-none text-center d-block">
-                <div className="categoria-circulo-wrapper ratio ratio-1x1 rounded-circle overflow-hidden mx-auto shadow-sm">
-                  <img src="../src/assets/categories/pinturas.webp" alt="Pinturas" className="w-100 h-100 object-fit-cover" />
-                </div>
-                <div className="categoria-badge-pill rounded-pill shadow-sm py-2 px-2 mt-2 mx-auto">
-                  <span className="categoria-texto-label fw-medium d-block text-truncate">Pinturas</span>
-                </div>
-              </a>
-            </div>
-
-            {/* 8. Categoría: Cerámicas */}
-            <div className="col">
-              <a href="#" className="categoria-item-enlace text-decoration-none text-center d-block">
-                <div className="categoria-circulo-wrapper ratio ratio-1x1 rounded-circle overflow-hidden mx-auto shadow-sm">
-                  <img src="../src/assets/categories/ceramicas.webp" alt="Cerámicas" className="w-100 h-100 object-fit-cover" />
-                </div>
-                <div className="categoria-badge-pill rounded-pill shadow-sm py-2 px-2 mt-2 mx-auto">
-                  <span className="categoria-texto-label fw-medium d-block text-truncate">Cerámicas</span>
-                </div>
-              </a>
-            </div>
-
-            {/* 9. Categoría: Seguridad */}
-            <div className="col">
-              <a href="#" className="categoria-item-enlace text-decoration-none text-center d-block">
-                <div className="categoria-circulo-wrapper ratio ratio-1x1 rounded-circle overflow-hidden mx-auto shadow-sm">
-                  <img src="../src/assets/categories/seguridad.webp" alt="Seguridad" className="w-100 h-100 object-fit-cover" />
-                </div>
-                <div className="categoria-badge-pill rounded-pill shadow-sm py-2 px-2 mt-2 mx-auto">
-                  <span className="categoria-texto-label fw-medium d-block text-truncate">Seguridad</span>
-                </div>
-              </a>
-            </div>
-
+            {CATEGORIAS.map((cat) => (
+              <div key={cat.id} className="col">
+                <a href={`#${cat.id}`} className="categoria-item-enlace text-decoration-none text-center d-block">
+                  <div className="categoria-circulo-wrapper ratio ratio-1x1 rounded-circle overflow-hidden mx-auto shadow-sm">
+                    <img 
+                      src={cat.img} 
+                      alt={cat.nombre} 
+                      className="w-100 h-100 object-fit-cover" 
+                      loading="lazy"
+                    />
+                  </div>
+                  <div className="categoria-badge-pill rounded-pill shadow-sm py-2 px-2 mt-2 mx-auto">
+                    <span className="categoria-texto-label fw-medium d-block text-truncate">
+                      {cat.nombre}
+                    </span>
+                  </div>
+                </a>
+              </div>
+            ))}
           </div>
         </div>
 
