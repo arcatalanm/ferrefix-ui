@@ -1,11 +1,11 @@
 function Categories() {
   return (
-    <section className="py-5">
+    <section className="py-1">
       <div className="container">
 
         {/* Encabezado */}
         <div className="text-center mb-4">
-          <h2 className="fw-bold mb-1">
+          <h2 className="cat-title fw-bold mb-1">
             Categorías destacadas
           </h2>
           <p className="mb-0">
