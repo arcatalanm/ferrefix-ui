@@ -1,19 +1,22 @@
 import { useState, useEffect } from 'react';
+import dewaltImg from '../assets/dewalt.webp';
+import makitaImg from '../assets/makita.webp';
+import boschImg from '../assets/bosch.webp';
 
 const IMAGENES = [
   {
     id: 1,
-    url: '../src/assets/dewalt.webp',
+    url: dewaltImg,
     alt: 'Publicidad de producto DeWalt'
   },
   {
     id: 2,
-    url: '../src/assets/makita.webp',
+    url: makitaImg,
     alt: 'Publicidad de producto Makita'
   },
   {
     id: 3,
-    url: '../src/assets/bosch.webp',
+    url: boschImg,
     alt: 'Publicidad de producto Bosch'
   }
 ];
