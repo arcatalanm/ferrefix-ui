@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import banner from '../assets/banner-web.webp';
 
 function Navbar() {
@@ -10,11 +11,16 @@ function Navbar() {
   const [isAccountOpen, setIsAccountOpen] = useState(false);
   const toggleAccount = () => setIsAccountOpen(!isAccountOpen);
 
+  const closeMenu = () => {
+    setIsOpen(false);
+    setIsAccountOpen(false);
+  };
+
   return (
     <nav className="navbar navbar-expand-lg bg-platino border-bottom border-light-subtle shadow-lg py-3">
       <div className="container">
         {/* Logo */}
-        <a className="navbar-brand d-flex align-items-center gap-2 m-0 p-0" href="/">
+        <Link className="navbar-brand d-flex align-items-center gap-2 m-0 p-0" to="/" onClick={closeMenu}>
           <div className="ferrefix-banner-web">
             <img 
               src={banner} 
@@ -22,7 +28,7 @@ function Navbar() {
               className="banner-ferrefix" 
             />
           </div>
-        </a>
+        </Link>
 
         {/* Botón hamburguesa */}
         <button
@@ -40,24 +46,24 @@ function Navbar() {
           {/* Links */}
           <ul className="navbar-nav mx-auto mb-2 mb-lg-0 align-items-lg-center gap-lg-3 text-center my-3 my-lg-0">
             <li className="nav-item">
-              <a className="nav-link clever-nav-link" href="#catalogo">
+              <Link className="nav-link clever-nav-link" to="/catalogo" onClick={closeMenu}>
                 Catálogo
-              </a>
+              </Link>
             </li>
             <li className="nav-item">
-              <a className="nav-link clever-nav-link" href="#arriendos">
+              <Link className="nav-link clever-nav-link" to="/arriendos" onClick={closeMenu}>
                 Arriendos
-              </a>
+              </Link>
             </li>
             <li className="nav-item">
-              <a className="nav-link clever-nav-link" href="#proveedores">
+              <Link className="nav-link clever-nav-link" to="/proveedores" onClick={closeMenu}>
                 Proveedores
-              </a>
+              </Link>
             </li>
             <li className="nav-item">
-              <a className="nav-link clever-nav-link" href="#nosotros">
+              <Link className="nav-link clever-nav-link" to="/nosotros" onClick={closeMenu}>
                 Nosotros
-              </a>
+              </Link>
             </li>
           </ul>
 
@@ -78,22 +84,22 @@ function Navbar() {
                 className={`dropdown-menu dropdown-menu-end shadow border-0 mt-2 rounded-3 ${isAccountOpen ? 'show' : ''}`}
               >
                 <li>
-                  <a 
+                  <Link 
                     className="dropdown-item py-2" 
-                    href="#login"
-                    onClick={() => setIsAccountOpen(false)}
+                    to="/login"
+                    onClick={closeMenu}
                   >
                     Iniciar Sesión
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a 
+                  <Link 
                     className="dropdown-item py-2" 
-                    href="#register"
-                    onClick={() => setIsAccountOpen(false)}
+                    to="/registro"
+                    onClick={closeMenu}
                   >
                     Registrarse
-                  </a>
+                  </Link>
                 </li>
               </ul>
             </div>
