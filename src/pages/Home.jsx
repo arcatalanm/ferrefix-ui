@@ -1,5 +1,5 @@
-import Carrousel from '../components/Carrousel';
-import Categories from '../components/Categories';
+import Carrousel from '../components/Carrousel/Carrousel';
+import Categories from '../components/Categories/Categories';
 
 function Home() {
   return (

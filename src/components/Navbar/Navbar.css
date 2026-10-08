@@ -1,0 +1,14 @@
+/* Navbar */
+
+.banner-ferrefix {
+  height: 100px;
+  width: 300px;
+}
+
+.nav-item, .clever-btn-signin, .dropdown-item {
+  font-family: "Oswald", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 500;
+  font-size: 16px;
+  font-style: normal;
+}

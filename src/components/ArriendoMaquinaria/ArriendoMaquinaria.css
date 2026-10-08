@@ -1,0 +1,13 @@
+/* Arriendo Maquinas */
+.arriendo-card {
+  min-height: 320px;
+  background-color: var(--color-platino);
+}
+
+.arriendo-img {
+  transition: transform 0.35s ease;
+}
+
+.arriendo-card:hover .arriendo-img {
+  transform: scale(1.03);
+}

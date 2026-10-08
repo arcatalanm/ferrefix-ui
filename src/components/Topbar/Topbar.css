@@ -1,0 +1,11 @@
+/* Estilos para el componente Topbar */
+.topbar-section {
+  font-size: 0.85rem;
+}
+
+.topbar-schedule-icon,
+.topbar-location-icon,
+.topbar-phone-icon,
+.topbar-instagram-icon {
+  font-size: 0.95rem;
+}

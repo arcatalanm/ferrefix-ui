@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import dewaltImg from '../assets/dewalt.webp';
-import makitaImg from '../assets/makita.webp';
-import boschImg from '../assets/bosch.webp';
+import dewaltImg from '../../assets/dewalt.webp';
+import makitaImg from '../../assets/makita.webp';
+import boschImg from '../../assets/bosch.webp';
+import './Carrousel.css';
 
 const IMAGENES = [
   {

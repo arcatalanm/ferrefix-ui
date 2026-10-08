@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import banner from '../assets/banner-web.webp';
+import banner from '../../assets/banner-web.webp';
+import './Navbar.css';
 
 function Navbar() {
   // Desplegable (Hamburguesa)

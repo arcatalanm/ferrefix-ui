@@ -1,3 +1,5 @@
+import './BannerPromocional.css';
+
 function BannerPromocional({ 
   imagen, 
   alt = 'Banner promocional', 

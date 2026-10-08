@@ -1,3 +1,5 @@
+import './ArriendoMaquinaria.css';
+
 function ArriendoMaquinaria() {
   return (
     <section className="py-5 bg-white">
@@ -9,7 +11,7 @@ function ArriendoMaquinaria() {
             Arriendo de Maquinaria
           </h2>
           <p className="text-secondary lead mx-auto col-lg-8 mb-0"> 
-            En Ferrefix ofrecemos servicios de arriendo de máquinas para que puedas terminar tu obra sin tener que hacer una inversión inicial enorme. Contamos con equipos en buen estado, listos para trabajar y a un precio conveniente. Tú eliges cuánto tiempo los necesitas y nosotros nos encargamos del resto. Es una forma práctica y económica de avanzar en tu proyecto sin comprar maquinaria. Cotiza con nosotros y arrienda lo que necesitas cuando lo necesitas.
+            En Ferrefix ofrecemos servicios de arriendo de máquinas para que puedas terminar tu obra sin tener que hacer una inversión inicial enorme. Contamos con equipos en buen estado, listos para trabajar y a un precio conveniente. Tú eliges cuánto tiempo los necesitas y nosotros nos encargamos del resto. Es una forma practical y económica de avanzar en tu proyecto sin comprar maquinaria. Cotiza con nosotros y arrienda lo que necesitas cuando lo necesitas.
           </p>
         </div>
 

@@ -1,12 +1,13 @@
-import construccionImg from '../assets/categories/construccion.webp';
-import maderasImg from '../assets/categories/maderas.webp';
-import herramientasImg from '../assets/categories/herramientas.webp';
-import fijacionesImg from '../assets/categories/fijaciones.webp';
-import gasfiteriaImg from '../assets/categories/gasfiteria.webp';
-import electricidadImg from '../assets/categories/electricidad.webp';
-import pinturasImg from '../assets/categories/pinturas.webp';
-import ceramicasImg from '../assets/categories/ceramicas.webp';
-import seguridadImg from '../assets/categories/seguridad.webp';
+import construccionImg from '../../assets/categories/construccion.webp';
+import maderasImg from '../../assets/categories/maderas.webp';
+import herramientasImg from '../../assets/categories/herramientas.webp';
+import fijacionesImg from '../../assets/categories/fijaciones.webp';
+import gasfiteriaImg from '../../assets/categories/gasfiteria.webp';
+import electricidadImg from '../../assets/categories/electricidad.webp';
+import pinturasImg from '../../assets/categories/pinturas.webp';
+import ceramicasImg from '../../assets/categories/ceramicas.webp';
+import seguridadImg from '../../assets/categories/seguridad.webp';
+import './Categories.css';
 
 const CATEGORIAS = [
   { id: 'construccion', nombre: 'Construcción', img: construccionImg },

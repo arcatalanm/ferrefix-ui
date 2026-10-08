@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
-import banner from '../assets/banner-web.webp';
+import banner from '../../assets/banner-web.webp';
+import './Footer.css';
 
 function Footer() {
   return (
