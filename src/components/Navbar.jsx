@@ -1,7 +1,5 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import banner from '../../assets/banner-web.webp';
-import './Navbar.css';
 
 function Navbar() {
   // Desplegable (Hamburguesa)
@@ -24,7 +22,7 @@ function Navbar() {
         <Link className="navbar-brand d-flex align-items-center gap-2 m-0 p-0" to="/" onClick={closeMenu}>
           <div className="ferrefix-banner-web">
             <img 
-              src={banner} 
+              src="/banner-web.webp" 
               alt="banner ferrefix" 
               className="banner-ferrefix" 
             />

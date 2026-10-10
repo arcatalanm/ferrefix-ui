@@ -1,6 +1,4 @@
 import { Link } from 'react-router-dom';
-import banner from '../../assets/banner-web.webp';
-import './Footer.css';
 
 function Footer() {
   return (
@@ -13,7 +11,7 @@ function Footer() {
             <div className="footer-logo-container mb-3">
               <Link to="/">
                 <img 
-                  src={banner} 
+                  src="/banner-web.webp" 
                   alt="Banner ferrefix" 
                   className="footer-logo-img d-block" 
                 />

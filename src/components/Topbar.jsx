@@ -1,5 +1,3 @@
-import './Topbar.css';
-
 function Topbar() {
   return (
     <div className="topbar-section py-2 border-bottom d-none d-lg-block bg-ambar">
