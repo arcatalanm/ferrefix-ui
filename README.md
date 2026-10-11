@@ -1,4 +1,4 @@
-![Ferrefix](/src/assets/banner-web.webp)
+![Ferrefix](/public/banner-web.webp)
 
 Tienda online de Ferrefix para la venta de productos de ferretería, con navegación simple, diseño responsivo y una experiencia de compra clara, pensada para facilitar la búsqueda y selección de productos desde cualquier dispositivo.
 
