@@ -226,10 +226,10 @@
 /* -- Product Card -- */
 /* Tarjeta de Producto individual */
 .product-card {
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  transition: box-shadow 0.25s ease;
   border: 1px solid #e2e8f0;
   background-color: #ffffff;
-  border-radius: 12px;
+  border-radius: 6px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -237,9 +237,7 @@
 }
 
 .product-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
-  border-color: var(--color-dorado);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
 }
 
 /* Contenedor de la Imagen */
@@ -257,11 +255,6 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.3s ease;
-}
-
-.product-card:hover .product-card-img {
-  transform: scale(1.05);
 }
 
 /* Etiqueta de Categoría */
@@ -419,4 +412,86 @@
   background-color: var(--color-oscuro);
   color: var(--color-platino);
   text-decoration: none;
+}
+
+
+/* ==========================================================================
+   Catálogo de Productos
+   ========================================================================== */
+.catalogo-titulo {
+  font-family: "Oswald", sans-serif;
+  color: var(--color-oscuro);
+  font-size: 2.2rem;
+}
+
+.catalogo-bar-filtros {
+  border-color: #e2e8f0 !important;
+}
+
+.catalogo-categorias-container .btn {
+  font-size: 0.85rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.catalogo-categorias-container .btn-dark {
+  background-color: var(--color-oscuro);
+  border-color: var(--color-oscuro);
+  color: #ffffff;
+}
+
+.catalogo-categorias-container .btn-outline-secondary:hover {
+  background-color: var(--color-platino);
+  color: var(--color-oscuro);
+}
+
+.product-grid-empty {
+  border: 1px dashed #cbd5e1;
+}
+
+.product-grid-empty-desc {
+  max-width: 480px;
+}
+
+
+/* ==========================================================================
+   Detalle de Producto (Página Completa)
+   ========================================================================== */
+.detalle-producto-titulo {
+  font-family: "Oswald", sans-serif;
+  font-size: 2.1rem;
+  line-height: 1.25;
+}
+
+.detalle-img-card {
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-color: #e2e8f0 !important;
+}
+
+.detalle-producto-foto {
+  max-height: 380px;
+}
+
+.detalle-precio-valor {
+  font-family: "Oswald", sans-serif;
+  color: var(--color-oscuro);
+}
+
+.detalle-ficha-seccion h3 {
+  font-family: "Oswald", sans-serif;
+  font-size: 1.5rem;
+}
+
+.detalle-no-encontrado-card {
+  max-width: 600px;
+}
+
+.detalle-breadcrumb-item {
+  max-width: 280px;
+}
+
+.detalle-cantidad-group {
+  width: 135px;
 }
