@@ -209,6 +209,6 @@ export const CATEGORIAS_PRODUCTOS = [
   'Gasfitería',
   'Electricidad',
   'Pinturas',
-  'Ceramicas',
+  'Cerámicas',
   'Seguridad'
 ];

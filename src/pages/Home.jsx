@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import dewaltImg from '../assets/dewalt.webp';
-import makitaImg from '../assets/makita.webp';
-import boschImg from '../assets/bosch.webp';
+import { Link } from 'react-router-dom';
+import dewaltImg from '../assets/banners/dewalt.webp';
+import makitaImg from '../assets/banners/makita.webp';
+import boschImg from '../assets/banners/bosch.webp';
 
 import construccionImg from '../assets/categories/construccion.webp';
 import maderasImg from '../assets/categories/maderas.webp';
@@ -144,7 +145,10 @@ function Home() {
             <div className="row row-cols-3 row-cols-md-5 row-cols-xl-auto justify-content-center justify-content-xl-between flex-xl-nowrap g-3 g-xl-2 align-items-start">
               {CATEGORIAS.map((cat) => (
                 <div key={cat.id} className="col">
-                  <a href={`#${cat.id}`} className="categoria-item-enlace text-decoration-none text-center d-block">
+                  <Link 
+                    to={`/catalogo?categoria=${encodeURIComponent(cat.nombre)}`} 
+                    className="categoria-item-enlace text-decoration-none text-center d-block"
+                  >
                     <div className="categoria-circulo-wrapper ratio ratio-1x1 rounded-circle overflow-hidden mx-auto shadow-sm">
                       <img 
                         src={cat.img} 
@@ -158,7 +162,7 @@ function Home() {
                         {cat.nombre}
                       </span>
                     </div>
-                  </a>
+                  </Link>
                 </div>
               ))}
             </div>

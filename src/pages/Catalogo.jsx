@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ProductGrid from '../components/ProductGrid';
 import { PRODUCTOS, CATEGORIAS_PRODUCTOS } from '../data/productos';
@@ -10,6 +10,11 @@ function Catalogo() {
   const categoriaSeleccionada = searchParams.get('categoria') || 'Todas';
   const [busquedaTexto, setBusquedaTexto] = useState('');
   const [ordenPrecio, setOrdenPrecio] = useState('default');
+
+  // Asegurar scroll arriba al entrar al catálogo o cambiar categoría
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [categoriaSeleccionada]);
 
   // Manejar cambio de categoría y actualizar URL de forma reactiva
   const handleCambiarCategoria = (cat) => {
