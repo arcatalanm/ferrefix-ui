@@ -1,10 +1,29 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ProductGrid from '../components/ProductGrid';
-import { PRODUCTOS, CATEGORIAS_PRODUCTOS } from '../data/productos';
+import { 
+  obtenerProductos, 
+  CATEGORIAS_PRODUCTOS, 
+  EVENTO_PRODUCTOS_ACTUALIZADOS 
+} from '../data/productos';
 
 function Catalogo() {
   const [searchParams, setSearchParams] = useSearchParams();
+
+  // Estado dinámico de productos conectados con localStorage
+  const [productos, setProductos] = useState(obtenerProductos);
+
+  // Escuchar cambios en localStorage (ej. cuando se crea/edita un producto en el admin)
+  useEffect(() => {
+    const handleActualizacion = () => {
+      setProductos(obtenerProductos());
+    };
+
+    window.addEventListener(EVENTO_PRODUCTOS_ACTUALIZADOS, handleActualizacion);
+    return () => {
+      window.removeEventListener(EVENTO_PRODUCTOS_ACTUALIZADOS, handleActualizacion);
+    };
+  }, []);
 
   // Derivar la categoría seleccionada directamente desde la URL
   const categoriaSeleccionada = searchParams.get('categoria') || 'Todas';
@@ -35,7 +54,7 @@ function Catalogo() {
 
   // Filtrado y ordenamiento con useMemo para máximo rendimiento
   const productosFiltrados = useMemo(() => {
-    let resultado = [...PRODUCTOS];
+    let resultado = [...productos];
 
     // Filtrar por categoría
     if (categoriaSeleccionada !== 'Todas') {
@@ -64,7 +83,7 @@ function Catalogo() {
     }
 
     return resultado;
-  }, [categoriaSeleccionada, busquedaTexto, ordenPrecio]);
+  }, [productos, categoriaSeleccionada, busquedaTexto, ordenPrecio]);
 
   return (
     <div className="catalogo-page py-4 py-md-5">

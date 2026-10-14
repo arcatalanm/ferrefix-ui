@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { PRODUCTOS } from '../data/productos';
+import { obtenerProductoPorId, EVENTO_PRODUCTOS_ACTUALIZADOS } from '../data/productos';
 
 function DetalleProducto() {
   const { id } = useParams();
@@ -9,8 +9,22 @@ function DetalleProducto() {
   const [cantidad, setCantidad] = useState(1);
   const [agregadoAlCarrito, setAgregadoAlCarrito] = useState(false);
 
-  // Buscar el producto correspondiente por idProducto
-  const producto = PRODUCTOS.find((p) => p.idProducto === id);
+  // Buscar el producto correspondiente de forma reactiva desde localStorage
+  const [producto, setProducto] = useState(() => obtenerProductoPorId(id));
+
+  // Escuchar si el producto fue modificado (ej. stock actualizado o precio)
+  useEffect(() => {
+    setProducto(obtenerProductoPorId(id));
+
+    const handleActualizacion = () => {
+      setProducto(obtenerProductoPorId(id));
+    };
+
+    window.addEventListener(EVENTO_PRODUCTOS_ACTUALIZADOS, handleActualizacion);
+    return () => {
+      window.removeEventListener(EVENTO_PRODUCTOS_ACTUALIZADOS, handleActualizacion);
+    };
+  }, [id]);
 
   // Scroll automático hacia arriba al cargar la página
   useEffect(() => {

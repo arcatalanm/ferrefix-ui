@@ -8,8 +8,8 @@ import llaveMonomando from '../assets/products/llave-monomando.webp';
 import esmalteCeresita from '../assets/products/esmalte-ceresita.webp';
 import arnesSeguridad from '../assets/products/arnes-seguridad.webp';
 import tornillosDrywall from '../assets/products/tornillos-drywall.webp';
-
-export const PRODUCTOS = [
+// Lista base de productos iniciales
+export const PRODUCTOS_INICIALES = [
   {
     idProducto: '5422223214',
     nombre: 'Taladro Percutor Inalámbrico 20V Max XR',
@@ -212,3 +212,133 @@ export const CATEGORIAS_PRODUCTOS = [
   'Cerámicas',
   'Seguridad'
 ];
+
+// ===============================================================
+// SISTEMA DE PERSISTENCIA Y OPERACIONES CRUD (SIMULACIÓN DE BD)
+// Requerimiento rúbrica Duoc UC: Datos en JS + Persistencia Local
+// ===============================================================
+
+const STORAGE_KEY = 'ferrefix_productos_v1';
+export const EVENTO_PRODUCTOS_ACTUALIZADOS = 'ferrefix:productos_actualizados';
+
+/**
+ * Notifica a los componentes React que los productos cambiaron en tiempo real
+ */
+const notificarCambio = () => {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent(EVENTO_PRODUCTOS_ACTUALIZADOS));
+  }
+};
+
+/**
+ * Obtiene todos los productos desde localStorage.
+ * Si no existen, inicializa con PRODUCTOS_INICIALES.
+ * (Operación READ - Leer todos)
+ */
+export const obtenerProductos = () => {
+  if (typeof window === 'undefined' || !window.localStorage) {
+    return PRODUCTOS_INICIALES;
+  }
+
+  try {
+    const dataGuardada = localStorage.getItem(STORAGE_KEY);
+    if (!dataGuardada) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(PRODUCTOS_INICIALES));
+      return PRODUCTOS_INICIALES;
+    }
+    return JSON.parse(dataGuardada);
+  } catch (error) {
+    console.error('Error al leer productos desde localStorage:', error);
+    return PRODUCTOS_INICIALES;
+  }
+};
+
+/**
+ * Busca un producto por su idProducto
+ * (Operación READ - Leer uno)
+ */
+export const obtenerProductoPorId = (id) => {
+  const productos = obtenerProductos();
+  return productos.find((p) => String(p.idProducto) === String(id)) || null;
+};
+
+/**
+ * Agrega un nuevo producto a la base de datos simulada
+ * (Operación CREATE - Crear)
+ */
+export const crearProducto = (nuevoProducto) => {
+  const productos = obtenerProductos();
+  
+  const productoAInsertar = {
+    ...nuevoProducto,
+    idProducto: nuevoProducto.idProducto || String(Date.now()),
+    stock: Number(nuevoProducto.stock) || 0,
+    precioVenta: Number(nuevoProducto.precioVenta) || 0,
+    categoria: nuevoProducto.categoria || 'Herramientas',
+    imagen: nuevoProducto.imagen || '/banner-web.webp',
+    especificaciones: nuevoProducto.especificaciones || {}
+  };
+
+  const nuevaLista = [productoAInsertar, ...productos];
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(nuevaLista));
+  notificarCambio();
+  return productoAInsertar;
+};
+
+/**
+ * Actualiza los datos de un producto existente
+ * (Operación UPDATE - Actualizar)
+ */
+export const actualizarProducto = (id, datosActualizados) => {
+  const productos = obtenerProductos();
+  const index = productos.findIndex((p) => String(p.idProducto) === String(id));
+
+  if (index === -1) {
+    console.warn(`Producto con id ${id} no encontrado para actualizar.`);
+    return null;
+  }
+
+  const productoActualizado = {
+    ...productos[index],
+    ...datosActualizados,
+    stock: datosActualizados.stock !== undefined ? Number(datosActualizados.stock) : productos[index].stock,
+    precioVenta: datosActualizados.precioVenta !== undefined ? Number(datosActualizados.precioVenta) : productos[index].precioVenta
+  };
+
+  productos[index] = productoActualizado;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(productos));
+  notificarCambio();
+  return productoActualizado;
+};
+
+/**
+ * Elimina un producto por su idProducto
+ * (Operación DELETE - Eliminar)
+ */
+export const eliminarProducto = (id) => {
+  const productos = obtenerProductos();
+  const nuevaLista = productos.filter((p) => String(p.idProducto) !== String(id));
+
+  if (nuevaLista.length === productos.length) {
+    return false;
+  }
+
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(nuevaLista));
+  notificarCambio();
+  return true;
+};
+
+/**
+ * Restablece los productos al catálogo original de fábrica
+ * (Utilidad para testing y demostraciones)
+ */
+export const restablecerProductos = () => {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(PRODUCTOS_INICIALES));
+    notificarCambio();
+  }
+  return PRODUCTOS_INICIALES;
+};
+
+// Exportación compatible para componentes existentes
+export const PRODUCTOS = obtenerProductos();
