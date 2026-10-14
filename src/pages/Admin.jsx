@@ -29,22 +29,23 @@ const FORM_INICIAL = {
 };
 
 function Admin() {
-  // Estado de autenticación desde localStorage
+  // Autenticación
   const [sesion, setSesion] = useState(obtenerSesionActiva);
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [errorLogin, setErrorLogin] = useState('');
 
+  // Datos
   const [productos, setProductos] = useState(obtenerProductos);
   const [ordenes, setOrdenes] = useState(obtenerOrdenes);
   const [tabActiva, setTabActiva] = useState('dashboard'); // 'dashboard' | 'productos' | 'ordenes'
   
-  // Filtros del panel de inventario
+  // Filtros de inventario
   const [busqueda, setBusqueda] = useState('');
   const [filtroCategoria, setFiltroCategoria] = useState('Todas');
   const [filtroStockCritico, setFiltroStockCritico] = useState(false);
 
-  // Estados de modales y formularios
+  // Modales
   const [modalAbierto, setModalAbierto] = useState(false);
   const [modoEdicion, setModoEdicion] = useState(false);
   const [formData, setFormData] = useState(FORM_INICIAL);
@@ -52,7 +53,7 @@ function Admin() {
   const [ordenSeleccionada, setOrdenSeleccionada] = useState(null);
   const [mensajeAlerta, setMensajeAlerta] = useState(null);
 
-  // Sincronizar en tiempo real con cambios en el storage
+  // Sincronización en tiempo real
   useEffect(() => {
     const handleProductos = () => setProductos(obtenerProductos());
     const handleOrdenes = () => setOrdenes(obtenerOrdenes());
@@ -69,15 +70,14 @@ function Admin() {
     };
   }, []);
 
-  // Notificación tipo Toast/Alerta
-  const mostrarMensaje = (texto, tipo = 'success') => {
+  const mostrarMensaje = (texto, tipo = 'dark') => {
     setMensajeAlerta({ texto, tipo });
     setTimeout(() => {
       setMensajeAlerta(null);
     }, 3500);
   };
 
-  // Métricas calculadas para el Dashboard
+  // Métricas
   const metricas = useMemo(() => {
     const totalProductos = productos.length;
     const stockCriticoCount = productos.filter((p) => Number(p.stock) <= 5).length;
@@ -96,7 +96,7 @@ function Admin() {
     };
   }, [productos, ordenes]);
 
-  // Filtrado de la tabla de productos
+  // Filtro de productos
   const productosFiltrados = useMemo(() => {
     return productos.filter((p) => {
       const coincideTexto = 
@@ -114,7 +114,7 @@ function Admin() {
     });
   }, [productos, busqueda, filtroCategoria, filtroStockCritico]);
 
-  // Manejo de Modal Crear/Editar
+  // Manejo de Modal Crear / Editar
   const abrirModalCrear = () => {
     setModoEdicion(false);
     setFormData({
@@ -148,7 +148,7 @@ function Admin() {
     e.preventDefault();
 
     if (!formData.nombre.trim() || !formData.marca.trim()) {
-      mostrarMensaje('Nombre y marca son campos requeridos.', 'danger');
+      mostrarMensaje('Nombre y marca son requeridos.', 'danger');
       return;
     }
 
@@ -162,7 +162,7 @@ function Admin() {
         descripcion: formData.descripcion.trim(),
         imagen: formData.imagen.trim() || undefined
       });
-      mostrarMensaje(`Producto "${formData.nombre}" actualizado correctamente.`);
+      mostrarMensaje(`Producto "${formData.nombre}" actualizado.`);
     } else {
       crearProducto({
         idProducto: formData.idProducto,
@@ -180,22 +180,18 @@ function Admin() {
     cerrarModal();
   };
 
-  const confirmarEliminar = (prod) => {
-    setProductoAEliminar(prod);
-  };
-
   const ejecutarEliminacion = () => {
     if (productoAEliminar) {
       eliminarProducto(productoAEliminar.idProducto);
-      mostrarMensaje(`Producto "${productoAEliminar.nombre}" eliminado del catálogo.`, 'warning');
+      mostrarMensaje(`Producto "${productoAEliminar.nombre}" eliminado del catálogo.`);
       setProductoAEliminar(null);
     }
   };
 
   const handleRestablecer = () => {
-    if (window.confirm('¿Estás seguro de restablecer el catálogo al estado original de fábrica?')) {
+    if (window.confirm('¿Restablecer el inventario a los 10 productos base de fábrica?')) {
       restablecerProductos();
-      mostrarMensaje('Catálogo restablecido con los 10 productos base de fábrica.', 'info');
+      mostrarMensaje('Inventario restablecido a valores iniciales de fábrica.');
     }
   };
 
@@ -216,7 +212,7 @@ function Admin() {
       return;
     }
     if (res.usuario.rol !== 'admin') {
-      setErrorLogin('Acceso denegado: Esta cuenta no posee permisos de administrador.');
+      setErrorLogin('Acceso denegado: Esta cuenta no tiene permisos de administrador.');
       return;
     }
     setSesion(res.usuario);
@@ -227,87 +223,73 @@ function Admin() {
     setSesion(null);
   };
 
-  // Si no está autenticado como administrador, se muestra la pantalla de login protegida
+  // ==============================================================
+  // PANTALLA DE ACCESO RESTRINGIDO (LOGIN ADMIN CUADRADO Y SOBRIO)
+  // ==============================================================
   if (!sesion || sesion.rol !== 'admin') {
     return (
-      <div className="admin-login-screen bg-light py-5 min-vh-75 d-flex align-items-center">
+      <div className="admin-wrapper py-5 d-flex align-items-center">
         <div className="container">
           <div className="row justify-content-center">
-            <div className="col-12 col-sm-10 col-md-8 col-lg-5">
-              <div className="card border-0 shadow-lg rounded-4 p-4 p-md-5 bg-white">
-                <div className="text-center mb-4">
-                  <div className="p-3 bg-dark text-warning rounded-circle d-inline-flex mb-3 shadow-sm">
-                    <i className="bi bi-shield-lock-fill fs-1"></i>
+            <div className="col-12 col-sm-9 col-md-6 col-lg-4">
+              <div className="admin-box p-4 bg-white shadow-sm">
+                
+                <div className="border-bottom pb-3 mb-3">
+                  <div className="d-flex align-items-center gap-2 mb-1">
+                    <span className="fw-bold text-dark font-monospace" style={{ letterSpacing: '1px' }}>
+                      FERREFIX
+                    </span>
+                    <span className="text-muted small">|</span>
+                    <span className="small text-secondary fw-semibold">Control de Acceso</span>
                   </div>
-                  <h2 className="fw-bold text-dark h4 mb-1" style={{ fontFamily: '"Oswald", sans-serif' }}>
-                    Acceso Administrativo
-                  </h2>
-                  <p className="text-muted small mb-0">
-                    Esta ruta es de acceso restringido. Ingresa tus credenciales de administrador para continuar.
-                  </p>
+                  <h1 className="h5 fw-bold text-dark mb-0">Iniciar Sesión Administrador</h1>
                 </div>
 
                 {errorLogin && (
-                  <div className="alert alert-danger py-2 px-3 small rounded-3 mb-3 d-flex align-items-center" role="alert">
-                    <i className="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
-                    <div>{errorLogin}</div>
+                  <div className="alert alert-danger py-2 px-3 small rounded-1 mb-3" role="alert">
+                    {errorLogin}
                   </div>
                 )}
 
                 <form onSubmit={handleLoginSubmit}>
                   <div className="mb-3">
-                    <label className="form-label small fw-semibold">Correo Electrónico</label>
-                    <div className="input-group">
-                      <span className="input-group-text bg-light border-end-0">
-                        <i className="bi bi-envelope text-muted"></i>
-                      </span>
-                      <input 
-                        type="email" 
-                        className="form-control border-start-0 bg-light"
-                        placeholder="admin@ferrefix.cl"
-                        value={loginEmail}
-                        onChange={(e) => setLoginEmail(e.target.value)}
-                        required
-                      />
-                    </div>
+                    <label className="form-label small fw-semibold text-secondary mb-1">Correo Electrónico</label>
+                    <input 
+                      type="email" 
+                      className="form-control form-control-sm rounded-1"
+                      placeholder="admin@ferrefix.cl"
+                      value={loginEmail}
+                      onChange={(e) => setLoginEmail(e.target.value)}
+                      required
+                    />
                   </div>
 
-                  <div className="mb-4">
-                    <label className="form-label small fw-semibold">Contraseña</label>
-                    <div className="input-group">
-                      <span className="input-group-text bg-light border-end-0">
-                        <i className="bi bi-key text-muted"></i>
-                      </span>
-                      <input 
-                        type="password" 
-                        className="form-control border-start-0 bg-light"
-                        placeholder="••••••••"
-                        value={loginPassword}
-                        onChange={(e) => setLoginPassword(e.target.value)}
-                        required
-                      />
-                    </div>
+                  <div className="mb-3">
+                    <label className="form-label small fw-semibold text-secondary mb-1">Contraseña</label>
+                    <input 
+                      type="password" 
+                      className="form-control form-control-sm rounded-1"
+                      placeholder="••••••••"
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      required
+                    />
                   </div>
 
                   <button 
                     type="submit" 
-                    className="btn btn-warning w-100 fw-semibold text-dark py-2 rounded-3 shadow-sm mb-3"
+                    className="btn btn-dark btn-sm w-100 fw-semibold rounded-1 py-2 mb-3"
                   >
-                    <i className="bi bi-box-arrow-in-right me-2"></i>
                     Ingresar al Panel
                   </button>
                 </form>
 
-                {/* Tarjeta de credenciales de prueba precargadas en localStorage */}
-                <div className="bg-platino p-3 rounded-3 small text-muted border mb-3">
+                <div className="p-3 bg-light border rounded-1 small text-secondary mb-3">
                   <div className="d-flex justify-content-between align-items-center mb-1">
-                    <strong className="text-dark">
-                      <i className="bi bi-person-badge me-1"></i>
-                      Credenciales de Prueba (localStorage):
-                    </strong>
+                    <strong className="text-dark">Credenciales de Acceso:</strong>
                     <button 
                       type="button" 
-                      className="btn btn-sm btn-link p-0 text-decoration-none text-dark fw-bold"
+                      className="btn btn-sm btn-link p-0 text-dark fw-bold text-decoration-none"
                       onClick={() => {
                         setLoginEmail('admin@ferrefix.cl');
                         setLoginPassword('admin123');
@@ -317,19 +299,16 @@ function Admin() {
                       Autocompletar
                     </button>
                   </div>
-                  <div><strong>Email:</strong> <code>admin@ferrefix.cl</code></div>
-                  <div><strong>Contraseña:</strong> <code>admin123</code></div>
-                  <div className="mt-1 text-muted" style={{ fontSize: '0.78rem' }}>
-                    * También disponible: <code>ariel@ferrefix.cl</code> / <code>admin123</code>
-                  </div>
+                  <div>Usuario: <code>admin@ferrefix.cl</code></div>
+                  <div>Clave: <code>admin123</code></div>
                 </div>
 
-                <div className="text-center">
-                  <Link to="/" className="text-decoration-none text-secondary small">
-                    <i className="bi bi-arrow-left me-1"></i>
-                    Volver a la tienda
+                <div className="text-center pt-2 border-top">
+                  <Link to="/" className="text-decoration-none text-muted small">
+                    ← Volver a la Tienda
                   </Link>
                 </div>
+
               </div>
             </div>
           </div>
@@ -338,208 +317,210 @@ function Admin() {
     );
   }
 
+  // ==============================================================
+  // PANEL ADMINISTRATIVO PRINCIPAL (CUADRADO, PROFESIONAL, SIN IA)
+  // ==============================================================
   return (
-    <div className="admin-page bg-light py-4 py-md-5">
-      <div className="container">
+    <div className="admin-wrapper">
 
-        {/* Encabezado del Backoffice */}
-        <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4 pb-3 border-bottom">
-          <div>
-            <div className="d-flex align-items-center gap-2 mb-1">
-              <span className="badge bg-dark text-warning px-3 py-2 fs-6 rounded-pill">
-                <i className="bi bi-shield-lock-fill me-1"></i> Backoffice
+      {/* Barra de Navegación Exclusiva del Panel Admin */}
+      <nav className="admin-navbar py-2 px-3">
+        <div className="container-fluid d-flex flex-wrap align-items-center justify-content-between gap-2">
+          
+          {/* Marca / Identificador */}
+          <div className="d-flex align-items-center gap-3">
+            <Link to="/admin" className="text-decoration-none d-flex align-items-center gap-2">
+              <span className="fw-bold text-white fs-5" style={{ fontFamily: '"Oswald", sans-serif', letterSpacing: '1px' }}>
+                FERREFIX
               </span>
-              <span className="badge bg-secondary-subtle text-secondary px-2 py-1 rounded">
-                Simulación BD (localStorage)
+              <span className="badge bg-secondary text-white fw-normal font-monospace rounded-1 px-2" style={{ fontSize: '0.72rem' }}>
+                ADMIN
               </span>
+            </Link>
+
+            {/* Pestañas de la barra */}
+            <div className="d-flex align-items-center gap-1 ms-2">
+              <button 
+                type="button"
+                className={`admin-nav-btn ${tabActiva === 'dashboard' ? 'active' : ''}`}
+                onClick={() => setTabActiva('dashboard')}
+              >
+                Dashboard
+              </button>
+              <button 
+                type="button"
+                className={`admin-nav-btn ${tabActiva === 'productos' ? 'active' : ''}`}
+                onClick={() => setTabActiva('productos')}
+              >
+                Productos ({productos.length})
+              </button>
+              <button 
+                type="button"
+                className={`admin-nav-btn ${tabActiva === 'ordenes' ? 'active' : ''}`}
+                onClick={() => setTabActiva('ordenes')}
+              >
+                Órdenes ({ordenes.length})
+              </button>
             </div>
-            <h1 className="h3 fw-bold mb-0 text-dark">
-              Panel Administrativo Ferrefix
-            </h1>
-            <p className="text-muted small mb-0">
-              Gestión centralizada de catálogo, inventario, productos críticos y órdenes.
-            </p>
           </div>
 
-          <div className="d-flex flex-wrap align-items-center gap-2">
-            <span className="badge bg-white text-dark border px-3 py-2 rounded-pill small">
-              <i className="bi bi-person-check-fill text-success me-1"></i>
-              {sesion.nombre}
-            </span>
+          {/* Acciones del Administrador en la barra */}
+          <div className="d-flex align-items-center gap-2">
             <button 
               type="button" 
-              className="btn btn-outline-danger btn-sm rounded-3 d-flex align-items-center gap-1"
-              onClick={handleRestablecer}
-              title="Restaura los 10 productos base iniciales"
+              className="btn btn-warning btn-sm fw-semibold text-dark rounded-1 px-3"
+              onClick={abrirModalCrear}
             >
-              <i className="bi bi-arrow-counterclockwise"></i>
+              + Agregar Producto
+            </button>
+
+            <button 
+              type="button" 
+              className="btn btn-outline-secondary btn-sm text-light border-secondary rounded-1 px-2"
+              onClick={handleRestablecer}
+              title="Restablecer base de datos inicial de fábrica"
+            >
               Restablecer BD
             </button>
-            <Link to="/catalogo" className="btn btn-outline-dark btn-sm rounded-3 d-flex align-items-center gap-1">
-              <i className="bi bi-shop"></i>
-              Ver Catálogo
-            </Link>
+
+            <div className="vr bg-secondary mx-1 d-none d-md-block" style={{ height: '24px' }}></div>
+
+            <span className="text-white-50 small d-none d-md-inline font-monospace">
+              {sesion.email}
+            </span>
+
             <button 
               type="button" 
-              className="btn btn-danger btn-sm rounded-3 d-flex align-items-center gap-1"
+              className="btn btn-outline-light btn-sm rounded-1 px-2"
               onClick={handleCerrarSesion}
-              title="Cerrar sesión de administrador"
+              title="Cerrar Sesión de Administrador"
             >
-              <i className="bi bi-box-arrow-right"></i>
               Salir
             </button>
           </div>
-        </div>
 
-        {/* Toast / Alerta interactiva */}
+        </div>
+      </nav>
+
+      {/* Contenedor Principal */}
+      <main className="container-fluid px-3 px-md-4 py-4">
+
+        {/* Notificación informativa */}
         {mensajeAlerta && (
-          <div className={`alert alert-${mensajeAlerta.tipo} alert-dismissible fade show rounded-3 shadow-sm d-flex align-items-center`} role="alert">
-            <i className="bi bi-info-circle-fill me-2 fs-5"></i>
-            <div>{mensajeAlerta.texto}</div>
+          <div className="admin-box p-3 mb-3 bg-white d-flex justify-content-between align-items-center" role="alert">
+            <span className="small fw-semibold text-dark">
+              {mensajeAlerta.texto}
+            </span>
             <button 
               type="button" 
-              className="btn-close" 
-              onClick={() => setMensajeAlerta(null)} 
+              className="btn-close btn-close-sm" 
+              onClick={() => setMensajeAlerta(null)}
               aria-label="Cerrar"
             ></button>
           </div>
         )}
 
-        {/* Pestañas de navegación del Backoffice */}
-        <ul className="nav nav-pills bg-white p-2 rounded-4 shadow-sm mb-4 border">
-          <li className="nav-item">
-            <button 
-              className={`nav-link px-4 py-2 rounded-3 fw-semibold ${tabActiva === 'dashboard' ? 'active bg-warning text-dark' : 'text-secondary'}`}
-              onClick={() => setTabActiva('dashboard')}
-            >
-              <i className="bi bi-speedometer2 me-2"></i>
-              Dashboard
-            </button>
-          </li>
-          <li className="nav-item">
-            <button 
-              className={`nav-link px-4 py-2 rounded-3 fw-semibold ${tabActiva === 'productos' ? 'active bg-warning text-dark' : 'text-secondary'}`}
-              onClick={() => setTabActiva('productos')}
-            >
-              <i className="bi bi-boxes me-2"></i>
-              Gestión de Productos ({productos.length})
-            </button>
-          </li>
-          <li className="nav-item">
-            <button 
-              className={`nav-link px-4 py-2 rounded-3 fw-semibold ${tabActiva === 'ordenes' ? 'active bg-warning text-dark' : 'text-secondary'}`}
-              onClick={() => setTabActiva('ordenes')}
-            >
-              <i className="bi bi-receipt me-2"></i>
-              Órdenes / Boletas ({ordenes.length})
-            </button>
-          </li>
-        </ul>
-
         {/* ============================================================== */}
-        {/* VISTA 1: DASHBOARD (MÉTRICAS Y STOCK CRÍTICO)                  */}
+        {/* VISTA: DASHBOARD                                               */}
         {/* ============================================================== */}
         {tabActiva === 'dashboard' && (
-          <div className="admin-tab-content">
-            {/* Tarjetas KPI */}
+          <div>
+            {/* 4 Cajas KPI Cuadradas y Sobrias */}
             <div className="row g-3 mb-4">
               <div className="col-12 col-sm-6 col-xl-3">
-                <div className="card border-0 shadow-sm rounded-4 h-100 bg-white p-3">
-                  <div className="d-flex align-items-center justify-content-between">
-                    <div>
-                      <span className="text-muted small fw-medium">Total Productos</span>
-                      <h3 className="fw-bold text-dark mt-1 mb-0">{metricas.totalProductos}</h3>
-                      <small className="text-success fw-semibold">
-                        <i className="bi bi-check-circle me-1"></i>En catálogo
-                      </small>
-                    </div>
-                    <div className="p-3 bg-primary-subtle text-primary rounded-4">
-                      <i className="bi bi-box-seam fs-3"></i>
-                    </div>
+                <div className="admin-kpi-box">
+                  <div className="text-secondary small fw-semibold text-uppercase" style={{ fontSize: '0.75rem', letterSpacing: '0.5px' }}>
+                    Productos en Catálogo
+                  </div>
+                  <div className="fs-3 fw-bold text-dark mt-1">
+                    {metricas.totalProductos}
+                  </div>
+                  <div className="text-muted small mt-1" style={{ fontSize: '0.8rem' }}>
+                    Artículos registrados
                   </div>
                 </div>
               </div>
 
               <div className="col-12 col-sm-6 col-xl-3">
-                <div className="card border-0 shadow-sm rounded-4 h-100 bg-white p-3">
-                  <div className="d-flex align-items-center justify-content-between">
-                    <div>
-                      <span className="text-muted small fw-medium">Stock Crítico (≤ 5)</span>
-                      <h3 className="fw-bold text-danger mt-1 mb-0">{metricas.stockCriticoCount}</h3>
-                      <small className="text-muted">Requieren reposición</small>
-                    </div>
-                    <div className="p-3 bg-danger-subtle text-danger rounded-4">
-                      <i className="bi bi-exclamation-triangle fs-3"></i>
-                    </div>
+                <div className="admin-kpi-box">
+                  <div className="text-secondary small fw-semibold text-uppercase" style={{ fontSize: '0.75rem', letterSpacing: '0.5px' }}>
+                    Stock Crítico (≤ 5 unids)
+                  </div>
+                  <div className="fs-3 fw-bold text-dark mt-1">
+                    {metricas.stockCriticoCount}
+                  </div>
+                  <div className="text-muted small mt-1" style={{ fontSize: '0.8rem' }}>
+                    {metricas.stockCriticoCount > 0 ? 'Requieren reposición' : 'Niveles óptimos'}
                   </div>
                 </div>
               </div>
 
               <div className="col-12 col-sm-6 col-xl-3">
-                <div className="card border-0 shadow-sm rounded-4 h-100 bg-white p-3">
-                  <div className="d-flex align-items-center justify-content-between">
-                    <div>
-                      <span className="text-muted small fw-medium">Valor del Inventario</span>
-                      <h4 className="fw-bold text-dark mt-1 mb-0">{formatearCLP(metricas.valorInventario)}</h4>
-                      <small className="text-muted">Cálculo precio × stock</small>
-                    </div>
-                    <div className="p-3 bg-warning-subtle text-warning-emphasis rounded-4">
-                      <i className="bi bi-cash-stack fs-3"></i>
-                    </div>
+                <div className="admin-kpi-box">
+                  <div className="text-secondary small fw-semibold text-uppercase" style={{ fontSize: '0.75rem', letterSpacing: '0.5px' }}>
+                    Valor Total Inventario
+                  </div>
+                  <div className="fs-3 fw-bold text-dark mt-1 font-monospace" style={{ fontSize: '1.4rem' }}>
+                    {formatearCLP(metricas.valorInventario)}
+                  </div>
+                  <div className="text-muted small mt-1" style={{ fontSize: '0.8rem' }}>
+                    Precio venta × stock
                   </div>
                 </div>
               </div>
 
               <div className="col-12 col-sm-6 col-xl-3">
-                <div className="card border-0 shadow-sm rounded-4 h-100 bg-white p-3">
-                  <div className="d-flex align-items-center justify-content-between">
-                    <div>
-                      <span className="text-muted small fw-medium">Ventas Registradas</span>
-                      <h4 className="fw-bold text-success mt-1 mb-0">{formatearCLP(metricas.totalVentas)}</h4>
-                      <small className="text-muted">{metricas.totalOrdenes} órdenes totales</small>
-                    </div>
-                    <div className="p-3 bg-success-subtle text-success rounded-4">
-                      <i className="bi bi-receipt-cutoff fs-3"></i>
-                    </div>
+                <div className="admin-kpi-box">
+                  <div className="text-secondary small fw-semibold text-uppercase" style={{ fontSize: '0.75rem', letterSpacing: '0.5px' }}>
+                    Ventas Registradas
+                  </div>
+                  <div className="fs-3 fw-bold text-dark mt-1 font-monospace" style={{ fontSize: '1.4rem' }}>
+                    {formatearCLP(metricas.totalVentas)}
+                  </div>
+                  <div className="text-muted small mt-1" style={{ fontSize: '0.8rem' }}>
+                    {metricas.totalOrdenes} órdenes procesadas
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Accesos rápidos & Alerta de Stock Crítico */}
+            {/* Tablas de Información del Dashboard */}
             <div className="row g-4">
-              <div className="col-12 col-lg-8">
-                <div className="card border-0 shadow-sm rounded-4 bg-white p-4">
-                  <div className="d-flex justify-content-between align-items-center mb-3">
-                    <h5 className="fw-bold mb-0 text-dark">
-                      <i className="bi bi-exclamation-octagon-fill text-danger me-2"></i>
-                      Atención: Productos con Stock Crítico
-                    </h5>
+              
+              {/* Tabla: Productos con Stock Crítico */}
+              <div className="col-12 col-lg-7">
+                <div className="admin-box p-3 bg-white">
+                  <div className="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                    <div>
+                      <h2 className="h6 fw-bold text-dark mb-0">Inventario con Stock Crítico (≤ 5)</h2>
+                      <span className="text-muted small">Productos que requieren reposición prioritaria</span>
+                    </div>
                     <button 
-                      className="btn btn-outline-danger btn-sm rounded-3"
+                      type="button"
+                      className="btn btn-outline-dark btn-sm rounded-1"
                       onClick={() => {
                         setTabActiva('productos');
                         setFiltroStockCritico(true);
                       }}
                     >
-                      Ver en Inventario
+                      Ver en Productos →
                     </button>
                   </div>
 
                   {metricas.stockCriticoCount === 0 ? (
-                    <div className="alert alert-success mb-0 rounded-3">
-                      <i className="bi bi-shield-check me-2"></i>
-                      Todo el inventario cuenta con stock suficiente superior a 5 unidades.
+                    <div className="p-3 text-secondary bg-light text-center rounded-1 small">
+                      Todos los productos cuentan con stock superior a 5 unidades.
                     </div>
                   ) : (
                     <div className="table-responsive">
-                      <table className="table table-hover align-middle mb-0">
-                        <thead className="table-light small">
+                      <table className="table admin-table align-middle mb-0">
+                        <thead>
                           <tr>
+                            <th>Código</th>
                             <th>Producto</th>
                             <th>Categoría</th>
-                            <th>Stock</th>
-                            <th>Precio</th>
+                            <th className="text-center">Stock</th>
+                            <th className="text-end">Precio</th>
                             <th className="text-end">Acción</th>
                           </tr>
                         </thead>
@@ -548,23 +529,25 @@ function Admin() {
                             .filter((p) => Number(p.stock) <= 5)
                             .map((p) => (
                               <tr key={p.idProducto}>
+                                <td className="font-monospace small text-muted">#{p.idProducto}</td>
                                 <td>
-                                  <div className="fw-semibold text-dark">{p.nombre}</div>
-                                  <small className="text-muted">ID: {p.idProducto} | {p.marca}</small>
+                                  <div className="fw-semibold text-dark small">{p.nombre}</div>
+                                  <div className="text-muted" style={{ fontSize: '0.78rem' }}>{p.marca}</div>
                                 </td>
-                                <td><span className="badge bg-light text-dark border">{p.categoria}</span></td>
-                                <td>
-                                  <span className="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">
-                                    {p.stock} unids.
+                                <td><span className="badge bg-light text-dark border rounded-1">{p.categoria}</span></td>
+                                <td className="text-center">
+                                  <span className="badge bg-secondary text-white rounded-1">
+                                    {p.stock} unids
                                   </span>
                                 </td>
-                                <td className="fw-semibold">{formatearCLP(p.precioVenta)}</td>
+                                <td className="text-end font-monospace small">{formatearCLP(p.precioVenta)}</td>
                                 <td className="text-end">
                                   <button 
-                                    className="btn btn-sm btn-outline-warning text-dark rounded-3"
+                                    type="button"
+                                    className="btn btn-sm btn-outline-dark rounded-1 py-0 px-2"
                                     onClick={() => abrirModalEditar(p)}
                                   >
-                                    <i className="bi bi-pencil-fill me-1"></i>Reponer
+                                    Editar
                                   </button>
                                 </td>
                               </tr>
@@ -576,329 +559,306 @@ function Admin() {
                 </div>
               </div>
 
-              {/* Tarjeta de acciones rápidas */}
-              <div className="col-12 col-lg-4">
-                <div className="card border-0 shadow-sm rounded-4 bg-white p-4 h-100">
-                  <h5 className="fw-bold mb-3 text-dark">
-                    <i className="bi bi-lightning-charge-fill text-warning me-2"></i>
-                    Acciones de Gestión
-                  </h5>
-                  <div className="d-grid gap-2">
+              {/* Tabla: Últimas Órdenes Registradas */}
+              <div className="col-12 col-lg-5">
+                <div className="admin-box p-3 bg-white">
+                  <div className="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                    <div>
+                      <h2 className="h6 fw-bold text-dark mb-0">Últimas Órdenes</h2>
+                      <span className="text-muted small">Compras registradas en la tienda</span>
+                    </div>
                     <button 
-                      className="btn btn-warning fw-semibold text-dark py-2 rounded-3 shadow-sm"
-                      onClick={abrirModalCrear}
-                    >
-                      <i className="bi bi-plus-circle me-2"></i>
-                      Registrar Nuevo Producto
-                    </button>
-                    <button 
-                      className="btn btn-outline-dark py-2 rounded-3"
-                      onClick={() => setTabActiva('productos')}
-                    >
-                      <i className="bi bi-table me-2"></i>
-                      Ver Tabla de Inventario Completa
-                    </button>
-                    <button 
-                      className="btn btn-outline-secondary py-2 rounded-3"
+                      type="button"
+                      className="btn btn-outline-dark btn-sm rounded-1"
                       onClick={() => setTabActiva('ordenes')}
                     >
-                      <i className="bi bi-receipt me-2"></i>
-                      Consultar Órdenes y Boletas
+                      Ver Todas →
                     </button>
                   </div>
 
-                  <hr className="my-4" />
-
-                  <div className="p-3 bg-platino rounded-3 text-muted small">
-                    <strong className="text-dark d-block mb-1">
-                      <i className="bi bi-hdd-network me-1"></i>
-                      Persistencia Activa
-                    </strong>
-                    Cualquier alta, baja o edición realizada se almacena de inmediato en <code>localStorage</code> y se refleja en la tienda en tiempo real.
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ============================================================== */}
-        {/* VISTA 2: GESTIÓN DE PRODUCTOS (CRUD COMPLETO)                  */}
-        {/* ============================================================== */}
-        {tabActiva === 'productos' && (
-          <div className="admin-tab-content">
-            <div className="card border-0 shadow-sm rounded-4 bg-white p-4">
-              
-              {/* Barra superior de herramientas y filtros */}
-              <div className="row g-3 align-items-center mb-4">
-                <div className="col-12 col-md-5">
-                  <div className="input-group">
-                    <span className="input-group-text bg-light border-end-0">
-                      <i className="bi bi-search text-muted"></i>
-                    </span>
-                    <input 
-                      type="text" 
-                      className="form-control border-start-0 bg-light"
-                      placeholder="Buscar por nombre, marca o ID..."
-                      value={busqueda}
-                      onChange={(e) => setBusqueda(e.target.value)}
-                    />
-                    {busqueda && (
-                      <button 
-                        className="btn btn-light border-start-0" 
-                        onClick={() => setBusqueda('')}
-                      >
-                        <i className="bi bi-x"></i>
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                <div className="col-6 col-md-3">
-                  <select 
-                    className="form-select bg-light"
-                    value={filtroCategoria}
-                    onChange={(e) => setFiltroCategoria(e.target.value)}
-                  >
-                    {CATEGORIAS_PRODUCTOS.map((cat) => (
-                      <option key={cat} value={cat}>{cat}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="col-6 col-md-2">
-                  <button 
-                    className={`btn w-100 rounded-3 ${filtroStockCritico ? 'btn-danger' : 'btn-outline-danger'}`}
-                    onClick={() => setFiltroStockCritico(!filtroStockCritico)}
-                  >
-                    <i className="bi bi-funnel me-1"></i>
-                    {filtroStockCritico ? 'Críticos (≤ 5)' : 'Filtrar Críticos'}
-                  </button>
-                </div>
-
-                <div className="col-12 col-md-2 text-md-end">
-                  <button 
-                    className="btn btn-warning fw-semibold text-dark w-100 rounded-3 shadow-sm"
-                    onClick={abrirModalCrear}
-                  >
-                    <i className="bi bi-plus-lg me-1"></i>
-                    Nuevo
-                  </button>
-                </div>
-              </div>
-
-              {/* Tabla de Productos */}
-              <div className="table-responsive">
-                <table className="table table-hover align-middle mb-0">
-                  <thead className="table-light small">
-                    <tr>
-                      <th style={{ width: '60px' }}>Foto</th>
-                      <th>Producto / Marca</th>
-                      <th>Categoría</th>
-                      <th>Precio Unitario</th>
-                      <th>Stock Disponible</th>
-                      <th className="text-end" style={{ width: '150px' }}>Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {productosFiltrados.length === 0 ? (
-                      <tr>
-                        <td colSpan="6" className="text-center py-5 text-muted">
-                          <i className="bi bi-inbox fs-1 d-block mb-2"></i>
-                          No se encontraron productos con los criterios seleccionados.
-                        </td>
-                      </tr>
-                    ) : (
-                      productosFiltrados.map((prod) => {
-                        const stockNum = Number(prod.stock);
-                        const esCritico = stockNum <= 5;
-                        const esMedio = stockNum > 5 && stockNum <= 10;
-
-                        return (
-                          <tr key={prod.idProducto}>
-                            <td>
-                              <img 
-                                src={prod.imagen || '/banner-web.webp'} 
-                                alt={prod.nombre} 
-                                className="rounded-3 border object-fit-contain bg-white"
-                                style={{ width: '48px', height: '48px' }}
-                                onError={(e) => { e.target.src = '/banner-web.webp'; }}
-                              />
+                  <div className="table-responsive">
+                    <table className="table admin-table align-middle mb-0">
+                      <thead>
+                        <tr>
+                          <th>N° Orden</th>
+                          <th>Cliente</th>
+                          <th className="text-end">Monto</th>
+                          <th className="text-end">Boleta</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {ordenes.slice(0, 5).map((ord) => (
+                          <tr key={ord.idOrden}>
+                            <td className="font-monospace small fw-semibold text-dark">
+                              #{ord.idOrden}
                             </td>
                             <td>
-                              <div className="fw-bold text-dark text-truncate" style={{ maxWidth: '280px' }}>
-                                {prod.nombre}
-                              </div>
-                              <small className="text-muted">
-                                ID: <span className="font-monospace">{prod.idProducto}</span> | Marca: <strong>{prod.marca}</strong>
-                              </small>
+                              <div className="small fw-semibold text-dark">{ord.cliente.nombre}</div>
+                              <div className="text-muted" style={{ fontSize: '0.75rem' }}>{ord.fecha}</div>
                             </td>
-                            <td>
-                              <span className="badge bg-light text-dark border">
-                                {prod.categoria}
-                              </span>
-                            </td>
-                            <td className="fw-bold text-dark">
-                              {formatearCLP(prod.precioVenta)}
-                            </td>
-                            <td>
-                              <span 
-                                className={`badge px-2 py-1 rounded-pill ${
-                                  esCritico 
-                                    ? 'bg-danger-subtle text-danger border border-danger-subtle' 
-                                    : esMedio
-                                    ? 'bg-warning-subtle text-warning-emphasis border border-warning-subtle'
-                                    : 'bg-success-subtle text-success border border-success-subtle'
-                                }`}
-                              >
-                                {prod.stock} unid. {esCritico && '⚠️ Crítico'}
-                              </span>
+                            <td className="text-end font-monospace small fw-bold">
+                              {formatearCLP(ord.total)}
                             </td>
                             <td className="text-end">
-                              <div className="btn-group btn-group-sm">
-                                <Link 
-                                  to={`/producto/${prod.idProducto}`} 
-                                  className="btn btn-outline-secondary"
-                                  title="Ver en la tienda"
-                                  target="_blank"
-                                >
-                                  <i className="bi bi-eye"></i>
-                                </Link>
-                                <button 
-                                  className="btn btn-outline-primary"
-                                  title="Editar producto"
-                                  onClick={() => abrirModalEditar(prod)}
-                                >
-                                  <i className="bi bi-pencil"></i>
-                                </button>
-                                <button 
-                                  className="btn btn-outline-danger"
-                                  title="Eliminar producto"
-                                  onClick={() => confirmarEliminar(prod)}
-                                >
-                                  <i className="bi bi-trash3"></i>
-                                </button>
-                              </div>
+                              <button 
+                                type="button"
+                                className="btn btn-sm btn-outline-secondary rounded-1 py-0 px-2"
+                                onClick={() => setOrdenSeleccionada(ord)}
+                              >
+                                Ver
+                              </button>
                             </td>
                           </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                </div>
               </div>
 
-              {/* Pie de tabla con resumen */}
-              <div className="d-flex justify-content-between align-items-center mt-3 pt-3 border-top small text-muted">
-                <span>Mostrando {productosFiltrados.length} de {productos.length} productos</span>
-                <span>Filtro activo: {filtroCategoria} {filtroStockCritico ? '(Solo críticos)' : ''}</span>
-              </div>
             </div>
           </div>
         )}
 
         {/* ============================================================== */}
-        {/* VISTA 3: ÓRDENES / BOLETAS (SEGUIMIENTO DE VENTAS)              */}
+        {/* VISTA: INVENTARIO DE PRODUCTOS (CRUD)                          */}
+        {/* ============================================================== */}
+        {tabActiva === 'productos' && (
+          <div className="admin-box p-3 bg-white">
+            
+            {/* Barra de Filtros y Búsqueda */}
+            <div className="row g-2 align-items-center mb-3 pb-3 border-bottom">
+              <div className="col-12 col-md-4">
+                <input 
+                  type="text" 
+                  className="form-control form-control-sm rounded-1"
+                  placeholder="Buscar por nombre, marca o código..."
+                  value={busqueda}
+                  onChange={(e) => setBusqueda(e.target.value)}
+                />
+              </div>
+
+              <div className="col-6 col-md-3">
+                <select 
+                  className="form-select form-select-sm rounded-1"
+                  value={filtroCategoria}
+                  onChange={(e) => setFiltroCategoria(e.target.value)}
+                >
+                  {CATEGORIAS_PRODUCTOS.map((cat) => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="col-6 col-md-3">
+                <button 
+                  type="button"
+                  className={`btn btn-sm w-100 rounded-1 ${filtroStockCritico ? 'btn-dark' : 'btn-outline-dark'}`}
+                  onClick={() => setFiltroStockCritico(!filtroStockCritico)}
+                >
+                  {filtroStockCritico ? 'Mostrando solo críticos (≤ 5)' : 'Filtrar stock crítico'}
+                </button>
+              </div>
+
+              <div className="col-12 col-md-2 text-md-end">
+                <button 
+                  type="button" 
+                  className="btn btn-warning btn-sm w-100 fw-semibold text-dark rounded-1"
+                  onClick={abrirModalCrear}
+                >
+                  + Agregar Producto
+                </button>
+              </div>
+            </div>
+
+            {/* Tabla de Productos */}
+            <div className="table-responsive">
+              <table className="table admin-table align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th style={{ width: '45px' }}></th>
+                    <th>Código</th>
+                    <th>Nombre / Descripción</th>
+                    <th>Marca</th>
+                    <th>Categoría</th>
+                    <th className="text-end">Precio (CLP)</th>
+                    <th className="text-center">Stock</th>
+                    <th className="text-end" style={{ width: '130px' }}>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {productosFiltrados.length === 0 ? (
+                    <tr>
+                      <td colSpan="8" className="text-center py-4 text-muted small">
+                        No se encontraron productos registrados con los filtros aplicados.
+                      </td>
+                    </tr>
+                  ) : (
+                    productosFiltrados.map((prod) => {
+                      const esBajo = Number(prod.stock) <= 5;
+                      return (
+                        <tr key={prod.idProducto}>
+                          <td>
+                            <img 
+                              src={prod.imagen || '/banner-web.webp'} 
+                              alt={prod.nombre} 
+                              className="border rounded-1 bg-white object-fit-contain"
+                              style={{ width: '38px', height: '38px' }}
+                              onError={(e) => { e.target.src = '/banner-web.webp'; }}
+                            />
+                          </td>
+                          <td className="font-monospace small text-muted">
+                            #{prod.idProducto}
+                          </td>
+                          <td>
+                            <div className="fw-semibold text-dark small">{prod.nombre}</div>
+                          </td>
+                          <td className="small text-secondary">{prod.marca}</td>
+                          <td>
+                            <span className="badge bg-light text-dark border rounded-1">
+                              {prod.categoria}
+                            </span>
+                          </td>
+                          <td className="text-end font-monospace small fw-semibold">
+                            {formatearCLP(prod.precioVenta)}
+                          </td>
+                          <td className="text-center">
+                            <span className={`badge rounded-1 ${esBajo ? 'bg-dark text-warning border' : 'bg-light text-dark border'}`}>
+                              {prod.stock} unids {esBajo ? '(Bajo)' : ''}
+                            </span>
+                          </td>
+                          <td className="text-end">
+                            <div className="btn-group btn-group-sm">
+                              <button 
+                                type="button"
+                                className="btn btn-outline-dark rounded-1 px-2 py-0 me-1"
+                                onClick={() => abrirModalEditar(prod)}
+                                title="Editar producto"
+                              >
+                                Editar
+                              </button>
+                              <button 
+                                type="button"
+                                className="btn btn-outline-danger rounded-1 px-2 py-0"
+                                onClick={() => setProductoAEliminar(prod)}
+                                title="Eliminar producto"
+                              >
+                                Eliminar
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="d-flex justify-content-between align-items-center mt-3 pt-3 border-top small text-muted">
+              <span>Mostrando {productosFiltrados.length} de {productos.length} productos en total</span>
+              <span>Categoría: {filtroCategoria}</span>
+            </div>
+
+          </div>
+        )}
+
+        {/* ============================================================== */}
+        {/* VISTA: ÓRDENES / BOLETAS                                      */}
         {/* ============================================================== */}
         {tabActiva === 'ordenes' && (
-          <div className="admin-tab-content">
-            <div className="card border-0 shadow-sm rounded-4 bg-white p-4">
-              <div className="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                  <h5 className="fw-bold mb-1 text-dark">
-                    <i className="bi bi-receipt-cutoff text-warning me-2"></i>
-                    Historial de Boletas y Órdenes
-                  </h5>
-                  <p className="text-muted small mb-0">
-                    Registro de compras realizadas por clientes en la plataforma.
-                  </p>
-                </div>
-                <span className="badge bg-success-subtle text-success px-3 py-2 rounded-pill fw-semibold">
-                  {ordenes.length} Órdenes procesadas
-                </span>
+          <div className="admin-box p-3 bg-white">
+            <div className="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+              <div>
+                <h2 className="h6 fw-bold text-dark mb-0">Registro de Órdenes y Ventas</h2>
+                <span className="text-muted small">Listado de transacciones registradas</span>
               </div>
-
-              <div className="table-responsive">
-                <table className="table table-hover align-middle mb-0">
-                  <thead className="table-light small">
-                    <tr>
-                      <th>N° Orden</th>
-                      <th>Fecha</th>
-                      <th>Cliente</th>
-                      <th>Dirección</th>
-                      <th>Total</th>
-                      <th>Estado</th>
-                      <th className="text-end">Detalle</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {ordenes.map((ord) => (
-                      <tr key={ord.idOrden}>
-                        <td className="fw-bold font-monospace text-dark">
-                          #{ord.idOrden}
-                        </td>
-                        <td className="small text-muted">{ord.fecha}</td>
-                        <td>
-                          <div className="fw-semibold text-dark">{ord.cliente.nombre}</div>
-                          <small className="text-muted">{ord.cliente.email}</small>
-                        </td>
-                        <td className="small text-muted text-truncate" style={{ maxWidth: '200px' }}>
-                          {ord.cliente.direccion}
-                        </td>
-                        <td className="fw-bold text-success">
-                          {formatearCLP(ord.total)}
-                        </td>
-                        <td>
-                          <span className={`badge px-2 py-1 rounded-pill ${
-                            ord.estado === 'Completada' 
-                              ? 'bg-success-subtle text-success' 
-                              : 'bg-info-subtle text-info-emphasis'
-                          }`}>
-                            {ord.estado}
-                          </span>
-                        </td>
-                        <td className="text-end">
-                          <button 
-                            className="btn btn-sm btn-outline-dark rounded-3"
-                            onClick={() => setOrdenSeleccionada(ord)}
-                          >
-                            <i className="bi bi-receipt me-1"></i>Ver Boleta
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <span className="badge bg-light text-dark border rounded-1">
+                {ordenes.length} órdenes registradas
+              </span>
             </div>
+
+            <div className="table-responsive">
+              <table className="table admin-table align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th>N° Orden</th>
+                    <th>Fecha / Hora</th>
+                    <th>Cliente</th>
+                    <th>Dirección de Entrega</th>
+                    <th>Método de Pago</th>
+                    <th className="text-end">Total Pagado</th>
+                    <th>Estado</th>
+                    <th className="text-end">Acción</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {ordenes.map((ord) => (
+                    <tr key={ord.idOrden}>
+                      <td className="font-monospace small fw-bold text-dark">
+                        #{ord.idOrden}
+                      </td>
+                      <td className="small text-muted">{ord.fecha}</td>
+                      <td>
+                        <div className="fw-semibold text-dark small">{ord.cliente.nombre}</div>
+                        <div className="text-muted" style={{ fontSize: '0.75rem' }}>{ord.cliente.email}</div>
+                      </td>
+                      <td className="small text-muted text-truncate" style={{ maxWidth: '220px' }}>
+                        {ord.cliente.direccion}
+                      </td>
+                      <td className="small text-secondary">{ord.metodoPago}</td>
+                      <td className="text-end font-monospace small fw-bold text-dark">
+                        {formatearCLP(ord.total)}
+                      </td>
+                      <td>
+                        <span className="badge bg-light text-dark border rounded-1">
+                          {ord.estado}
+                        </span>
+                      </td>
+                      <td className="text-end">
+                        <button 
+                          type="button"
+                          className="btn btn-sm btn-outline-dark rounded-1 py-0 px-2"
+                          onClick={() => setOrdenSeleccionada(ord)}
+                        >
+                          Ver Boleta
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
           </div>
         )}
 
-      </div>
+      </main>
 
       {/* ============================================================== */}
-      {/* MODAL: CREAR / EDITAR PRODUCTO (CRUD)                          */}
+      {/* MODAL: FORMULARIO AGREGAR / EDITAR PRODUCTO (CUADRADO)         */}
       {/* ============================================================== */}
       {modalAbierto && (
-        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} tabIndex="-1">
+        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.6)' }} tabIndex="-1">
           <div className="modal-dialog modal-lg modal-dialog-centered">
-            <div className="modal-content rounded-4 border-0 shadow">
-              <div className="modal-header border-bottom bg-light rounded-top-4">
-                <h5 className="modal-title fw-bold text-dark">
-                  <i className={`bi ${modoEdicion ? 'bi-pencil-square text-primary' : 'bi-plus-circle-fill text-warning'} me-2`}></i>
-                  {modoEdicion ? 'Editar Producto' : 'Registrar Nuevo Producto'}
+            <div className="modal-content rounded-1 border-0 shadow">
+              
+              <div className="modal-header border-bottom bg-light py-2 px-3">
+                <h5 className="modal-title fw-bold text-dark h6 mb-0">
+                  {modoEdicion ? 'Editar Producto' : 'Agregar Nuevo Producto'}
                 </h5>
-                <button type="button" className="btn-close" onClick={cerrarModal} aria-label="Cerrar"></button>
+                <button type="button" className="btn-close btn-close-sm" onClick={cerrarModal} aria-label="Cerrar"></button>
               </div>
 
               <form onSubmit={handleSubmitForm}>
-                <div className="modal-body p-4">
+                <div className="modal-body p-3">
                   <div className="row g-3">
                     <div className="col-12 col-md-4">
-                      <label className="form-label small fw-semibold">Código / ID</label>
+                      <label className="form-label small fw-semibold text-secondary mb-1">Código ID</label>
                       <input 
                         type="text" 
-                        className="form-control bg-light font-monospace"
+                        className="form-control form-control-sm rounded-1 font-monospace"
                         value={formData.idProducto}
                         disabled={modoEdicion}
                         onChange={(e) => setFormData({ ...formData, idProducto: e.target.value })}
@@ -907,11 +867,11 @@ function Admin() {
                     </div>
 
                     <div className="col-12 col-md-8">
-                      <label className="form-label small fw-semibold">Nombre del Producto *</label>
+                      <label className="form-label small fw-semibold text-secondary mb-1">Nombre del Producto *</label>
                       <input 
                         type="text" 
-                        className="form-control"
-                        placeholder="Ej: Taladro Percutor 20V..."
+                        className="form-control form-control-sm rounded-1"
+                        placeholder="Ej: Taladro Percutor 20V Max XR"
                         value={formData.nombre}
                         onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
                         required
@@ -919,10 +879,10 @@ function Admin() {
                     </div>
 
                     <div className="col-12 col-md-6">
-                      <label className="form-label small fw-semibold">Marca *</label>
+                      <label className="form-label small fw-semibold text-secondary mb-1">Marca *</label>
                       <input 
                         type="text" 
-                        className="form-control"
+                        className="form-control form-control-sm rounded-1"
                         placeholder="Ej: DeWalt, Bosch, Makita..."
                         value={formData.marca}
                         onChange={(e) => setFormData({ ...formData, marca: e.target.value })}
@@ -931,9 +891,9 @@ function Admin() {
                     </div>
 
                     <div className="col-12 col-md-6">
-                      <label className="form-label small fw-semibold">Categoría *</label>
+                      <label className="form-label small fw-semibold text-secondary mb-1">Categoría *</label>
                       <select 
-                        className="form-select"
+                        className="form-select form-select-sm rounded-1"
                         value={formData.categoria}
                         onChange={(e) => setFormData({ ...formData, categoria: e.target.value })}
                       >
@@ -944,28 +904,25 @@ function Admin() {
                     </div>
 
                     <div className="col-12 col-md-6">
-                      <label className="form-label small fw-semibold">Precio de Venta (CLP) *</label>
-                      <div className="input-group">
-                        <span className="input-group-text">$</span>
-                        <input 
-                          type="number" 
-                          min="0"
-                          step="100"
-                          className="form-control"
-                          placeholder="59990"
-                          value={formData.precioVenta}
-                          onChange={(e) => setFormData({ ...formData, precioVenta: e.target.value })}
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div className="col-12 col-md-6">
-                      <label className="form-label small fw-semibold">Stock Inicial / Disponible *</label>
+                      <label className="form-label small fw-semibold text-secondary mb-1">Precio Unitario (CLP) *</label>
                       <input 
                         type="number" 
                         min="0"
-                        className="form-control"
+                        step="100"
+                        className="form-control form-control-sm rounded-1 font-monospace"
+                        placeholder="129990"
+                        value={formData.precioVenta}
+                        onChange={(e) => setFormData({ ...formData, precioVenta: e.target.value })}
+                        required
+                      />
+                    </div>
+
+                    <div className="col-12 col-md-6">
+                      <label className="form-label small fw-semibold text-secondary mb-1">Stock Disponible *</label>
+                      <input 
+                        type="number" 
+                        min="0"
+                        className="form-control form-control-sm rounded-1 font-monospace"
                         placeholder="10"
                         value={formData.stock}
                         onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
@@ -974,22 +931,22 @@ function Admin() {
                     </div>
 
                     <div className="col-12">
-                      <label className="form-label small fw-semibold">URL de Imagen (Opcional)</label>
+                      <label className="form-label small fw-semibold text-secondary mb-1">URL de Imagen (Opcional)</label>
                       <input 
                         type="text" 
-                        className="form-control"
-                        placeholder="https://ejemplo.com/foto.jpg o dejar vacío para imagen predeterminada"
+                        className="form-control form-control-sm rounded-1"
+                        placeholder="Dejar vacío para imagen de catálogo por defecto"
                         value={formData.imagen}
                         onChange={(e) => setFormData({ ...formData, imagen: e.target.value })}
                       />
                     </div>
 
                     <div className="col-12">
-                      <label className="form-label small fw-semibold">Descripción Técnica</label>
+                      <label className="form-label small fw-semibold text-secondary mb-1">Descripción</label>
                       <textarea 
-                        className="form-control"
+                        className="form-control form-control-sm rounded-1"
                         rows="3"
-                        placeholder="Especificaciones, usos recomendados y detalles del producto..."
+                        placeholder="Descripción técnica del producto..."
                         value={formData.descripcion}
                         onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
                       ></textarea>
@@ -997,48 +954,47 @@ function Admin() {
                   </div>
                 </div>
 
-                <div className="modal-footer bg-light border-top rounded-bottom-4">
-                  <button type="button" className="btn btn-secondary rounded-3" onClick={cerrarModal}>
+                <div className="modal-footer bg-light border-top py-2 px-3">
+                  <button type="button" className="btn btn-sm btn-outline-secondary rounded-1" onClick={cerrarModal}>
                     Cancelar
                   </button>
-                  <button type="submit" className="btn btn-warning fw-semibold text-dark rounded-3 px-4 shadow-sm">
-                    <i className="bi bi-check-lg me-1"></i>
-                    {modoEdicion ? 'Guardar Cambios' : 'Crear Producto'}
+                  <button type="submit" className="btn btn-sm btn-warning text-dark fw-semibold rounded-1 px-3">
+                    {modoEdicion ? 'Guardar Cambios' : 'Registrar Producto'}
                   </button>
                 </div>
               </form>
+
             </div>
           </div>
         </div>
       )}
 
       {/* ============================================================== */}
-      {/* MODAL: CONFIRMAR ELIMINACIÓN                                   */}
+      {/* MODAL: CONFIRMACIÓN DE ELIMINACIÓN                             */}
       {/* ============================================================== */}
       {productoAEliminar && (
-        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} tabIndex="-1">
+        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.6)' }} tabIndex="-1">
           <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content rounded-4 border-0 shadow">
+            <div className="modal-content rounded-1 border-0 shadow">
               <div className="modal-body p-4 text-center">
-                <i className="bi bi-exclamation-triangle-fill text-danger display-4 mb-3 d-block"></i>
-                <h5 className="fw-bold mb-2">¿Eliminar este producto?</h5>
-                <p className="text-muted small mb-4">
-                  Esta acción dará de baja el producto <strong>"{productoAEliminar.nombre}"</strong> (#{productoAEliminar.idProducto}) de la base de datos simulada en <code>localStorage</code>.
+                <h5 className="fw-bold text-dark h6 mb-2">¿Eliminar producto?</h5>
+                <p className="small text-secondary mb-4">
+                  Se dará de baja el producto <strong>"{productoAEliminar.nombre}"</strong> (#{productoAEliminar.idProducto}) del catálogo en localStorage.
                 </p>
                 <div className="d-flex justify-content-center gap-2">
                   <button 
                     type="button" 
-                    className="btn btn-light px-4 rounded-3" 
+                    className="btn btn-sm btn-outline-secondary rounded-1 px-3" 
                     onClick={() => setProductoAEliminar(null)}
                   >
                     Cancelar
                   </button>
                   <button 
                     type="button" 
-                    className="btn btn-danger px-4 rounded-3 fw-semibold" 
+                    className="btn btn-sm btn-danger rounded-1 px-3" 
                     onClick={ejecutarEliminacion}
                   >
-                    Sí, Eliminar
+                    Eliminar
                   </button>
                 </div>
               </div>
@@ -1048,26 +1004,26 @@ function Admin() {
       )}
 
       {/* ============================================================== */}
-      {/* MODAL: VISTA DE BOLETA / DETALLE DE ORDEN                      */}
+      {/* MODAL: VER BOLETA                                              */}
       {/* ============================================================== */}
       {ordenSeleccionada && (
-        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} tabIndex="-1">
+        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.6)' }} tabIndex="-1">
           <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content rounded-4 border-0 shadow">
-              <div className="modal-header border-bottom bg-light rounded-top-4">
-                <h5 className="modal-title fw-bold">
-                  <i className="bi bi-receipt text-warning me-2"></i>
+            <div className="modal-content rounded-1 border-0 shadow">
+              <div className="modal-header border-bottom py-2 px-3 bg-light">
+                <h5 className="modal-title h6 fw-bold mb-0">
                   Boleta Electrónica #{ordenSeleccionada.idOrden}
                 </h5>
-                <button type="button" className="btn-close" onClick={() => setOrdenSeleccionada(null)}></button>
+                <button type="button" className="btn-close btn-close-sm" onClick={() => setOrdenSeleccionada(null)}></button>
               </div>
-              <div className="modal-body p-4">
-                <div className="border-bottom pb-3 mb-3">
-                  <div className="fw-bold text-dark fs-5">FERREFIX SpA</div>
+
+              <div className="modal-body p-3">
+                <div className="border-bottom pb-2 mb-3">
+                  <div className="fw-bold text-dark">FERREFIX SpA</div>
                   <small className="text-muted">RUT: 76.845.120-K | Antonio Varas 666, Providencia</small>
                 </div>
 
-                <div className="mb-3 small">
+                <div className="small mb-3">
                   <div><strong>Fecha:</strong> {ordenSeleccionada.fecha}</div>
                   <div><strong>Cliente:</strong> {ordenSeleccionada.cliente.nombre}</div>
                   <div><strong>Email:</strong> {ordenSeleccionada.cliente.email}</div>
@@ -1075,7 +1031,7 @@ function Admin() {
                   <div><strong>Método:</strong> {ordenSeleccionada.metodoPago}</div>
                 </div>
 
-                <div className="table-responsive border rounded-3 mb-3">
+                <div className="table-responsive border rounded-1 mb-3">
                   <table className="table table-sm align-middle mb-0 small">
                     <thead className="table-light">
                       <tr>
@@ -1089,7 +1045,7 @@ function Admin() {
                         <tr key={idx}>
                           <td>{item.nombre}</td>
                           <td className="text-center">{item.cantidad}</td>
-                          <td className="text-end">{formatearCLP(item.precioUnitario * item.cantidad)}</td>
+                          <td className="text-end font-monospace">{formatearCLP(item.precioUnitario * item.cantidad)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -1097,26 +1053,28 @@ function Admin() {
                 </div>
 
                 <div className="d-flex justify-content-between align-items-center pt-2 border-top">
-                  <span className="fw-bold text-dark fs-5">Total Pagado:</span>
-                  <span className="fw-bold text-success fs-5">{formatearCLP(ordenSeleccionada.total)}</span>
+                  <span className="fw-bold text-dark">Total:</span>
+                  <span className="fw-bold text-dark fs-5 font-monospace">{formatearCLP(ordenSeleccionada.total)}</span>
                 </div>
               </div>
-              <div className="modal-footer bg-light border-top rounded-bottom-4">
+
+              <div className="modal-footer border-top py-2 px-3 bg-light">
                 <button 
                   type="button" 
-                  className="btn btn-outline-dark btn-sm rounded-3"
+                  className="btn btn-outline-dark btn-sm rounded-1"
                   onClick={() => window.print()}
                 >
-                  <i className="bi bi-printer me-1"></i>Imprimir Boleta
+                  Imprimir Boleta
                 </button>
                 <button 
                   type="button" 
-                  className="btn btn-secondary btn-sm rounded-3" 
+                  className="btn btn-secondary btn-sm rounded-1" 
                   onClick={() => setOrdenSeleccionada(null)}
                 >
                   Cerrar
                 </button>
               </div>
+
             </div>
           </div>
         </div>

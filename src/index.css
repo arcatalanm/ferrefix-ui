@@ -495,3 +495,69 @@
 .detalle-cantidad-group {
   width: 135px;
 }
+
+/* ==========================================================================
+   Panel de Administración (Backoffice Profesional Cuadrado)
+   ========================================================================== */
+.admin-wrapper {
+  background-color: #f1f5f9;
+  min-height: 100vh;
+}
+
+.admin-navbar {
+  background-color: var(--color-oscuro);
+  border-bottom: 2px solid var(--color-ambar);
+}
+
+.admin-nav-btn {
+  color: #94a3b8;
+  font-family: "Oswald", sans-serif;
+  font-size: 15px;
+  letter-spacing: 0.5px;
+  padding: 0.45rem 1rem;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  background: transparent;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+}
+
+.admin-nav-btn:hover {
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.admin-nav-btn.active {
+  color: var(--color-oscuro);
+  background-color: var(--color-dorado);
+  font-weight: 600;
+  border-color: var(--color-dorado);
+}
+
+.admin-box {
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+}
+
+.admin-kpi-box {
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  padding: 1.2rem;
+}
+
+.admin-table thead th {
+  background-color: #f8fafc;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #475569;
+  font-weight: 600;
+  border-bottom: 2px solid #cbd5e1;
+}
+
+.admin-table tbody td {
+  border-bottom: 1px solid #e2e8f0;
+}
