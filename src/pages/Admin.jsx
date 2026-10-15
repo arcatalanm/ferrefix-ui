@@ -484,16 +484,14 @@ function Admin() {
               </div>
             </div>
 
-            {/* Tablas de Información del Dashboard */}
+            {/* Tabla de Inventario Crítico extendida a ancho completo */}
             <div className="row g-4">
-              
-              {/* Tabla: Productos con Stock Crítico */}
-              <div className="col-12 col-lg-7">
+              <div className="col-12">
                 <div className="admin-box p-3 bg-white">
                   <div className="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
                     <div>
                       <h2 className="h6 fw-bold text-dark mb-0">Inventario con Stock Crítico (≤ 5)</h2>
-                      <span className="text-muted small">Productos que requieren reposición prioritaria</span>
+                      <span className="text-muted small">Productos que requieren reposición prioritaria de inventario</span>
                     </div>
                     <button 
                       type="button"
@@ -503,7 +501,7 @@ function Admin() {
                         setFiltroStockCritico(true);
                       }}
                     >
-                      Ver en Productos →
+                      Ir a Inventario Completo →
                     </button>
                   </div>
 
@@ -519,8 +517,8 @@ function Admin() {
                             <th>Código</th>
                             <th>Producto</th>
                             <th>Categoría</th>
-                            <th className="text-center">Stock</th>
-                            <th className="text-end">Precio</th>
+                            <th className="text-center">Stock Disponible</th>
+                            <th className="text-end">Precio (CLP)</th>
                             <th className="text-end">Acción</th>
                           </tr>
                         </thead>
@@ -537,7 +535,7 @@ function Admin() {
                                 <td><span className="badge bg-light text-dark border rounded-1">{p.categoria}</span></td>
                                 <td className="text-center">
                                   <span className="badge bg-secondary text-white rounded-1">
-                                    {p.stock} unids
+                                    {p.stock} unids (Bajo)
                                   </span>
                                 </td>
                                 <td className="text-end font-monospace small">{formatearCLP(p.precioVenta)}</td>
@@ -547,7 +545,7 @@ function Admin() {
                                     className="btn btn-sm btn-outline-dark rounded-1 py-0 px-2"
                                     onClick={() => abrirModalEditar(p)}
                                   >
-                                    Editar
+                                    Editar Stock
                                   </button>
                                 </td>
                               </tr>
@@ -558,65 +556,6 @@ function Admin() {
                   )}
                 </div>
               </div>
-
-              {/* Tabla: Últimas Órdenes Registradas */}
-              <div className="col-12 col-lg-5">
-                <div className="admin-box p-3 bg-white">
-                  <div className="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-                    <div>
-                      <h2 className="h6 fw-bold text-dark mb-0">Últimas Órdenes</h2>
-                      <span className="text-muted small">Compras registradas en la tienda</span>
-                    </div>
-                    <button 
-                      type="button"
-                      className="btn btn-outline-dark btn-sm rounded-1"
-                      onClick={() => setTabActiva('ordenes')}
-                    >
-                      Ver Todas →
-                    </button>
-                  </div>
-
-                  <div className="table-responsive">
-                    <table className="table admin-table align-middle mb-0">
-                      <thead>
-                        <tr>
-                          <th>N° Orden</th>
-                          <th>Cliente</th>
-                          <th className="text-end">Monto</th>
-                          <th className="text-end">Boleta</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {ordenes.slice(0, 5).map((ord) => (
-                          <tr key={ord.idOrden}>
-                            <td className="font-monospace small fw-semibold text-dark">
-                              #{ord.idOrden}
-                            </td>
-                            <td>
-                              <div className="small fw-semibold text-dark">{ord.cliente.nombre}</div>
-                              <div className="text-muted" style={{ fontSize: '0.75rem' }}>{ord.fecha}</div>
-                            </td>
-                            <td className="text-end font-monospace small fw-bold">
-                              {formatearCLP(ord.total)}
-                            </td>
-                            <td className="text-end">
-                              <button 
-                                type="button"
-                                className="btn btn-sm btn-outline-secondary rounded-1 py-0 px-2"
-                                onClick={() => setOrdenSeleccionada(ord)}
-                              >
-                                Ver
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                </div>
-              </div>
-
             </div>
           </div>
         )}

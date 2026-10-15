@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { obtenerProductoPorId, EVENTO_PRODUCTOS_ACTUALIZADOS } from '../data/productos';
+import { agregarAlCarrito } from '../data/carrito';
 
 function DetalleProducto() {
   const { id } = useParams();
@@ -66,11 +67,21 @@ function DetalleProducto() {
     if (cantidad < producto.stock) setCantidad((prev) => prev + 1);
   };
 
+  const [feedbackCarrito, setFeedbackCarrito] = useState(null);
+
   const handleAgregarCarrito = () => {
-    setAgregadoAlCarrito(true);
-    setTimeout(() => {
-      setAgregadoAlCarrito(false);
-    }, 3000);
+    const res = agregarAlCarrito(producto, cantidad);
+    if (!res.ok) {
+      setFeedbackCarrito({ tipo: 'danger', mensaje: res.error });
+      setTimeout(() => setFeedbackCarrito(null), 4000);
+    } else {
+      setAgregadoAlCarrito(true);
+      setFeedbackCarrito({ tipo: 'success', mensaje: res.mensaje });
+      setTimeout(() => {
+        setAgregadoAlCarrito(false);
+        setFeedbackCarrito(null);
+      }, 4500);
+    }
   };
 
 
@@ -236,20 +247,26 @@ function DetalleProducto() {
                 <button
                   type="button"
                   onClick={handleAgregarCarrito}
-                  className="btn btn-warning btn-lg fw-bold py-3 rounded-3 shadow-sm d-flex align-items-center justify-content-center gap-2"
+                  disabled={producto.stock <= 0}
+                  className="btn btn-warning btn-lg fw-bold py-3 rounded-2 shadow-sm d-flex align-items-center justify-content-center gap-2 text-dark"
                 >
                   <i className="bi bi-cart-plus-fill fs-5"></i>
-                  Agregar al Carrito
+                  {producto.stock > 0 ? 'Agregar al Carrito' : 'Agotado Temporalmente'}
                 </button>
               </div>
 
-              {/* Mensaje de confirmación temporal */}
-              {agregadoAlCarrito && (
-                <div className="alert alert-success d-flex align-items-center gap-2 py-2 px-3 rounded-3 mb-4 shadow-sm animate__animated animate__fadeIn">
-                  <i className="bi bi-check-circle-fill fs-5"></i>
-                  <div>
-                    ¡Agregaste <strong>{cantidad} {cantidad === 1 ? 'unidad' : 'unidades'}</strong> de este producto a tu pedido!
+              {/* Mensaje de confirmación o error de stock */}
+              {feedbackCarrito && (
+                <div className={`alert alert-${feedbackCarrito.tipo} d-flex align-items-center justify-content-between gap-2 py-2 px-3 rounded-2 mb-4 shadow-sm`} role="alert">
+                  <div className="d-flex align-items-center gap-2">
+                    <i className={`bi ${feedbackCarrito.tipo === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill'} fs-5`}></i>
+                    <span className="small">{feedbackCarrito.mensaje}</span>
                   </div>
+                  {feedbackCarrito.tipo === 'success' && (
+                    <Link to="/carrito" className="btn btn-dark btn-sm rounded-1 text-nowrap">
+                      Ver Carrito →
+                    </Link>
+                  )}
                 </div>
               )}
 

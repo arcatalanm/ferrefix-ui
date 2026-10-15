@@ -120,3 +120,42 @@ export const esAdministrador = () => {
   const sesion = obtenerSesionActiva();
   return sesion !== null && sesion.rol === 'admin';
 };
+
+/**
+ * Registra un nuevo usuario cliente en localStorage y activa su sesión
+ */
+export const registrarUsuario = ({ nombre, email, password }) => {
+  const usuarios = obtenerUsuarios();
+  const existe = usuarios.find((u) => u.email.toLowerCase().trim() === email.toLowerCase().trim());
+  if (existe) {
+    return { ok: false, mensaje: 'Ya existe una cuenta registrada con este correo electrónico.' };
+  }
+
+  const nuevoUsuario = {
+    idUsuario: `USR-${Date.now().toString().slice(-6)}`,
+    nombre: nombre.trim(),
+    email: email.toLowerCase().trim(),
+    password,
+    rol: 'cliente'
+  };
+
+  const listaActualizada = [...usuarios, nuevoUsuario];
+  if (typeof window !== 'undefined' && window.localStorage) {
+    localStorage.setItem(STORAGE_KEY_USUARIOS, JSON.stringify(listaActualizada));
+  }
+
+  // Iniciar sesión automáticamente
+  const sesion = {
+    idUsuario: nuevoUsuario.idUsuario,
+    nombre: nuevoUsuario.nombre,
+    email: nuevoUsuario.email,
+    rol: nuevoUsuario.rol,
+    fechaIngreso: new Date().toISOString()
+  };
+  if (typeof window !== 'undefined' && window.localStorage) {
+    localStorage.setItem(STORAGE_KEY_SESION, JSON.stringify(sesion));
+  }
+  notificarSesion();
+  return { ok: true, usuario: sesion };
+};
+
