@@ -19,10 +19,14 @@ function ProductCard({ producto }) {
         {/* Contenedor de la foto */}
         <div className="product-card-img-wrapper">
           <img 
-            src={imagen} 
+            src={imagen || '/arriendo-bosch.jpg'} 
             alt={nombre} 
             className="product-card-img"
             loading="lazy" 
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = '/arriendo-bosch.jpg';
+            }}
           />
         </div>
 

@@ -153,7 +153,7 @@ function ContactoCotizacion() {
                     <input 
                       type="text" 
                       className="form-control form-control-sm rounded-1"
-                      placeholder="Ej: Constructora Andina SpA o Juan Pérez"
+                      placeholder="Ej: Constructora Andina o Juan Pérez"
                       value={form.nombre}
                       onChange={(e) => setForm({ ...form, nombre: e.target.value })}
                       required

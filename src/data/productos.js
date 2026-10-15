@@ -275,11 +275,16 @@ export const crearProducto = (nuevoProducto) => {
     stock: Number(nuevoProducto.stock) || 0,
     precioVenta: Number(nuevoProducto.precioVenta) || 0,
     categoria: nuevoProducto.categoria || 'Herramientas',
-    imagen: nuevoProducto.imagen || '/banner-web.webp',
-    especificaciones: nuevoProducto.especificaciones || {}
+    imagen: (nuevoProducto.imagen && nuevoProducto.imagen.trim()) || '/arriendo-bosch.jpg',
+    descripcion: nuevoProducto.descripcion || 'Producto de alta calidad disponible en Ferrefix.',
+    especificaciones: nuevoProducto.especificaciones || {
+      'Disponibilidad': 'Entrega inmediata en tienda o despacho a domicilio',
+      'Garantía': 'Garantía legal 6 meses oficial Ferrefix'
+    }
   };
 
-  const nuevaLista = [productoAInsertar, ...productos];
+  // Se añade al final de la lista como fue requerido
+  const nuevaLista = [...productos, productoAInsertar];
   localStorage.setItem(STORAGE_KEY, JSON.stringify(nuevaLista));
   notificarCambio();
   return productoAInsertar;

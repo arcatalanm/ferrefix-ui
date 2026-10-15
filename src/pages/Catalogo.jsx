@@ -73,13 +73,15 @@ function Catalogo() {
       );
     }
 
-    // Ordenar por precio o nombre
+    // Ordenar por precio, fecha/llegada o nombre
     if (ordenPrecio === 'precio-asc') {
       resultado.sort((a, b) => a.precioVenta - b.precioVenta);
     } else if (ordenPrecio === 'precio-desc') {
       resultado.sort((a, b) => b.precioVenta - a.precioVenta);
     } else if (ordenPrecio === 'nombre-asc') {
       resultado.sort((a, b) => a.nombre.localeCompare(b.nombre));
+    } else if (ordenPrecio === 'ultimas-llegadas') {
+      resultado.reverse(); // Los últimos agregados aparecen primero
     }
 
     return resultado;
@@ -149,10 +151,11 @@ function Catalogo() {
                   value={ordenPrecio}
                   onChange={(e) => setOrdenPrecio(e.target.value)}
                 >
-                  <option value="default">Recomendados / Defecto</option>
+                  <option value="default">Recomendados / Catálogo Base</option>
+                  <option value="ultimas-llegadas">Últimas Llegadas / Nuevos Ingresos</option>
+                  <option value="nombre-asc">Nombre: A - Z</option>
                   <option value="precio-asc">Precio: Menor a Mayor</option>
                   <option value="precio-desc">Precio: Mayor a Menor</option>
-                  <option value="nombre-asc">Nombre: A - Z</option>
                 </select>
               </div>
             </div>

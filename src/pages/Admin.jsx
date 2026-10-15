@@ -172,9 +172,9 @@ function Admin() {
         precioVenta: Number(formData.precioVenta) || 0,
         stock: Number(formData.stock) || 0,
         descripcion: formData.descripcion.trim(),
-        imagen: formData.imagen.trim() || '/banner-web.webp'
+        imagen: formData.imagen.trim() || '/arriendo-bosch.jpg'
       });
-      mostrarMensaje(`Producto "${formData.nombre}" creado exitosamente.`);
+      mostrarMensaje(`Producto "${formData.nombre}" registrado al final del catálogo con éxito.`);
     }
 
     cerrarModal();
@@ -874,7 +874,7 @@ function Admin() {
                       <input 
                         type="text" 
                         className="form-control form-control-sm rounded-1"
-                        placeholder="Dejar vacío para imagen de catálogo por defecto"
+                        placeholder="Por defecto: /arriendo-bosch.jpg"
                         value={formData.imagen}
                         onChange={(e) => setFormData({ ...formData, imagen: e.target.value })}
                       />
@@ -958,7 +958,7 @@ function Admin() {
 
               <div className="modal-body p-3">
                 <div className="border-bottom pb-2 mb-3">
-                  <div className="fw-bold text-dark">FERREFIX SpA</div>
+                  <div className="fw-bold text-dark">FERREFIX</div>
                   <small className="text-muted">RUT: 76.845.120-K | Antonio Varas 666, Providencia</small>
                 </div>
 

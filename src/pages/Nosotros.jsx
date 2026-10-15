@@ -4,7 +4,7 @@ function Nosotros() {
   return (
     <div className="nosotros-page py-4 py-lg-5 bg-light min-vh-75">
       <div className="container">
-        
+
         {/* Breadcrumb */}
         <nav aria-label="breadcrumb" className="mb-4">
           <ol className="breadcrumb small mb-0">
@@ -24,7 +24,7 @@ function Nosotros() {
                 FERREFIX: Especialistas en Herramientas y Soluciones para la Construcción
               </h1>
               <p className="text-secondary lh-lg mb-4">
-                Fundada en Santiago de Chile, <strong>Ferrefix SpA</strong> se ha consolidado como un socio estratégico para constructoras, contratistas independientes y maestros de obra. Nos especializamos en la comercialización y arriendo de herramientas de alta gama, maquinaria pesada para faena y fijaciones industriales de calidad certificada.
+                Fundada en Santiago de Chile, <strong>Ferrefix </strong> se ha consolidado como un socio estratégico para constructoras, contratistas independientes y maestros de obra. Nos especializamos en la comercialización y arriendo de herramientas de alta gama, maquinaria pesada para faena y fijaciones industriales de calidad certificada.
               </p>
               <div className="d-flex flex-wrap gap-2">
                 <Link to="/catalogo" className="btn btn-warning text-dark fw-bold px-4 py-2 rounded-1 shadow-sm">
@@ -121,7 +121,7 @@ function Nosotros() {
         {/* Ubicación Física con Mapa Nativo Embed */}
         <div className="bg-white border rounded-1 shadow-sm p-4 p-md-5 mb-4">
           <div className="row g-4 align-items-center">
-            
+
             <div className="col-12 col-lg-5">
               <h2 className="h4 fw-bold text-dark mb-2" style={{ fontFamily: '"Oswald", sans-serif' }}>
                 Visítanos en Nuestra Casa Matriz
@@ -145,28 +145,19 @@ function Nosotros() {
                 <div className="fw-bold text-dark">Servicios en Tienda:</div>
                 <div className="text-secondary">Retiro en mesón, entrega de maquinaria en arriendo, servicio técnico y asesoría de cálculo de materiales.</div>
               </div>
-
-              <a 
-                href="https://maps.app.goo.gl/SScoFNhnuidG1PweA" 
-                target="_blank" 
-                rel="noreferrer" 
-                className="btn btn-outline-dark btn-sm rounded-1"
-              >
-                Abrir en Google Maps App ↗
-              </a>
             </div>
 
             {/* Mapa Embebido Nativo */}
             <div className="col-12 col-lg-7">
               <div className="border rounded-1 overflow-hidden shadow-sm" style={{ height: '360px' }}>
-                <iframe 
+                <iframe
                   title="Ubicación Ferrefix Providencia"
                   src="https://maps.google.com/maps?q=Antonio%20Varas%20666,%20Providencia,%20Santiago,%20Chile&t=&z=15&ie=UTF8&iwloc=&output=embed"
-                  width="100%" 
-                  height="100%" 
-                  style={{ border: 0 }} 
-                  allowFullScreen="" 
-                  loading="lazy" 
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  allowFullScreen=""
+                  loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
                 ></iframe>
               </div>
