@@ -83,9 +83,13 @@ export const obtenerOrdenes = () => {
 
 export const crearOrden = (datosOrden) => {
   const ordenes = obtenerOrdenes();
+  const timestamp = Date.now().toString().slice(-6);
+  const correlativo = String(ordenes.length + 1).padStart(4, '0');
+
   const nuevaOrden = {
     ...datosOrden,
-    idOrden: datosOrden.idOrden || `ORD-${Date.now().toString().slice(-8)}`,
+    idOrden: datosOrden.idOrden || `ORD-2024-${timestamp}`,
+    numeroBoleta: datosOrden.numeroBoleta || `BOL-2024-${correlativo}`,
     fecha: new Date().toLocaleString('es-CL', { 
       year: 'numeric', 
       month: '2-digit', 
@@ -101,3 +105,4 @@ export const crearOrden = (datosOrden) => {
   notificarOrdenes();
   return nuevaOrden;
 };
+

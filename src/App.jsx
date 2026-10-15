@@ -6,6 +6,7 @@ import Catalogo from './pages/Catalogo';
 import DetalleProducto from './pages/DetalleProducto';
 import Arriendos from './pages/Arriendos';
 import Nosotros from './pages/Nosotros';
+import ContactoCotizacion from './pages/ContactoCotizacion';
 import Carrito from './pages/Carrito';
 import Login from './pages/Login';
 import Admin from './pages/Admin';
@@ -26,6 +27,8 @@ function App() {
         <Route path="/producto/:id" element={<DetalleProducto />} />
         <Route path="/arriendos" element={<Arriendos />} />
         <Route path="/nosotros" element={<Nosotros />} />
+        <Route path="/contacto" element={<ContactoCotizacion />} />
+        <Route path="/cotizaciones" element={<ContactoCotizacion />} />
         <Route path="/carrito" element={<Carrito />} />
         <Route path="/login" element={<Login />} />
         <Route path="/registro" element={<Login />} />

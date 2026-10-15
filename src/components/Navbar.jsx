@@ -97,6 +97,11 @@ function Navbar() {
                 Nosotros
               </Link>
             </li>
+            <li className="nav-item">
+              <Link className="nav-link clever-nav-link" to="/contacto" onClick={closeMenu}>
+                Cotizaciones
+              </Link>
+            </li>
           </ul>
 
           {/* Bloque de Acciones: Carrito de Compras + Usuario */}

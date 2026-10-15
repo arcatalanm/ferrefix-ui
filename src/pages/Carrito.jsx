@@ -12,6 +12,26 @@ import { obtenerSesionActiva } from '../data/auth';
 import { crearOrden } from '../data/ordenes';
 import { obtenerProductoPorId, actualizarProducto } from '../data/productos';
 
+const REGIONES_CHILE = [
+  {
+    region: 'Región Metropolitana',
+    comunas: [
+      'Santiago', 'Providencia', 'Las Condes', 'Ñuñoa', 'Cerrillos',
+      'Maipú', 'Puente Alto', 'La Florida', 'San Miguel', 'San Bernardo',
+      'Quilicura', 'Pudahuel', 'Recoleta', 'Independencia', 'Huechuraba',
+      'Vitacura', 'Lo Barnechea', 'Peñalolén', 'Macul', 'Estación Central'
+    ]
+  },
+  {
+    region: 'Región de Valparaíso',
+    comunas: ['Valparaíso', 'Viña del Mar', 'Quilpué', 'Villa Alemana', 'Concón', 'Quillota', 'San Antonio']
+  },
+  {
+    region: 'Región del Biobío',
+    comunas: ['Concepción', 'Talcahuano', 'San Pedro de la Paz', 'Chiguayante', 'Coronel', 'Los Ángeles']
+  }
+];
+
 function Carrito() {
   const [items, setItems] = useState(obtenerCarrito);
   const [totales, setTotales] = useState(obtenerTotalesCarrito);
@@ -22,15 +42,16 @@ function Carrito() {
   const [ordenCreada, setOrdenCreada] = useState(null);
   const [alertaStock, setAlertaStock] = useState(null);
 
-  // Formulario de despacho y cliente (Autollenado si hay sesión)
+  // Formulario de despacho (Inicia vacío con placeholders de ejemplo; autocompleta nombre y correo si hay sesión)
+  const [regionSeleccionada, setRegionSeleccionada] = useState('Región Metropolitana');
   const [formCliente, setFormCliente] = useState({
     nombre: sesion ? sesion.nombre : '',
     email: sesion ? sesion.email : '',
-    telefono: '+56 9 8765 4321',
-    direccion: 'Los Crisantemos 450, Depto 603',
-    comuna: 'Cerrillos',
+    telefono: '',
+    direccion: '',
     region: 'Región Metropolitana',
-    indicaciones: 'Entregar en conserjería si no hay nadie.',
+    comuna: 'Santiago',
+    indicaciones: '',
     metodoEntrega: 'despacho', // 'despacho' | 'retiro'
     metodoPago: 'WebPay Plus (Débito)'
   });
@@ -384,31 +405,34 @@ function Carrito() {
                   </h3>
 
                   <div className="row g-3 mb-4">
-                    <div className="col-12 col-md-6">
+                    <div className="col-12 col-md-4">
                       <label className="form-label small fw-semibold">Nombre y Apellido *</label>
                       <input 
                         type="text" 
                         className="form-control form-control-sm rounded-1"
+                        placeholder="Ej: Pedro González"
                         value={formCliente.nombre}
                         onChange={(e) => setFormCliente({ ...formCliente, nombre: e.target.value })}
                         required
                       />
                     </div>
-                    <div className="col-12 col-md-6">
+                    <div className="col-12 col-md-4">
                       <label className="form-label small fw-semibold">Correo Electrónico *</label>
                       <input 
                         type="email" 
                         className="form-control form-control-sm rounded-1"
+                        placeholder="ejemplo@correo.cl"
                         value={formCliente.email}
                         onChange={(e) => setFormCliente({ ...formCliente, email: e.target.value })}
                         required
                       />
                     </div>
-                    <div className="col-12 col-md-6">
+                    <div className="col-12 col-md-4">
                       <label className="form-label small fw-semibold">Teléfono de Contacto *</label>
                       <input 
                         type="tel" 
                         className="form-control form-control-sm rounded-1"
+                        placeholder="+56 9 1234 5678"
                         value={formCliente.telefono}
                         onChange={(e) => setFormCliente({ ...formCliente, telefono: e.target.value })}
                         required
@@ -421,31 +445,65 @@ function Carrito() {
                   </h3>
 
                   <div className="row g-3 mb-4">
+                    <div className="col-12 col-md-5">
+                      <label className="form-label small fw-semibold">Región *</label>
+                      <select 
+                        className="form-select form-select-sm rounded-1"
+                        value={regionSeleccionada}
+                        onChange={(e) => {
+                          const nuevaReg = e.target.value;
+                          setRegionSeleccionada(nuevaReg);
+                          const comunasDisponibles = REGIONES_CHILE.find(r => r.region === nuevaReg)?.comunas || [];
+                          setFormCliente({ 
+                            ...formCliente, 
+                            region: nuevaReg, 
+                            comuna: comunasDisponibles[0] || '' 
+                          });
+                        }}
+                      >
+                        {REGIONES_CHILE.map((r) => (
+                          <option key={r.region} value={r.region}>{r.region}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="col-12 col-md-7">
+                      <label className="form-label small fw-semibold">
+                        Comuna (Selecciona de las disponibles) *
+                      </label>
+                      <div className="input-group input-group-sm">
+                        <span className="input-group-text bg-light"><i className="bi bi-search text-muted"></i></span>
+                        <select 
+                          className="form-select form-select-sm rounded-end-1"
+                          value={formCliente.comuna}
+                          onChange={(e) => setFormCliente({ ...formCliente, comuna: e.target.value })}
+                          required
+                        >
+                          {(REGIONES_CHILE.find(r => r.region === regionSeleccionada)?.comunas || []).map((com) => (
+                            <option key={com} value={com}>{com}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
                     <div className="col-12 col-md-8">
                       <label className="form-label small fw-semibold">Calle, Número y Depto *</label>
                       <input 
                         type="text" 
                         className="form-control form-control-sm rounded-1"
+                        placeholder="Ej: Av. Providencia 1240, Depto 502"
                         value={formCliente.direccion}
                         onChange={(e) => setFormCliente({ ...formCliente, direccion: e.target.value })}
                         required
                       />
                     </div>
+
                     <div className="col-12 col-md-4">
-                      <label className="form-label small fw-semibold">Comuna *</label>
+                      <label className="form-label small fw-semibold">Indicaciones de Entrega (Opcional)</label>
                       <input 
                         type="text" 
                         className="form-control form-control-sm rounded-1"
-                        value={formCliente.comuna}
-                        onChange={(e) => setFormCliente({ ...formCliente, comuna: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div className="col-12">
-                      <label className="form-label small fw-semibold">Indicaciones para el repartidor (Opcional)</label>
-                      <input 
-                        type="text" 
-                        className="form-control form-control-sm rounded-1"
+                        placeholder="Ej: Dejar con conserje"
                         value={formCliente.indicaciones}
                         onChange={(e) => setFormCliente({ ...formCliente, indicaciones: e.target.value })}
                       />
@@ -550,9 +608,14 @@ function Carrito() {
                   <h1 className="h4 fw-bold text-dark mb-1" style={{ fontFamily: '"Oswald", sans-serif' }}>
                     ¡Se ha realizado la compra con éxito!
                   </h1>
-                  <span className="badge bg-dark text-warning font-monospace px-3 py-2 rounded-1">
-                    Código de Orden: #{ordenCreada.idOrden}
-                  </span>
+                  <div className="d-flex justify-content-center gap-2 mt-2">
+                    <span className="badge bg-dark text-warning font-monospace px-3 py-2 rounded-1">
+                      Orden: #{ordenCreada.idOrden}
+                    </span>
+                    <span className="badge bg-secondary text-white font-monospace px-3 py-2 rounded-1">
+                      N° Boleta: {ordenCreada.numeroBoleta}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Datos del Cliente y Despacho */}
