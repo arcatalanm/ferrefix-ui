@@ -15,6 +15,21 @@
 .bg-bronce   { background-color: var(--color-bronce); }
 .bg-platino  { background-color: var(--color-platino); }
 
+.btn-ambar {
+  background-color: var(--color-ambar) !important;
+  color: var(--color-oscuro) !important;
+  border: 1px solid var(--color-ambar) !important;
+}
+
+.btn-ambar:hover,
+.btn-ambar:focus,
+.btn-ambar:active {
+  background-color: var(--color-bronce) !important;
+  border-color: var(--color-bronce) !important;
+  color: #ffffff !important;
+}
+
+
 
 /* -- Topbar -- */
 .topbar-section {
@@ -560,4 +575,239 @@
 
 .admin-table tbody td {
   border-bottom: 1px solid #e2e8f0;
+}
+
+/* ==========================================================================
+   Clases de Reemplazo para Estilos en Línea (Buenas Prácticas)
+   ========================================================================== */
+
+/* Tipografía y Utilidades Generales */
+.font-oswald {
+  font-family: "Oswald", sans-serif;
+}
+
+.modal-backdrop-custom {
+  background-color: rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Navbar */
+.navbar-cart-link {
+  color: var(--color-oscuro);
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.navbar-cart-link:hover {
+  color: var(--color-ambar) !important;
+  transform: scale(1.1);
+}
+
+.navbar-cart-badge {
+  position: absolute;
+  top: 2px;
+  right: -9px;
+  font-size: 0.65rem;
+  padding: 0.2em 0.42em;
+  line-height: 1;
+}
+
+.navbar-user-avatar {
+  width: 32px;
+  height: 32px;
+  background-color: var(--color-dorado);
+  border: 2px solid var(--color-oscuro);
+}
+
+.navbar-user-name {
+  max-width: 120px;
+}
+
+.navbar-dropdown-menu {
+  min-width: 220px;
+}
+
+.navbar-user-email {
+  font-size: 0.78rem;
+}
+
+.navbar-user-badge {
+  font-size: 0.7rem;
+}
+
+/* Nosotros */
+.nosotros-stat-label {
+  font-size: 0.75rem;
+}
+
+.nosotros-stat-desc {
+  font-size: 0.8rem;
+}
+
+.nosotros-map-container {
+  height: 360px;
+}
+
+.nosotros-map-iframe {
+  border: 0;
+}
+
+/* Carrito y Checkout */
+.cart-th-photo {
+  width: 60px;
+}
+
+.cart-th-qty {
+  width: 130px;
+}
+
+.cart-th-action {
+  width: 40px;
+}
+
+.cart-item-img {
+  width: 50px;
+  height: 50px;
+}
+
+.cart-promo-alert {
+  font-size: 0.78rem;
+}
+
+.checkout-section-title {
+  letter-spacing: 0.5px;
+}
+
+/* Arriendos */
+.arriendos-hero-img {
+  max-height: 380px;
+}
+
+.arriendo-item-img {
+  max-height: 200px;
+}
+
+.arriendo-specs-list {
+  font-size: 0.8rem;
+}
+
+.arriendo-rate-label {
+  font-size: 0.75rem;
+}
+
+.arriendo-modal-section-title {
+  letter-spacing: 0.5px;
+}
+
+.arriendo-help-text {
+  font-size: 0.72rem;
+}
+
+/* Panel Administrativo */
+.admin-login-banner {
+  height: 60px;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.admin-dashboard-banner {
+  height: 42px;
+  width: auto;
+  object-fit: contain;
+}
+
+.admin-brand-login {
+  letter-spacing: 1px;
+}
+
+.admin-brand-title {
+  font-family: "Oswald", sans-serif;
+  letter-spacing: 1px;
+}
+
+.admin-brand-badge {
+  font-size: 0.72rem;
+}
+
+.admin-vr {
+  height: 24px;
+}
+
+.admin-kpi-title {
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+}
+
+.admin-kpi-subtitle {
+  font-size: 0.8rem;
+}
+
+.admin-kpi-value-mono {
+  font-size: 1.4rem;
+}
+
+.admin-item-brand {
+  font-size: 0.78rem;
+}
+
+.admin-th-thumb {
+  width: 45px;
+}
+
+.admin-th-actions {
+  width: 130px;
+}
+
+.admin-prod-thumb {
+  width: 38px;
+  height: 38px;
+}
+
+.admin-order-email {
+  font-size: 0.75rem;
+}
+
+.admin-td-address {
+  max-width: 220px;
+}
+
+/* OfertaDestacada.jsx */
+.oferta-titulo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+ 
+.oferta-titulo-texto {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #2b2b2b;
+}
+ 
+.oferta-titulo-barra {
+  display: block;
+  width: 190px;
+  height: 2px;
+  background-color: #2ecc71;
+}
+
+.oferta-img {
+  width: 100%;
+  object-fit: cover;
+  border-radius: 6px;
+  display: block;
+}
+
+.oferta-img-banner {
+  height: 120px;
+}
+
+.oferta-img-1,
+.oferta-img-2,
+.oferta-img-3,
+.oferta-img-4,
+.oferta-img-5,
+.oferta-img-6,
+.oferta-img-7 {
+  height: 260px;
 }

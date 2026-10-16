@@ -248,7 +248,7 @@ function DetalleProducto() {
                   type="button"
                   onClick={handleAgregarCarrito}
                   disabled={producto.stock <= 0}
-                  className="btn btn-warning btn-lg fw-bold py-3 rounded-2 shadow-sm d-flex align-items-center justify-content-center gap-2 text-dark"
+                  className="btn btn-ambar btn-lg fw-bold py-3 rounded-2 shadow-sm d-flex align-items-center justify-content-center gap-2 text-dark"
                 >
                   <i className="bi bi-cart-plus-fill fs-5"></i>
                   {producto.stock > 0 ? 'Agregar al Carrito' : 'Agotado Temporalmente'}

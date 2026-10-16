@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import ProductCard from '../components/ProductCard';
+import OfertaDestacada from '../components/OfertaDestacada';
 import { obtenerProductos, EVENTO_PRODUCTOS_ACTUALIZADOS } from '../data/productos';
 
 import dewaltImg from '../assets/banners/dewalt.webp';
@@ -16,6 +16,13 @@ import electricidadImg from '../assets/categories/electricidad.webp';
 import pinturasImg from '../assets/categories/pinturas.webp';
 import ceramicasImg from '../assets/categories/ceramicas.webp';
 import seguridadImg from '../assets/categories/seguridad.webp';
+
+import uno from '../assets/sales/uno.jpg'
+import dos from '../assets/sales/dos.jpg'
+import tres from '../assets/sales/tres.jpg'
+import cuatro from '../assets/sales/cuatro.jpg'
+import cinco from '../assets/sales/cinco.jpg'
+import seis from '../assets/sales/seis.jpg'
 
 const IMAGENES_BANNER = [
   {
@@ -206,93 +213,17 @@ function Home() {
 
         </div>
       </section>
-
-      {/* Sección Dinámica de Productos en Home: Últimas Llegadas / Alfabético */}
-      <section className="py-4 py-md-5 bg-white border-top border-bottom">
-        <div className="container">
-
-          {/* Encabezado y Filtros de Orden */}
-          <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-end mb-4 gap-3">
-            <div>
-              <div className="d-flex align-items-center gap-2 mb-1">
-                <span className="badge bg-dark text-warning rounded-1 px-2 py-1 small fw-semibold">
-                  CATÁLOGO EN VIVO
-                </span>
-                <span className="text-muted small font-monospace">
-                  {productos.length} productos disponibles
-                </span>
-              </div>
-              <h2 className="h3 fw-bold text-dark mb-1" style={{ fontFamily: '"Oswald", sans-serif' }}>
-                Productos en Tienda
-              </h2>
-              <p className="text-secondary small mb-0">
-                Inventario conectado en tiempo real. Añade productos desde administración o realiza compras con boleta.
-              </p>
-            </div>
-
-            {/* Selector de modo de visualización: Últimas Llegadas vs Alfabético */}
-            <div className="d-flex flex-wrap align-items-center gap-2">
-              <span className="small text-secondary fw-semibold d-none d-sm-inline">
-                Ordenar por:
-              </span>
-              <div className="btn-group rounded-1 shadow-sm" role="group">
-                <button
-                  type="button"
-                  className={`btn btn-sm ${criterioOrden === 'ultimas-llegadas' ? 'btn-dark text-warning fw-bold' : 'btn-outline-secondary'}`}
-                  onClick={() => setCriterioOrden('ultimas-llegadas')}
-                  title="Muestra los productos más recientes o recién añadidos al inicio"
-                >
-                  <i className="bi bi-clock-history me-1"></i>
-                  Últimas Llegadas
-                </button>
-                <button
-                  type="button"
-                  className={`btn btn-sm ${criterioOrden === 'alfabetico' ? 'btn-dark text-warning fw-bold' : 'btn-outline-secondary'}`}
-                  onClick={() => setCriterioOrden('alfabetico')}
-                  title="Ordena alfabéticamente de la A a la Z"
-                >
-                  <i className="bi bi-sort-alpha-down me-1"></i>
-                  Alfabético (A - Z)
-                </button>
-                <button
-                  type="button"
-                  className={`btn btn-sm ${criterioOrden === 'todos' ? 'btn-dark text-warning fw-bold' : 'btn-outline-secondary'}`}
-                  onClick={() => setCriterioOrden('todos')}
-                  title="Orden de registro base"
-                >
-                  <i className="bi bi-grid-3x3-gap me-1"></i>
-                  Todos
-                </button>
-              </div>
-
-              <Link to="/catalogo" className="btn btn-sm btn-warning text-dark fw-semibold rounded-1 ms-md-2">
-                Ver Catálogo Completo →
-              </Link>
-            </div>
-          </div>
-
-          {/* Grilla de Productos */}
-          <div className="row g-2 g-md-3 row-cols-2 row-cols-md-3 row-cols-lg-4">
-            {productosProcesados.slice(0, 8).map((producto) => (
-              <div key={producto.idProducto} className="col d-flex">
-                <ProductCard producto={producto} />
-              </div>
-            ))}
-          </div>
-
-          {/* Botón para ver más en el catálogo */}
-          <div className="text-center mt-4 pt-2">
-            <Link 
-              to="/catalogo" 
-              className="btn btn-outline-dark rounded-1 px-4 py-2 small fw-semibold"
-            >
-              Explorar los {productos.length} productos en el Catálogo Completo
-            </Link>
-          </div>
-
-        </div>
-      </section>
-
+      {/*  
+      <OfertaDestacada 
+        titulo={'Tecnologia'}
+        img2={uno} link2="/categoria"
+        img3={dos} link3="/categoria"
+        img4={tres} link4="/categoria"
+        img5={cuatro} link5="/categoria"
+        img6={cinco} link6="/categoria"
+        img7={seis} link7="/categoria"
+      />
+      */}
     </div>
   );
 }

@@ -57,15 +57,21 @@ function Navbar() {
           </div>
         </Link>
 
-        {/* Acciones en móvil: Carrito visible + Botón hamburguesa */}
+        {/* Acciones en móvil: Carrito visible (solo icono) + Botón hamburguesa */}
         <div className="d-flex align-items-center gap-2 d-lg-none">
-          <Link to="/carrito" className="btn btn-warning btn-sm fw-bold d-flex align-items-center gap-1 rounded-2 shadow-sm text-dark">
-            <i className="bi bi-cart3 fs-6"></i>
-            {totalesCarrito.totalArticulos > 0 && (
-              <span className="badge bg-dark text-warning rounded-pill px-1">
-                {totalesCarrito.totalArticulos}
-              </span>
-            )}
+          <Link 
+            to="/carrito" 
+            className="navbar-cart-link text-dark d-flex align-items-center justify-content-center p-2 text-decoration-none me-1"
+            title="Ver mi carrito de compras"
+          >
+            <div className="position-relative d-inline-flex align-items-center">
+              <i className="bi bi-cart3 fs-5"></i>
+              {totalesCarrito.totalArticulos > 0 && (
+                <span className="navbar-cart-badge badge rounded-pill bg-ambar text-dark fw-bold border border-white">
+                  {totalesCarrito.totalArticulos}
+                </span>
+              )}
+            </div>
           </Link>
           <button
             className="navbar-toggler border-0 shadow-none p-1"
@@ -107,22 +113,25 @@ function Navbar() {
           {/* Bloque de Acciones: Carrito de Compras + Usuario */}
           <div className="d-flex align-items-center justify-content-center gap-3">
             
-            {/* Botón Carrito en Desktop */}
+            {/* Carrito en Desktop (solo icono, sin texto) */}
             <Link 
               to="/carrito" 
-              className="btn btn-warning text-dark fw-semibold d-none d-lg-flex align-items-center gap-2 rounded-2 px-3 shadow-sm py-2"
+              className="navbar-cart-link text-dark d-none d-lg-flex align-items-center justify-content-center p-2 text-decoration-none me-2"
               onClick={closeMenu}
               title="Ver mi carrito de compras"
             >
-              <i className="bi bi-cart3 fs-5"></i>
-              <span>Carrito</span>
-              {totalesCarrito.totalArticulos > 0 ? (
-                <span className="badge bg-dark text-warning rounded-pill px-2">
-                  {totalesCarrito.totalArticulos}
-                </span>
-              ) : (
-                <span className="badge bg-dark text-white-50 rounded-pill px-2">0</span>
-              )}
+              <div className="position-relative d-inline-flex align-items-center">
+                <i className="bi bi-cart3 fs-4"></i>
+                {totalesCarrito.totalArticulos > 0 ? (
+                  <span className="navbar-cart-badge badge rounded-pill bg-ambar text-dark fw-bold border border-white">
+                    {totalesCarrito.totalArticulos}
+                  </span>
+                ) : (
+                  <span className="navbar-cart-badge badge rounded-pill bg-secondary text-white">
+                    0
+                  </span>
+                )}
+              </div>
             </Link>
 
             {/* Panel de Usuario / Sesión con Avatar Circular */}
@@ -136,18 +145,10 @@ function Navbar() {
                   aria-expanded={isAccountOpen}
                   title={`Conectado como ${sesion.nombre}`}
                 >
-                  <div 
-                    className="rounded-circle d-flex align-items-center justify-content-center fw-bold text-dark shadow-sm"
-                    style={{ 
-                      width: '32px', 
-                      height: '32px', 
-                      backgroundColor: 'var(--color-dorado)',
-                      border: '2px solid var(--color-oscuro)'
-                    }}
-                  >
+                  <div className="navbar-user-avatar rounded-circle d-flex align-items-center justify-content-center fw-bold text-dark shadow-sm">
                     {inicialUsuario}
                   </div>
-                  <span className="small fw-bold text-dark d-none d-sm-inline text-truncate" style={{ maxWidth: '120px' }}>
+                  <span className="navbar-user-name small fw-bold text-dark d-none d-sm-inline text-truncate">
                     {sesion.nombre.split(' ')[0]}
                   </span>
                   <i className="bi bi-chevron-down small text-muted"></i>
@@ -168,13 +169,13 @@ function Navbar() {
               )}
 
               {/* Menú Desplegable */}
-              <ul className={`dropdown-menu dropdown-menu-end shadow border-0 mt-2 rounded-3 ${isAccountOpen ? 'show' : ''}`} style={{ minWidth: '220px' }}>
+              <ul className={`dropdown-menu dropdown-menu-end navbar-dropdown-menu shadow border-0 mt-2 rounded-3 ${isAccountOpen ? 'show' : ''}`}>
                 {sesion ? (
                   <>
                     <li className="px-3 py-2 border-bottom bg-light rounded-top-3">
                       <div className="small fw-bold text-dark text-truncate">{sesion.nombre}</div>
-                      <div className="text-muted small text-truncate" style={{ fontSize: '0.78rem' }}>{sesion.email}</div>
-                      <span className={`badge mt-1 rounded-1 ${sesion.rol === 'admin' ? 'bg-dark text-warning' : 'bg-secondary text-white'}`} style={{ fontSize: '0.7rem' }}>
+                      <div className="navbar-user-email text-muted small text-truncate">{sesion.email}</div>
+                      <span className={`badge navbar-user-badge mt-1 rounded-1 ${sesion.rol === 'admin' ? 'bg-dark text-warning' : 'bg-secondary text-white'}`}>
                         {sesion.rol === 'admin' ? 'Administrador' : 'Cliente Registrado'}
                       </span>
                     </li>
@@ -204,13 +205,11 @@ function Navbar() {
                   <>
                     <li>
                       <Link className="dropdown-item py-2" to="/login" onClick={closeMenu}>
-                        <i className="bi bi-box-arrow-in-right me-2 text-warning"></i>
                         Iniciar Sesión
                       </Link>
                     </li>
                     <li>
                       <Link className="dropdown-item py-2" to="/registro" onClick={closeMenu}>
-                        <i className="bi bi-person-plus me-2 text-primary"></i>
                         Registrarse
                       </Link>
                     </li>

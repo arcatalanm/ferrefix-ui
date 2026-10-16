@@ -170,7 +170,7 @@ function Carrito() {
           <div>
             <div className="d-flex justify-content-between align-items-center mb-3">
               <div>
-                <h1 className="h3 fw-bold text-dark mb-1" style={{ fontFamily: '"Oswald", sans-serif' }}>
+                <h1 className="h3 fw-bold text-dark mb-1 font-oswald">
                   Carrito de Compras
                 </h1>
                 <p className="text-muted small mb-0">
@@ -214,12 +214,12 @@ function Carrito() {
                       <table className="table align-middle mb-0">
                         <thead className="table-light small">
                           <tr>
-                            <th style={{ width: '60px' }}>Foto</th>
+                            <th className="cart-th-photo">Foto</th>
                             <th>Producto</th>
                             <th className="text-end">Precio</th>
-                            <th className="text-center" style={{ width: '130px' }}>Cantidad</th>
+                            <th className="cart-th-qty text-center">Cantidad</th>
                             <th className="text-end">Subtotal</th>
-                            <th className="text-end" style={{ width: '40px' }}></th>
+                            <th className="cart-th-action text-end"></th>
                           </tr>
                         </thead>
                         <tbody>
@@ -229,8 +229,7 @@ function Carrito() {
                                 <img 
                                   src={item.imagen} 
                                   alt={item.nombre} 
-                                  className="border rounded-1 bg-white object-fit-contain"
-                                  style={{ width: '50px', height: '50px' }}
+                                  className="cart-item-img border rounded-1 bg-white object-fit-contain"
                                   onError={(e) => { e.target.src = '/banner-web.webp'; }}
                                 />
                               </td>
@@ -320,7 +319,7 @@ function Carrito() {
                       </span>
                     </div>
 
-                    <div className="alert alert-info py-2 px-3 small rounded-1 mb-3" style={{ fontSize: '0.78rem' }}>
+                    <div className="cart-promo-alert alert alert-info py-2 px-3 small rounded-1 mb-3">
                       <i className="bi bi-truck me-1"></i>
                       Despacho gratis en compras superiores a $50.000 en la Región Metropolitana.
                     </div>
@@ -336,7 +335,7 @@ function Carrito() {
 
                     <button 
                       type="button" 
-                      className="btn btn-warning w-100 fw-bold text-dark py-3 rounded-1 shadow-sm mb-2"
+                      className="btn btn-ambar w-100 fw-bold text-dark py-3 rounded-1 shadow-sm mb-2"
                       onClick={() => setPasoActual('checkout')}
                     >
                       Continuar al Pago →
@@ -364,7 +363,7 @@ function Carrito() {
                 
                 <div className="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
                   <div>
-                    <h2 className="h4 fw-bold text-dark mb-1" style={{ fontFamily: '"Oswald", sans-serif' }}>
+                    <h2 className="h4 fw-bold text-dark mb-1 font-oswald">
                       Paso de Pago y Despacho
                     </h2>
                     <p className="text-muted small mb-0">
@@ -400,7 +399,7 @@ function Carrito() {
                 )}
 
                 <form onSubmit={handleProcesarCompra}>
-                  <h3 className="h6 fw-bold text-dark text-uppercase mb-3" style={{ letterSpacing: '0.5px' }}>
+                  <h3 className="checkout-section-title h6 fw-bold text-dark text-uppercase mb-3">
                     1. Información del Cliente
                   </h3>
 
@@ -440,7 +439,7 @@ function Carrito() {
                     </div>
                   </div>
 
-                  <h3 className="h6 fw-bold text-dark text-uppercase mb-3" style={{ letterSpacing: '0.5px' }}>
+                  <h3 className="checkout-section-title h6 fw-bold text-dark text-uppercase mb-3">
                     2. Dirección y Opciones de Entrega
                   </h3>
 
@@ -510,7 +509,7 @@ function Carrito() {
                     </div>
                   </div>
 
-                  <h3 className="h6 fw-bold text-dark text-uppercase mb-3" style={{ letterSpacing: '0.5px' }}>
+                  <h3 className="checkout-section-title h6 fw-bold text-dark text-uppercase mb-3">
                     3. Método de Pago Simulado
                   </h3>
 
@@ -581,7 +580,7 @@ function Carrito() {
 
                   <button 
                     type="submit" 
-                    className="btn btn-warning w-100 fw-bold text-dark py-3 rounded-1 shadow-sm fs-5"
+                    className="btn btn-ambar w-100 fw-bold text-dark py-3 rounded-1 shadow-sm fs-5"
                   >
                     Confirmar y Pagar {formatearCLP(totales.total)}
                   </button>
@@ -605,7 +604,7 @@ function Carrito() {
                   <div className="d-inline-flex p-3 bg-success-subtle text-success rounded-circle mb-3">
                     <i className="bi bi-check-lg display-4"></i>
                   </div>
-                  <h1 className="h4 fw-bold text-dark mb-1" style={{ fontFamily: '"Oswald", sans-serif' }}>
+                  <h1 className="h4 fw-bold text-dark mb-1 font-oswald">
                     ¡Se ha realizado la compra con éxito!
                   </h1>
                   <div className="d-flex justify-content-center gap-2 mt-2">

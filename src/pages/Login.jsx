@@ -1,12 +1,28 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { iniciarSesion, registrarUsuario } from '../data/auth';
 
 function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
 
-  // 'login' | 'registro'
-  const [modo, setModo] = useState('login');
+  // 'login' | 'registro' - inicializado según la ruta (/registro o /login)
+  const [modo, setModo] = useState(() => {
+    return location.pathname === '/registro' ? 'registro' : 'login';
+  });
+
+  // Sincronizar el modo si la ruta cambia desde el Navbar u otro enlace
+  useEffect(() => {
+    if (location.pathname === '/registro') {
+      setModo('registro');
+      setErrorMsg('');
+      setExitoMsg('');
+    } else if (location.pathname === '/login') {
+      setModo('login');
+      setErrorMsg('');
+      setExitoMsg('');
+    }
+  }, [location.pathname]);
 
   // Estados de formulario
   const [nombre, setNombre] = useState('');
@@ -51,13 +67,6 @@ function Login() {
     }
   };
 
-  const handleAutocompletar = (correo, clave) => {
-    setModo('login');
-    setEmail(correo);
-    setPassword(clave);
-    setErrorMsg('');
-  };
-
   return (
     <div className="login-page py-5 bg-light min-vh-75 d-flex align-items-center">
       <div className="container">
@@ -68,7 +77,7 @@ function Login() {
               
               {/* Encabezado */}
               <div className="text-center mb-4">
-                <h1 className="h4 fw-bold text-dark mb-1" style={{ fontFamily: '"Oswald", sans-serif' }}>
+                <h1 className="h4 fw-bold text-dark mb-1 font-oswald">
                   {modo === 'login' ? 'Iniciar Sesión en Ferrefix' : 'Crear Cuenta de Cliente'}
                 </h1>
                 <p className="text-muted small mb-0">
@@ -83,14 +92,14 @@ function Login() {
                 <button 
                   type="button" 
                   className={`btn btn-sm ${modo === 'login' ? 'btn-dark' : 'btn-outline-dark'}`}
-                  onClick={() => { setModo('login'); setErrorMsg(''); }}
+                  onClick={() => { setModo('login'); setErrorMsg(''); setExitoMsg(''); navigate('/login', { replace: true }); }}
                 >
                   Ya tengo cuenta
                 </button>
                 <button 
                   type="button" 
                   className={`btn btn-sm ${modo === 'registro' ? 'btn-dark' : 'btn-outline-dark'}`}
-                  onClick={() => { setModo('registro'); setErrorMsg(''); }}
+                  onClick={() => { setModo('registro'); setErrorMsg(''); setExitoMsg(''); navigate('/registro', { replace: true }); }}
                 >
                   Soy nuevo cliente
                 </button>
@@ -153,35 +162,11 @@ function Login() {
 
                 <button 
                   type="submit" 
-                  className="btn btn-warning w-100 fw-bold text-dark py-2 rounded-1 shadow-sm mb-3"
+                  className="btn btn-ambar w-100 fw-bold text-dark py-2 rounded-1 shadow-sm mb-3"
                 >
                   {modo === 'login' ? 'Entrar a mi Cuenta' : 'Registrarme e Iniciar Sesión'}
                 </button>
               </form>
-
-              {/* Cuentas de prueba */}
-              <div className="p-3 bg-light border rounded-1 small text-secondary mt-3">
-                <strong className="text-dark d-block mb-1">
-                  <i className="bi bi-lightning-charge me-1 text-warning"></i>
-                  Cuentas de Prueba Rápidas (localStorage):
-                </strong>
-                <div className="d-flex flex-wrap gap-2 mt-2">
-                  <button 
-                    type="button" 
-                    className="btn btn-outline-dark btn-sm py-1 px-2 rounded-1"
-                    onClick={() => handleAutocompletar('cliente@ferrefix.cl', 'cliente123')}
-                  >
-                    Cliente: Juan Maestro
-                  </button>
-                  <button 
-                    type="button" 
-                    className="btn btn-outline-secondary btn-sm py-1 px-2 rounded-1"
-                    onClick={() => handleAutocompletar('admin@ferrefix.cl', 'admin123')}
-                  >
-                    Admin: Ferrefix
-                  </button>
-                </div>
-              </div>
 
               <div className="text-center pt-3 mt-3 border-top">
                 <Link to="/" className="text-decoration-none text-muted small">

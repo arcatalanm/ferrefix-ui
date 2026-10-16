@@ -17,52 +17,12 @@ function Nosotros() {
         <div className="bg-white border rounded-1 p-4 p-md-5 mb-4 shadow-sm">
           <div className="row align-items-center g-4">
             <div className="col-12 col-lg-7">
-              <span className="badge bg-dark text-warning px-3 py-2 rounded-1 fw-semibold mb-2">
-                Trayectoria y Solidez desde 2012
-              </span>
-              <h1 className="display-6 fw-bold text-dark mb-3" style={{ fontFamily: '"Oswald", sans-serif' }}>
-                FERREFIX: Especialistas en Herramientas y Soluciones para la Construcción
+              <h1 className="display-6 fw-bold text-dark mb-3 font-oswald">
+                Especialistas en Herramientas y Soluciones para la Construcción
               </h1>
               <p className="text-secondary lh-lg mb-4">
                 Fundada en Santiago de Chile, <strong>Ferrefix </strong> se ha consolidado como un socio estratégico para constructoras, contratistas independientes y maestros de obra. Nos especializamos en la comercialización y arriendo de herramientas de alta gama, maquinaria pesada para faena y fijaciones industriales de calidad certificada.
               </p>
-              <div className="d-flex flex-wrap gap-2">
-                <Link to="/catalogo" className="btn btn-warning text-dark fw-bold px-4 py-2 rounded-1 shadow-sm">
-                  Ver Catálogo de Productos
-                </Link>
-                <Link to="/contacto" className="btn btn-outline-dark px-4 py-2 rounded-1">
-                  Cotizaciones Mayoristas
-                </Link>
-              </div>
-            </div>
-
-            <div className="col-12 col-lg-5">
-              <div className="p-4 bg-light border rounded-1">
-                <h4 className="fw-bold text-dark h5 mb-3" style={{ fontFamily: '"Oswald", sans-serif' }}>
-                  Respaldo de Marcas Líderes
-                </h4>
-                <p className="small text-secondary mb-3">
-                  Distribuimos de manera directa con garantía oficial de fábrica para el mercado chileno:
-                </p>
-                <ul className="list-unstyled mb-0 small text-dark d-flex flex-column gap-2">
-                  <li className="d-flex align-items-center gap-2">
-                    <span className="badge bg-dark rounded-1">✓</span>
-                    <strong>Bosch Professional</strong> (Línea Heavy Duty y Demolición)
-                  </li>
-                  <li className="d-flex align-items-center gap-2">
-                    <span className="badge bg-dark rounded-1">✓</span>
-                    <strong>DeWalt</strong> (Herramientas 20V Max XR Brushless)
-                  </li>
-                  <li className="d-flex align-items-center gap-2">
-                    <span className="badge bg-dark rounded-1">✓</span>
-                    <strong>Makita</strong> (Corte, desbaste y perforación industrial)
-                  </li>
-                  <li className="d-flex align-items-center gap-2">
-                    <span className="badge bg-dark rounded-1">✓</span>
-                    <strong>Cemento Bío Bío & Pinturas Ceresita</strong>
-                  </li>
-                </ul>
-              </div>
             </div>
           </div>
         </div>
@@ -72,10 +32,10 @@ function Nosotros() {
           <div className="col-12 col-sm-6 col-lg-3">
             <div className="bg-white border rounded-1 p-3 text-center shadow-sm">
               <div className="display-6 fw-bold text-dark font-monospace">+12</div>
-              <div className="small fw-bold text-secondary text-uppercase mt-1" style={{ fontSize: '0.75rem' }}>
+              <div className="nosotros-stat-label small fw-bold text-secondary text-uppercase mt-1">
                 Años de Trayectoria
               </div>
-              <p className="text-muted small mb-0 mt-1" style={{ fontSize: '0.8rem' }}>
+              <p className="nosotros-stat-desc text-muted small mb-0 mt-1">
                 Abasteciendo faenas en Chile
               </p>
             </div>
@@ -84,10 +44,10 @@ function Nosotros() {
           <div className="col-12 col-sm-6 col-lg-3">
             <div className="bg-white border rounded-1 p-3 text-center shadow-sm">
               <div className="display-6 fw-bold text-dark font-monospace">+15.000</div>
-              <div className="small fw-bold text-secondary text-uppercase mt-1" style={{ fontSize: '0.75rem' }}>
+              <div className="nosotros-stat-label small fw-bold text-secondary text-uppercase mt-1">
                 Despachos Entregados
               </div>
-              <p className="text-muted small mb-0 mt-1" style={{ fontSize: '0.8rem' }}>
+              <p className="nosotros-stat-desc text-muted small mb-0 mt-1">
                 En Santiago y regiones
               </p>
             </div>
@@ -96,10 +56,10 @@ function Nosotros() {
           <div className="col-12 col-sm-6 col-lg-3">
             <div className="bg-white border rounded-1 p-3 text-center shadow-sm">
               <div className="display-6 fw-bold text-dark font-monospace">99.4%</div>
-              <div className="small fw-bold text-secondary text-uppercase mt-1" style={{ fontSize: '0.75rem' }}>
+              <div className="nosotros-stat-label small fw-bold text-secondary text-uppercase mt-1">
                 Satisfacción de Clientes
               </div>
-              <p className="text-muted small mb-0 mt-1" style={{ fontSize: '0.8rem' }}>
+              <p className="nosotros-stat-desc text-muted small mb-0 mt-1">
                 Garantía y soporte técnico
               </p>
             </div>
@@ -108,10 +68,10 @@ function Nosotros() {
           <div className="col-12 col-sm-6 col-lg-3">
             <div className="bg-white border rounded-1 p-3 text-center shadow-sm">
               <div className="display-6 fw-bold text-dark font-monospace">100%</div>
-              <div className="small fw-bold text-secondary text-uppercase mt-1" style={{ fontSize: '0.75rem' }}>
+              <div className="nosotros-stat-label small fw-bold text-secondary text-uppercase mt-1">
                 Garantía Certificada
               </div>
-              <p className="text-muted small mb-0 mt-1" style={{ fontSize: '0.8rem' }}>
+              <p className="nosotros-stat-desc text-muted small mb-0 mt-1">
                 Equipos y repuestos originales
               </p>
             </div>
@@ -123,7 +83,7 @@ function Nosotros() {
           <div className="row g-4 align-items-center">
 
             <div className="col-12 col-lg-5">
-              <h2 className="h4 fw-bold text-dark mb-2" style={{ fontFamily: '"Oswald", sans-serif' }}>
+              <h2 className="h4 fw-bold text-dark mb-2 font-oswald">
                 Visítanos en Nuestra Casa Matriz
               </h2>
               <p className="text-secondary small mb-4">
@@ -149,13 +109,13 @@ function Nosotros() {
 
             {/* Mapa Embebido Nativo */}
             <div className="col-12 col-lg-7">
-              <div className="border rounded-1 overflow-hidden shadow-sm" style={{ height: '360px' }}>
+              <div className="nosotros-map-container border rounded-1 overflow-hidden shadow-sm">
                 <iframe
                   title="Ubicación Ferrefix Providencia"
                   src="https://maps.google.com/maps?q=Antonio%20Varas%20666,%20Providencia,%20Santiago,%20Chile&t=&z=15&ie=UTF8&iwloc=&output=embed"
                   width="100%"
                   height="100%"
-                  style={{ border: 0 }}
+                  className="nosotros-map-iframe"
                   allowFullScreen=""
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"

@@ -234,13 +234,13 @@ function Admin() {
             <div className="col-12 col-sm-9 col-md-6 col-lg-4">
               <div className="admin-box p-4 bg-white shadow-sm">
                 
-                <div className="border-bottom pb-3 mb-3">
-                  <div className="d-flex align-items-center gap-2 mb-1">
-                    <span className="fw-bold text-dark font-monospace" style={{ letterSpacing: '1px' }}>
-                      FERREFIX
-                    </span>
-                    <span className="text-muted small">|</span>
-                    <span className="small text-secondary fw-semibold">Control de Acceso</span>
+                <div className="border-bottom pb-3 mb-3 text-center">
+                  <div className="mb-2">
+                    <img 
+                      src="/banner-web.webp" 
+                      alt="Ferrefix" 
+                      className="admin-login-banner"
+                    />
                   </div>
                   <h1 className="h5 fw-bold text-dark mb-0">Iniciar Sesión Administrador</h1>
                 </div>
@@ -278,30 +278,11 @@ function Admin() {
 
                   <button 
                     type="submit" 
-                    className="btn btn-dark btn-sm w-100 fw-semibold rounded-1 py-2 mb-3"
+                    className="btn btn-ambar btn-sm w-100 fw-bold rounded-1 py-2 mb-3"
                   >
                     Ingresar al Panel
                   </button>
                 </form>
-
-                <div className="p-3 bg-light border rounded-1 small text-secondary mb-3">
-                  <div className="d-flex justify-content-between align-items-center mb-1">
-                    <strong className="text-dark">Credenciales de Acceso:</strong>
-                    <button 
-                      type="button" 
-                      className="btn btn-sm btn-link p-0 text-dark fw-bold text-decoration-none"
-                      onClick={() => {
-                        setLoginEmail('admin@ferrefix.cl');
-                        setLoginPassword('admin123');
-                        setErrorLogin('');
-                      }}
-                    >
-                      Autocompletar
-                    </button>
-                  </div>
-                  <div>Usuario: <code>admin@ferrefix.cl</code></div>
-                  <div>Clave: <code>admin123</code></div>
-                </div>
 
                 <div className="text-center pt-2 border-top">
                   <Link to="/" className="text-decoration-none text-muted small">
@@ -330,10 +311,12 @@ function Admin() {
           {/* Marca / Identificador */}
           <div className="d-flex align-items-center gap-3">
             <Link to="/admin" className="text-decoration-none d-flex align-items-center gap-2">
-              <span className="fw-bold text-white fs-5" style={{ fontFamily: '"Oswald", sans-serif', letterSpacing: '1px' }}>
-                FERREFIX
-              </span>
-              <span className="badge bg-secondary text-white fw-normal font-monospace rounded-1 px-2" style={{ fontSize: '0.72rem' }}>
+              <img 
+                src="/banner-web.webp" 
+                alt="Ferrefix Admin" 
+                className="admin-dashboard-banner"
+              />
+              <span className="badge admin-brand-badge bg-secondary text-white fw-normal font-monospace rounded-1 px-2">
                 ADMIN
               </span>
             </Link>
@@ -383,7 +366,7 @@ function Admin() {
               Restablecer BD
             </button>
 
-            <div className="vr bg-secondary mx-1 d-none d-md-block" style={{ height: '24px' }}></div>
+            <div className="vr admin-vr bg-secondary mx-1 d-none d-md-block"></div>
 
             <span className="text-white-50 small d-none d-md-inline font-monospace">
               {sesion.email}
@@ -429,13 +412,13 @@ function Admin() {
             <div className="row g-3 mb-4">
               <div className="col-12 col-sm-6 col-xl-3">
                 <div className="admin-kpi-box">
-                  <div className="text-secondary small fw-semibold text-uppercase" style={{ fontSize: '0.75rem', letterSpacing: '0.5px' }}>
+                  <div className="admin-kpi-title text-secondary small fw-semibold text-uppercase">
                     Productos en Catálogo
                   </div>
                   <div className="fs-3 fw-bold text-dark mt-1">
                     {metricas.totalProductos}
                   </div>
-                  <div className="text-muted small mt-1" style={{ fontSize: '0.8rem' }}>
+                  <div className="admin-kpi-subtitle text-muted small mt-1">
                     Artículos registrados
                   </div>
                 </div>
@@ -443,13 +426,13 @@ function Admin() {
 
               <div className="col-12 col-sm-6 col-xl-3">
                 <div className="admin-kpi-box">
-                  <div className="text-secondary small fw-semibold text-uppercase" style={{ fontSize: '0.75rem', letterSpacing: '0.5px' }}>
+                  <div className="admin-kpi-title text-secondary small fw-semibold text-uppercase">
                     Stock Crítico (≤ 5 unids)
                   </div>
                   <div className="fs-3 fw-bold text-dark mt-1">
                     {metricas.stockCriticoCount}
                   </div>
-                  <div className="text-muted small mt-1" style={{ fontSize: '0.8rem' }}>
+                  <div className="admin-kpi-subtitle text-muted small mt-1">
                     {metricas.stockCriticoCount > 0 ? 'Requieren reposición' : 'Niveles óptimos'}
                   </div>
                 </div>
@@ -457,13 +440,13 @@ function Admin() {
 
               <div className="col-12 col-sm-6 col-xl-3">
                 <div className="admin-kpi-box">
-                  <div className="text-secondary small fw-semibold text-uppercase" style={{ fontSize: '0.75rem', letterSpacing: '0.5px' }}>
+                  <div className="admin-kpi-title text-secondary small fw-semibold text-uppercase">
                     Valor Total Inventario
                   </div>
-                  <div className="fs-3 fw-bold text-dark mt-1 font-monospace" style={{ fontSize: '1.4rem' }}>
+                  <div className="admin-kpi-value-mono fw-bold text-dark mt-1 font-monospace">
                     {formatearCLP(metricas.valorInventario)}
                   </div>
-                  <div className="text-muted small mt-1" style={{ fontSize: '0.8rem' }}>
+                  <div className="admin-kpi-subtitle text-muted small mt-1">
                     Precio venta × stock
                   </div>
                 </div>
@@ -471,13 +454,13 @@ function Admin() {
 
               <div className="col-12 col-sm-6 col-xl-3">
                 <div className="admin-kpi-box">
-                  <div className="text-secondary small fw-semibold text-uppercase" style={{ fontSize: '0.75rem', letterSpacing: '0.5px' }}>
+                  <div className="admin-kpi-title text-secondary small fw-semibold text-uppercase">
                     Ventas Registradas
                   </div>
-                  <div className="fs-3 fw-bold text-dark mt-1 font-monospace" style={{ fontSize: '1.4rem' }}>
+                  <div className="admin-kpi-value-mono fw-bold text-dark mt-1 font-monospace">
                     {formatearCLP(metricas.totalVentas)}
                   </div>
-                  <div className="text-muted small mt-1" style={{ fontSize: '0.8rem' }}>
+                  <div className="admin-kpi-subtitle text-muted small mt-1">
                     {metricas.totalOrdenes} órdenes procesadas
                   </div>
                 </div>
@@ -530,7 +513,7 @@ function Admin() {
                                 <td className="font-monospace small text-muted">#{p.idProducto}</td>
                                 <td>
                                   <div className="fw-semibold text-dark small">{p.nombre}</div>
-                                  <div className="text-muted" style={{ fontSize: '0.78rem' }}>{p.marca}</div>
+                                  <div className="admin-item-brand text-muted">{p.marca}</div>
                                 </td>
                                 <td><span className="badge bg-light text-dark border rounded-1">{p.categoria}</span></td>
                                 <td className="text-center">
@@ -616,14 +599,14 @@ function Admin() {
               <table className="table admin-table align-middle mb-0">
                 <thead>
                   <tr>
-                    <th style={{ width: '45px' }}></th>
+                    <th className="admin-th-thumb"></th>
                     <th>Código</th>
                     <th>Nombre / Descripción</th>
                     <th>Marca</th>
                     <th>Categoría</th>
                     <th className="text-end">Precio (CLP)</th>
                     <th className="text-center">Stock</th>
-                    <th className="text-end" style={{ width: '130px' }}>Acciones</th>
+                    <th className="admin-th-actions text-end">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -642,8 +625,7 @@ function Admin() {
                             <img 
                               src={prod.imagen || '/banner-web.webp'} 
                               alt={prod.nombre} 
-                              className="border rounded-1 bg-white object-fit-contain"
-                              style={{ width: '38px', height: '38px' }}
+                              className="admin-prod-thumb border rounded-1 bg-white object-fit-contain"
                               onError={(e) => { e.target.src = '/banner-web.webp'; }}
                             />
                           </td>
@@ -741,9 +723,9 @@ function Admin() {
                       <td className="small text-muted">{ord.fecha}</td>
                       <td>
                         <div className="fw-semibold text-dark small">{ord.cliente.nombre}</div>
-                        <div className="text-muted" style={{ fontSize: '0.75rem' }}>{ord.cliente.email}</div>
+                        <div className="admin-order-email text-muted">{ord.cliente.email}</div>
                       </td>
-                      <td className="small text-muted text-truncate" style={{ maxWidth: '220px' }}>
+                      <td className="admin-td-address small text-muted text-truncate">
                         {ord.cliente.direccion}
                       </td>
                       <td className="small text-secondary">{ord.metodoPago}</td>
@@ -779,7 +761,7 @@ function Admin() {
       {/* MODAL: FORMULARIO AGREGAR / EDITAR PRODUCTO (CUADRADO)         */}
       {/* ============================================================== */}
       {modalAbierto && (
-        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.6)' }} tabIndex="-1">
+        <div className="modal modal-backdrop-custom fade show d-block" tabIndex="-1">
           <div className="modal-dialog modal-lg modal-dialog-centered">
             <div className="modal-content rounded-1 border-0 shadow">
               
@@ -912,7 +894,7 @@ function Admin() {
       {/* MODAL: CONFIRMACIÓN DE ELIMINACIÓN                             */}
       {/* ============================================================== */}
       {productoAEliminar && (
-        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.6)' }} tabIndex="-1">
+        <div className="modal modal-backdrop-custom fade show d-block" tabIndex="-1">
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content rounded-1 border-0 shadow">
               <div className="modal-body p-4 text-center">
@@ -946,7 +928,7 @@ function Admin() {
       {/* MODAL: VER BOLETA                                              */}
       {/* ============================================================== */}
       {ordenSeleccionada && (
-        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.6)' }} tabIndex="-1">
+        <div className="modal modal-backdrop-custom fade show d-block" tabIndex="-1">
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content rounded-1 border-0 shadow">
               <div className="modal-header border-bottom py-2 px-3 bg-light">

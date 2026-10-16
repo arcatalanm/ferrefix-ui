@@ -62,26 +62,12 @@ function ContactoCotizacion() {
         <div className="bg-white border rounded-1 p-4 p-md-5 mb-4 shadow-sm">
           <div className="row align-items-center g-4">
             <div className="col-12 col-lg-8">
-              <span className="badge bg-dark text-warning px-3 py-2 rounded-1 fw-semibold mb-2">
-                Atención a Constructoras y Particulares
-              </span>
-              <h1 className="h2 fw-bold text-dark mb-2" style={{ fontFamily: '"Oswald", sans-serif' }}>
+              <h1 className="h2 fw-bold text-dark mb-2 font-oswald">
                 Cotizaciones por Volumen y Contacto Comercial
               </h1>
               <p className="text-secondary mb-0">
                 ¿Necesitas presupuestos especiales para tu obra, compra por mayor o arriendo corporativo? Completa el formulario y un asesor técnico de Ferrefix te enviará la propuesta formal en menos de 2 horas hábiles.
               </p>
-            </div>
-            <div className="col-12 col-lg-4 text-lg-end">
-              <a 
-                href="https://web.whatsapp.com/" 
-                target="_blank" 
-                rel="noreferrer" 
-                className="btn btn-warning text-dark fw-bold px-4 py-3 rounded-1 shadow-sm d-inline-flex align-items-center gap-2"
-              >
-                <i className="bi bi-whatsapp fs-5"></i>
-                WhatsApp Directo Faenas
-              </a>
             </div>
           </div>
         </div>
@@ -125,7 +111,7 @@ function ContactoCotizacion() {
             <div className="bg-white border rounded-1 shadow-sm p-4 p-md-5">
               
               <div className="border-bottom pb-3 mb-4">
-                <h2 className="h4 fw-bold text-dark mb-1" style={{ fontFamily: '"Oswald", sans-serif' }}>
+                <h2 className="h4 fw-bold text-dark mb-1 font-oswald">
                   Formulario de Solicitud de Cotización
                 </h2>
                 <p className="text-muted small mb-0">

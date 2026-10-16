@@ -125,32 +125,19 @@ function Arriendos() {
           <div className="row g-0 align-items-center">
             
             <div className="col-12 col-lg-6 p-4 p-md-5">
-              <span className="badge bg-dark text-warning px-3 py-2 rounded-1 fw-semibold mb-2">
-                Línea Demolición y Obra Pesada
-              </span>
-              <h1 className="display-6 fw-bold text-dark mb-2" style={{ fontFamily: '"Oswald", sans-serif' }}>
+              <h1 className="display-6 fw-bold text-dark mb-2 font-oswald">
                 Arriendo de Maquinaria Profesional en Santiago
               </h1>
               <p className="text-secondary lh-base mb-4">
                 Equipos de alto rendimiento listos para operar en faena sin requerir inversión en compras de capital. Registro y verificación de arriendo por <strong>RUN de cliente</strong> con entrega garantizada y servicio técnico en obra.
               </p>
-              
-              <div className="d-flex flex-wrap gap-2">
-                <a href="#catalogo-maquinas" className="btn btn-warning text-dark fw-bold px-4 py-2 rounded-1 shadow-sm">
-                  Ver Maquinarias Disponibles
-                </a>
-                <Link to="/contacto" className="btn btn-outline-dark px-4 py-2 rounded-1">
-                  Cotizar Arriendo por Mes
-                </Link>
-              </div>
             </div>
 
             <div className="col-12 col-lg-6 bg-dark text-center">
               <img 
                 src="/arriendo-bosch.jpg" 
                 alt="Bosch Potencia Imparable - Martillo Demoledor en Arriendo"
-                className="w-100 object-fit-cover"
-                style={{ maxHeight: '380px' }}
+                className="arriendos-hero-img w-100 object-fit-cover"
               />
             </div>
 
@@ -161,14 +148,11 @@ function Arriendos() {
         <div id="catalogo-maquinas" className="mb-4">
           <div className="d-flex justify-content-between align-items-center mb-3">
             <div>
-              <h2 className="h4 fw-bold text-dark mb-0" style={{ fontFamily: '"Oswald", sans-serif' }}>
+              <h2 className="h4 fw-bold text-dark mb-0 font-oswald">
                 Equipos y Maquinarias en Arriendo
               </h2>
               <span className="text-muted small">Tarifas diarias transparentes con mantención oficial de fábrica</span>
             </div>
-            <span className="badge bg-light text-dark border rounded-1">
-              {maquinarias.filter(m => m.estado === 'Disponible').length} Disponibles para retiro
-            </span>
           </div>
 
           <div className="row g-4">
@@ -183,9 +167,8 @@ function Arriendos() {
                       <div className="col-12 col-sm-5 bg-platino d-flex align-items-center justify-content-center p-3 border-end border-light-subtle">
                         <img 
                           src={maq.imagen} 
-                          alt={maq.nombre}
-                          className="img-fluid object-fit-contain"
-                          style={{ maxHeight: '200px' }}
+                          alt={maq.nombre} 
+                          className="arriendo-item-img img-fluid object-fit-contain"
                           onError={(e) => { e.target.src = '/banner-web.webp'; }}
                         />
                       </div>
@@ -193,9 +176,6 @@ function Arriendos() {
                       <div className="col-12 col-sm-7 p-3 d-flex flex-column justify-content-between">
                         <div>
                           <div className="d-flex justify-content-between align-items-start mb-1">
-                            <span className="badge bg-light text-secondary border font-monospace" style={{ fontSize: '0.72rem' }}>
-                              #{maq.idMaquina}
-                            </span>
                             <span className={`badge rounded-1 ${estaDisponible ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-secondary text-white'}`}>
                               {estaDisponible ? '● Disponible' : '■ En Faena (Arrendada)'}
                             </span>
@@ -207,7 +187,7 @@ function Arriendos() {
                           <div className="text-muted small mb-2">{maq.marca} | {maq.categoria}</div>
 
                           <div className="small text-secondary mb-3">
-                            <ul className="list-unstyled mb-0" style={{ fontSize: '0.8rem' }}>
+                            <ul className="arriendo-specs-list list-unstyled mb-0">
                               {Object.entries(maq.especificaciones).slice(0, 3).map(([k, v]) => (
                                 <li key={k}><strong>{k}:</strong> {v}</li>
                               ))}
@@ -217,7 +197,7 @@ function Arriendos() {
 
                         <div className="border-top pt-2 d-flex justify-content-between align-items-center">
                           <div>
-                            <span className="text-muted small d-block" style={{ fontSize: '0.75rem' }}>Tarifa por día:</span>
+                            <span className="arriendo-rate-label text-muted small d-block">Tarifa por día:</span>
                             <span className="fw-bold text-dark font-monospace fs-5">
                               {formatearCLP(maq.tarifaDia)}
                             </span>
@@ -249,7 +229,7 @@ function Arriendos() {
       {/* MODAL: FORMULARIO DE ARRIENDO CON RUN Y SELECTOR DE COMUNA     */}
       {/* ============================================================== */}
       {maquinaSeleccionada && (
-        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.6)' }} tabIndex="-1">
+        <div className="modal modal-backdrop-custom fade show d-block" tabIndex="-1">
           <div className="modal-dialog modal-lg modal-dialog-centered">
             <div className="modal-content rounded-1 border-0 shadow">
               
@@ -282,7 +262,7 @@ function Arriendos() {
                     </div>
                   )}
 
-                  <h4 className="h6 fw-bold text-dark text-uppercase mb-3" style={{ letterSpacing: '0.5px' }}>
+                  <h4 className="arriendo-modal-section-title h6 fw-bold text-dark text-uppercase mb-3">
                     1. Identificación del Cliente (Validación de RUN)
                   </h4>
 
@@ -299,7 +279,7 @@ function Arriendos() {
                         onChange={(e) => setForm({ ...form, rutUsuario: e.target.value })}
                         required
                       />
-                      <small className="text-muted" style={{ fontSize: '0.72rem' }}>Requerido para la emisión del contrato</small>
+                      <small className="arriendo-help-text text-muted">Requerido para la emisión del contrato</small>
                     </div>
 
                     <div className="col-12 col-md-6">
@@ -345,7 +325,7 @@ function Arriendos() {
                     </div>
                   </div>
 
-                  <h4 className="h6 fw-bold text-dark text-uppercase mb-3" style={{ letterSpacing: '0.5px' }}>
+                  <h4 className="arriendo-modal-section-title h6 fw-bold text-dark text-uppercase mb-3">
                     2. Ubicación de la Faena / Obra
                   </h4>
 
@@ -404,7 +384,7 @@ function Arriendos() {
                     </div>
                   </div>
 
-                  <h4 className="h6 fw-bold text-dark text-uppercase mb-3" style={{ letterSpacing: '0.5px' }}>
+                  <h4 className="arriendo-modal-section-title h6 fw-bold text-dark text-uppercase mb-3">
                     3. Período de Arriendo y Cálculo de Tarifa
                   </h4>
 
@@ -468,7 +448,7 @@ function Arriendos() {
       {/* MODAL: COMPROBANTE DE CONTRATO DE ARRIENDO GENERADO            */}
       {/* ============================================================== */}
       {contratoGenerado && (
-        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.6)' }} tabIndex="-1">
+        <div className="modal modal-backdrop-custom fade show d-block" tabIndex="-1">
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content rounded-1 border-0 shadow">
               <div className="modal-header border-bottom py-2 px-3 bg-light">
