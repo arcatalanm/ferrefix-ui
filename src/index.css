@@ -1797,3 +1797,350 @@
   aspect-ratio: 1320 / 1560;
   height: auto;
 }
+
+/* ==========================================================================
+   Páginas Informativas (Fletes, Garantías, FAQ, Términos y Privacidad)
+   ========================================================================== */
+
+.info-page {
+  background-color: var(--color-platino);
+}
+
+/* Migas de pan */
+.info-breadcrumb {
+  font-size: 0.85rem;
+}
+
+.info-breadcrumb .breadcrumb-item a {
+  color: #6b7280;
+  text-decoration: none;
+}
+
+.info-breadcrumb .breadcrumb-item a:hover {
+  color: var(--color-bronce);
+}
+
+.info-breadcrumb .breadcrumb-item.active {
+  color: var(--color-oscuro);
+  font-weight: 600;
+}
+
+/* -- Espacios reservados para imágenes (EspacioImagen.jsx) --
+   Cada espacio tiene un tamaño limitado y recorta la imagen con object-fit,
+   de modo que cualquier imagen colocada respeta el marco definido. */
+.espacio-imagen {
+  position: relative;
+  display: block;
+  width: 100%;
+  max-height: 420px;
+  margin: 0;
+  overflow: hidden;
+  background-color: var(--color-platino);
+  border: 1px dashed #cbd5e1;
+  border-radius: 6px;
+}
+
+.espacio-imagen--banner { aspect-ratio: 21 / 9; }
+.espacio-imagen--16x9 { aspect-ratio: 16 / 9; }
+.espacio-imagen--4x3 { aspect-ratio: 4 / 3; }
+.espacio-imagen--3x2 { aspect-ratio: 3 / 2; }
+.espacio-imagen--1x1 { aspect-ratio: 1 / 1; }
+
+.espacio-imagen-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-height: 420px;
+  object-fit: cover;
+}
+
+.espacio-imagen-vacio {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  text-align: center;
+  color: #94a3b8;
+}
+
+.espacio-imagen-vacio i {
+  font-size: 2.25rem;
+}
+
+.espacio-imagen-vacio span {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* -- Tarjetas y bloques de contenido -- */
+.info-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e5e8;
+  border-radius: 4px;
+}
+
+.info-card--ambar {
+  border-top: 3px solid var(--color-ambar);
+}
+
+.info-card--dorado {
+  border-top: 3px solid var(--color-dorado);
+}
+
+.info-section-title {
+  font-family: "Oswald", sans-serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--color-oscuro);
+}
+
+.info-subtitle {
+  font-family: "Oswald", sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-oscuro);
+}
+
+.info-text {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: #4b5563;
+}
+
+.info-mini-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e5e8;
+  border-top: 3px solid var(--color-ambar);
+  border-radius: 4px;
+}
+
+.info-mini-icon {
+  font-size: 1.6rem;
+  color: var(--color-ambar);
+}
+
+.info-mini-title {
+  font-weight: 700;
+  color: var(--color-oscuro);
+}
+
+.info-mini-text {
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: #6b7280;
+}
+
+.info-highlight {
+  font-size: 0.9rem;
+  color: var(--color-oscuro);
+  background-color: #fdf6e3;
+  border-left: 4px solid var(--color-ambar);
+}
+
+.info-info-pill {
+  padding: 0.6rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-oscuro);
+  background-color: var(--color-platino);
+  border: 1px solid #e2e5e8;
+  border-radius: 4px;
+}
+
+/* -- Pasos numerados -- */
+.info-step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  font-family: "Oswald", sans-serif;
+  font-weight: 700;
+  color: var(--color-dorado);
+  background-color: var(--color-oscuro);
+  border-radius: 50%;
+}
+
+/* -- Listas con viñetas de marca -- */
+.info-list {
+  padding-left: 0;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  color: #4b5563;
+  list-style: none;
+}
+
+.info-list li {
+  position: relative;
+  padding-left: 1.4rem;
+  margin-bottom: 0.5rem;
+  line-height: 1.6;
+}
+
+.info-list li::before {
+  content: "\F272"; /* bi-check2 */
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-family: "bootstrap-icons";
+  font-weight: 700;
+  color: var(--color-ambar);
+}
+
+.info-list--check li::before {
+  color: #1b7a34;
+}
+
+.info-list--cross li::before {
+  content: "\D7";
+  font-family: inherit;
+  font-size: 1.1rem;
+  line-height: 1.4;
+  color: #dc3545;
+}
+
+/* -- Tabla de cobertura (Fletes) -- */
+.info-table {
+  font-size: 0.9rem;
+}
+
+.info-table thead th {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--color-oscuro);
+  background-color: var(--color-platino);
+  border-bottom: 1px solid #cbd5e1;
+}
+
+.info-table tbody td {
+  color: #4b5563;
+  border-color: #eef1f3;
+}
+
+/* -- Acordeón de Preguntas Frecuentes -- */
+.faq-item {
+  overflow: hidden;
+  background-color: #ffffff;
+  border: 1px solid #e2e5e8;
+  border-radius: 4px;
+}
+
+.faq-item + .faq-item {
+  margin-top: 0.75rem;
+}
+
+.faq-button {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 1rem 1.1rem;
+  font-weight: 600;
+  text-align: left;
+  color: var(--color-oscuro);
+  background-color: #ffffff;
+  border: 0;
+}
+
+.faq-button:hover {
+  background-color: var(--color-platino);
+}
+
+.faq-categoria {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--color-bronce);
+}
+
+.faq-pregunta {
+  font-size: 0.95rem;
+}
+
+.faq-chevron {
+  flex-shrink: 0;
+  color: var(--color-bronce);
+  transition: transform 0.2s ease;
+}
+
+.faq-chevron--abierta {
+  transform: rotate(180deg);
+}
+
+.faq-body {
+  max-height: 0;
+  padding: 0 1.1rem;
+  overflow: hidden;
+  transition: max-height 0.25s ease, padding 0.25s ease;
+}
+
+.faq-body--abierta {
+  max-height: 400px;
+  padding-bottom: 1rem;
+}
+
+.faq-body p {
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: #4b5563;
+}
+
+/* -- Barra lateral e índice de contenido -- */
+.info-index-link {
+  display: block;
+  padding: 0.45rem 0;
+  font-size: 0.85rem;
+  color: #4b5563;
+  text-decoration: none;
+  border-bottom: 1px dashed #e2e5e8;
+}
+
+.info-index-link:last-child {
+  border-bottom: 0;
+}
+
+.info-index-link:hover {
+  color: var(--color-bronce);
+}
+
+/* Barra lateral del índice legal (sticky en escritorio) */
+.info-sidebar {
+  position: sticky;
+  top: 90px;
+}
+
+.info-sidebar-foot {
+  border-top: 1px solid #eef1f3;
+}
+
+@media (max-width: 991.98px) {
+  .info-sidebar {
+    position: static;
+  }
+}
+
+/* -- Secciones legales (Términos / Privacidad) -- */
+.info-legal-section {
+  padding-bottom: 0.5rem;
+  margin-bottom: 1.25rem;
+  scroll-margin-top: 90px;
+}
+
+.info-legal-section + .info-legal-section {
+  padding-top: 1.25rem;
+  border-top: 1px solid #eef1f3;
+}
+
+.info-legal-section .info-text:last-child {
+  margin-bottom: 0;
+}
