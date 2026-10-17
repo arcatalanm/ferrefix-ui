@@ -1,11 +1,12 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import OfertaDestacada from '../components/OfertaDestacada';
-import { obtenerProductos, EVENTO_PRODUCTOS_ACTUALIZADOS } from '../data/productos';
+import BannerPromocional from '../components/BannerPromocional';
 
 import dewaltImg from '../assets/banners/dewalt.webp';
 import makitaImg from '../assets/banners/makita.webp';
 import boschImg from '../assets/banners/bosch.webp';
+import bannerSeguridadImg from '../assets/banners/banner-seguridad.webp';
 
 import construccionImg from '../assets/categories/construccion.webp';
 import maderasImg from '../assets/categories/maderas.webp';
@@ -17,12 +18,10 @@ import pinturasImg from '../assets/categories/pinturas.webp';
 import ceramicasImg from '../assets/categories/ceramicas.webp';
 import seguridadImg from '../assets/categories/seguridad.webp';
 
-import uno from '../assets/sales/uno.jpg'
-import dos from '../assets/sales/dos.jpg'
-import tres from '../assets/sales/tres.jpg'
-import cuatro from '../assets/sales/cuatro.jpg'
-import cinco from '../assets/sales/cinco.jpg'
-import seis from '../assets/sales/seis.jpg'
+import uno from '../assets/sales/guantes-de-nitrilo-card.webp'
+import dos from '../assets/sales/lentes-de-protecci-n-card.webp'
+import cinco from '../assets/sales/chaleco-reflectante-card.webp'
+import seis from '../assets/sales/casco-de-construcci-n-est-ndar-card.webp'
 
 const IMAGENES_BANNER = [
   {
@@ -57,12 +56,6 @@ const CATEGORIAS = [
 function Home() {
   const [slideActivo, setSlideActivo] = useState(0);
 
-  // Estado dinámico de productos desde localStorage
-  const [productos, setProductos] = useState(() => obtenerProductos());
-  
-  // Criterio de ordenamiento en Home: 'ultimas-llegadas' | 'alfabetico' | 'todos'
-  const [criterioOrden, setCriterioOrden] = useState('ultimas-llegadas');
-
   // Intervalo automático del carrusel de banners
   useEffect(() => {
     const intervalo = setInterval(() => {
@@ -72,18 +65,6 @@ function Home() {
     return () => clearInterval(intervalo);
   }, []);
 
-  // Escuchar en tiempo real cambios en localStorage (cuando el admin añade o se realiza una venta)
-  useEffect(() => {
-    const sincronizarProductos = () => {
-      setProductos(obtenerProductos());
-    };
-
-    window.addEventListener(EVENTO_PRODUCTOS_ACTUALIZADOS, sincronizarProductos);
-    return () => {
-      window.removeEventListener(EVENTO_PRODUCTOS_ACTUALIZADOS, sincronizarProductos);
-    };
-  }, []);
-
   const retrocederSlide = () => {
     setSlideActivo((prev) => (prev - 1 + IMAGENES_BANNER.length) % IMAGENES_BANNER.length);
   };
@@ -91,21 +72,6 @@ function Home() {
   const avanzarSlide = () => {
     setSlideActivo((prev) => (prev + 1) % IMAGENES_BANNER.length);
   };
-
-  // Procesar y ordenar productos según el criterio seleccionado por el usuario
-  const productosProcesados = useMemo(() => {
-    const lista = [...productos];
-    if (criterioOrden === 'ultimas-llegadas') {
-      // Como los nuevos productos se agregan al final de la lista en localStorage,
-      // al invertir la lista las últimas llegadas aparecen en primera posición.
-      return lista.reverse();
-    }
-    if (criterioOrden === 'alfabetico') {
-      return lista.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' }));
-    }
-    // Orden natural de guardado
-    return lista;
-  }, [productos, criterioOrden]);
 
   return (
     <div className="home-content">
@@ -174,11 +140,11 @@ function Home() {
         <div className="container">
 
           {/* Encabezado */}
-          <div className="text-center mb-4">
-            <h2 className="cat-title fw-bold mb-1">
+          <div className="marca-centro mb-4">
+            <h2 className="cat-title mb-1">
               Categorías destacadas
             </h2>
-            <p className="mb-0 text-secondary">
+            <p className="marca-parrafo mb-0">
               Todo lo que necesitas para tus proyectos, obras y reparaciones.
             </p>
           </div>
@@ -188,20 +154,20 @@ function Home() {
             <div className="row row-cols-3 row-cols-md-5 row-cols-xl-auto justify-content-center justify-content-xl-between flex-xl-nowrap g-3 g-xl-2 align-items-start">
               {CATEGORIAS.map((cat) => (
                 <div key={cat.id} className="col">
-                  <Link 
-                    to={`/catalogo?categoria=${encodeURIComponent(cat.nombre)}`} 
-                    className="categoria-item-enlace text-decoration-none text-center d-block"
+                  <Link
+                    to={`/catalogo?categoria=${encodeURIComponent(cat.nombre)}`}
+                    className="categoria-item-enlace marca-centro d-block"
                   >
                     <div className="categoria-circulo-wrapper ratio ratio-1x1 rounded-circle overflow-hidden mx-auto shadow-sm">
-                      <img 
-                        src={cat.img} 
-                        alt={cat.nombre} 
-                        className="w-100 h-100 object-fit-cover" 
+                      <img
+                        src={cat.img}
+                        alt={cat.nombre}
+                        className="w-100 h-100 object-fit-cover"
                         loading="lazy"
                       />
                     </div>
                     <div className="categoria-badge-pill rounded-pill shadow-sm py-2 px-2 mt-2 mx-auto">
-                      <span className="categoria-texto-label fw-medium d-block text-truncate">
+                      <span className="categoria-texto-label d-block marca-truncar">
                         {cat.nombre}
                       </span>
                     </div>
@@ -213,17 +179,19 @@ function Home() {
 
         </div>
       </section>
-      {/*  
-      <OfertaDestacada 
-        titulo={'Tecnologia'}
-        img2={uno} link2="/categoria"
-        img3={dos} link3="/categoria"
-        img4={tres} link4="/categoria"
-        img5={cuatro} link5="/categoria"
-        img6={cinco} link6="/categoria"
-        img7={seis} link7="/categoria"
+
+      {/* Banner promocional de seguridad */}
+      <BannerPromocional
+        imagen={bannerSeguridadImg}
+        alt="Banner promocional de productos de seguridad"
       />
-      */}
+
+      <OfertaDestacada
+        img1={uno} link1="/categoria"
+        img2={dos} link2="/categoria"
+        img3={cinco} link3="/categoria"
+        img4={seis} link4="/categoria"
+      />
     </div>
   );
 }

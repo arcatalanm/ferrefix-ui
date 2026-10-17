@@ -11,31 +11,28 @@ import {
 import { obtenerSesionActiva } from '../data/auth';
 import { crearOrden } from '../data/ordenes';
 import { obtenerProductoPorId, actualizarProducto } from '../data/productos';
+import { REGIONES_CHILE, REGION_POR_DEFECTO, obtenerComunas, obtenerComunaPorDefecto } from '../data/chile';
+import {
+  validadores,
+  validarFormulario,
+  formatearRut,
+  formatearTelefono
+} from '../data/validaciones';
 
-const REGIONES_CHILE = [
-  {
-    region: 'Región Metropolitana',
-    comunas: [
-      'Santiago', 'Providencia', 'Las Condes', 'Ñuñoa', 'Cerrillos',
-      'Maipú', 'Puente Alto', 'La Florida', 'San Miguel', 'San Bernardo',
-      'Quilicura', 'Pudahuel', 'Recoleta', 'Independencia', 'Huechuraba',
-      'Vitacura', 'Lo Barnechea', 'Peñalolén', 'Macul', 'Estación Central'
-    ]
-  },
-  {
-    region: 'Región de Valparaíso',
-    comunas: ['Valparaíso', 'Viña del Mar', 'Quilpué', 'Villa Alemana', 'Concón', 'Quillota', 'San Antonio']
-  },
-  {
-    region: 'Región del Biobío',
-    comunas: ['Concepción', 'Talcahuano', 'San Pedro de la Paz', 'Chiguayante', 'Coronel', 'Los Ángeles']
-  }
-];
+// Reglas de validación del formulario de despacho.
+const REGLAS_VALIDACION = {
+  nombre: validadores.nombre,
+  rut: validadores.rut,
+  email: validadores.email,
+  telefono: validadores.telefono,
+  direccion: validadores.direccion,
+  comuna: validadores.requerido('La comuna')
+};
 
 function Carrito() {
   const [items, setItems] = useState(obtenerCarrito);
   const [totales, setTotales] = useState(obtenerTotalesCarrito);
-  const [sesion, setSesion] = useState(obtenerSesionActiva);
+  const [sesion] = useState(obtenerSesionActiva);
 
   // Pasos: 'carrito' | 'checkout' | 'exito' | 'error'
   const [pasoActual, setPasoActual] = useState('carrito');
@@ -43,18 +40,21 @@ function Carrito() {
   const [alertaStock, setAlertaStock] = useState(null);
 
   // Formulario de despacho (Inicia vacío con placeholders de ejemplo; autocompleta nombre y correo si hay sesión)
-  const [regionSeleccionada, setRegionSeleccionada] = useState('Región Metropolitana');
+  const [regionSeleccionada, setRegionSeleccionada] = useState(REGION_POR_DEFECTO);
   const [formCliente, setFormCliente] = useState({
     nombre: sesion ? sesion.nombre : '',
+    rut: '',
     email: sesion ? sesion.email : '',
     telefono: '',
     direccion: '',
-    region: 'Región Metropolitana',
-    comuna: 'Santiago',
+    region: REGION_POR_DEFECTO,
+    comuna: obtenerComunaPorDefecto(REGION_POR_DEFECTO),
     indicaciones: '',
     metodoEntrega: 'despacho', // 'despacho' | 'retiro'
     metodoPago: 'WebPay Plus (Débito)'
   });
+  const [errores, setErrores] = useState({});
+  const [touched, setTouched] = useState({});
 
   // Sincronizar en tiempo real
   useEffect(() => {
@@ -95,11 +95,46 @@ function Carrito() {
     }
   };
 
+  // ---- Validación del formulario de despacho ----
+  const validarCampo = (campo, valor) => {
+    const validador = REGLAS_VALIDACION[campo];
+    if (!validador) return;
+    const mensaje = validador(valor);
+    setErrores((prev) => ({ ...prev, [campo]: mensaje }));
+  };
+
+  const handleChange = (campo, valor) => {
+    setFormCliente((prev) => ({ ...prev, [campo]: valor }));
+    if (touched[campo]) validarCampo(campo, valor);
+  };
+
+  const handleBlur = (campo) => {
+    setTouched((prev) => ({ ...prev, [campo]: true }));
+    validarCampo(campo, formCliente[campo]);
+  };
+
+  const claseCampo = (campo, base = 'form-control form-control-sm rounded-1') =>
+    `${base}${errores[campo] ? ' is-invalid' : ''}`;
+
+  const handleCambiarRegion = (nuevaRegion) => {
+    setRegionSeleccionada(nuevaRegion);
+    const comuna = obtenerComunaPorDefecto(nuevaRegion);
+    setFormCliente((prev) => ({ ...prev, region: nuevaRegion, comuna }));
+    setErrores((prev) => ({ ...prev, comuna: '' }));
+  };
+
   // Procesar orden / checkout
   const handleProcesarCompra = (e) => {
     e.preventDefault();
 
     if (items.length === 0) return;
+
+    const nuevosErrores = validarFormulario(REGLAS_VALIDACION, formCliente);
+    setErrores(nuevosErrores);
+    setTouched(
+      Object.keys(REGLAS_VALIDACION).reduce((acc, campo) => ({ ...acc, [campo]: true }), {})
+    );
+    if (Object.keys(nuevosErrores).length > 0) return;
 
     // 1. Descontar stock de la base de datos simulada
     items.forEach((item) => {
@@ -115,6 +150,7 @@ function Carrito() {
       idOrden: `ORD-${Date.now().toString().slice(-6)}`,
       cliente: {
         nombre: formCliente.nombre,
+        rut: formCliente.rut,
         email: formCliente.email,
         telefono: formCliente.telefono,
         direccion: `${formCliente.direccion}, ${formCliente.comuna}, ${formCliente.region}`
@@ -138,15 +174,15 @@ function Carrito() {
   };
 
   return (
-    <div className="carrito-page py-4 py-lg-5 bg-light min-vh-75">
+    <div className="carrito-page py-4 py-lg-5">
       <div className="container">
 
         {/* Migas de pan */}
         <nav aria-label="breadcrumb" className="mb-4">
-          <ol className="breadcrumb small mb-0">
-            <li className="breadcrumb-item"><Link to="/" className="text-decoration-none text-muted">Inicio</Link></li>
-            <li className="breadcrumb-item"><Link to="/catalogo" className="text-decoration-none text-muted">Catálogo</Link></li>
-            <li className="breadcrumb-item active text-dark fw-semibold" aria-current="page">
+          <ol className="breadcrumb carrito-breadcrumb mb-0">
+            <li className="breadcrumb-item"><Link to="/">Inicio</Link></li>
+            <li className="breadcrumb-item"><Link to="/catalogo">Catálogo</Link></li>
+            <li className="breadcrumb-item active" aria-current="page">
               {pasoActual === 'carrito' && 'Carrito de Compras'}
               {pasoActual === 'checkout' && 'Paso de Pago y Despacho'}
               {pasoActual === 'exito' && 'Confirmación de Compra'}
@@ -157,7 +193,7 @@ function Carrito() {
         {/* Alerta de validación de stock */}
         {alertaStock && (
           <div className="alert alert-warning alert-dismissible fade show rounded-2 shadow-sm d-flex align-items-center mb-4" role="alert">
-            <i className="bi bi-exclamation-triangle-fill fs-5 me-2"></i>
+            <i className="bi bi-exclamation-triangle-fill marca-icono me-2"></i>
             <div>{alertaStock}</div>
             <button type="button" className="btn-close" onClick={() => setAlertaStock(null)}></button>
           </div>
@@ -170,10 +206,10 @@ function Carrito() {
           <div>
             <div className="d-flex justify-content-between align-items-center mb-3">
               <div>
-                <h1 className="h3 fw-bold text-dark mb-1 font-oswald">
+                <h1 className="marca-titulo marca-tam-2 mb-1">
                   Carrito de Compras
                 </h1>
-                <p className="text-muted small mb-0">
+                <p className="marca-nota mb-0">
                   Revisa tus productos seleccionados y confirma las cantidades antes de pagar.
                 </p>
               </div>
@@ -192,13 +228,13 @@ function Carrito() {
 
             {items.length === 0 ? (
               // Carrito Vacío
-              <div className="bg-white border rounded-1 p-5 text-center my-4 shadow-sm">
-                <i className="bi bi-cart-x text-muted display-2 mb-3 d-block"></i>
-                <h2 className="h4 fw-bold text-dark mb-2">Tu carrito está actualmente vacío</h2>
-                <p className="text-muted mb-4 small">
+              <div className="bg-white border rounded-1 p-5 marca-centro my-4 shadow-sm">
+                <i className="bi bi-cart-x carrito-vacio-icon mb-3 d-block"></i>
+                <h2 className="marca-titulo marca-tam-4 mb-2">Tu carrito está actualmente vacío</h2>
+                <p className="marca-nota mb-4">
                   No has añadido herramientas ni materiales aún. Explora nuestro catálogo con stock disponible.
                 </p>
-                <Link to="/catalogo" className="btn btn-warning fw-semibold text-dark rounded-1 px-4 py-2 shadow-sm">
+                <Link to="/catalogo" className="btn btn-ambar marca-strong rounded-1 px-4 py-2 shadow-sm">
                   <i className="bi bi-box-seam me-2"></i>
                   Explorar Catálogo de Productos
                 </Link>
@@ -212,14 +248,14 @@ function Carrito() {
                   <div className="bg-white border rounded-1 shadow-sm p-3">
                     <div className="table-responsive">
                       <table className="table align-middle mb-0">
-                        <thead className="table-light small">
+                        <thead className="table-light marca-fino">
                           <tr>
                             <th className="cart-th-photo">Foto</th>
                             <th>Producto</th>
-                            <th className="text-end">Precio</th>
-                            <th className="cart-th-qty text-center">Cantidad</th>
-                            <th className="text-end">Subtotal</th>
-                            <th className="cart-th-action text-end"></th>
+                            <th className="marca-derecha">Precio</th>
+                            <th className="cart-th-qty marca-centro">Cantidad</th>
+                            <th className="marca-derecha">Subtotal</th>
+                            <th className="cart-th-action marca-derecha"></th>
                           </tr>
                         </thead>
                         <tbody>
@@ -236,16 +272,16 @@ function Carrito() {
                               <td>
                                 <Link 
                                   to={`/producto/${item.idProducto}`} 
-                                  className="text-decoration-none fw-semibold text-dark small d-block"
+                                  className="carrito-item-nombre d-block"
                                 >
                                   {item.nombre}
                                 </Link>
-                                <small className="text-muted">Marca: {item.marca} | Stock: {item.stock} unids.</small>
+                                <small className="marca-muted">Marca: {item.marca} | Stock: {item.stock} unids.</small>
                               </td>
-                              <td className="text-end small font-monospace">
+                              <td className="marca-derecha marca-nota marca-mono">
                                 {formatearCLP(item.precioVenta)}
                               </td>
-                              <td className="text-center">
+                              <td className="marca-centro">
                                 <div className="input-group input-group-sm">
                                   <button 
                                     className="btn btn-outline-secondary" 
@@ -256,7 +292,7 @@ function Carrito() {
                                   </button>
                                   <input 
                                     type="text" 
-                                    className="form-control text-center fw-bold bg-white"
+                                    className="form-control marca-centro marca-bold bg-white"
                                     value={item.cantidad} 
                                     readOnly 
                                   />
@@ -270,10 +306,10 @@ function Carrito() {
                                   </button>
                                 </div>
                               </td>
-                              <td className="text-end fw-bold font-monospace text-dark">
+                              <td className="marca-derecha marca-precio">
                                 {formatearCLP(item.precioVenta * item.cantidad)}
                               </td>
-                              <td className="text-end">
+                              <td className="marca-derecha">
                                 <button 
                                   type="button" 
                                   className="btn btn-sm btn-outline-danger border-0 p-1"
@@ -294,7 +330,7 @@ function Carrito() {
                     <Link to="/catalogo" className="btn btn-outline-dark btn-sm rounded-1">
                       ← Seguir Comprando
                     </Link>
-                    <span className="small text-muted">
+                    <span className="marca-nota">
                       Precios con IVA incluido.
                     </span>
                   </div>
@@ -303,23 +339,23 @@ function Carrito() {
                 {/* Columna Derecha: Tarjeta de Resumen */}
                 <div className="col-12 col-lg-4">
                   <div className="bg-white border rounded-1 shadow-sm p-4">
-                    <h2 className="h5 fw-bold text-dark mb-3 border-bottom pb-2">
+                    <h2 className="marca-titulo marca-tam-5 mb-3 border-bottom pb-2">
                       Resumen del Pedido
                     </h2>
 
-                    <div className="d-flex justify-content-between mb-2 small text-secondary">
+                    <div className="d-flex justify-content-between mb-2 marca-nota">
                       <span>Artículos ({totales.totalArticulos}):</span>
-                      <span className="font-monospace fw-semibold">{formatearCLP(totales.subtotal)}</span>
+                      <span className="marca-mono marca-strong">{formatearCLP(totales.subtotal)}</span>
                     </div>
 
-                    <div className="d-flex justify-content-between mb-3 small text-secondary">
+                    <div className="d-flex justify-content-between mb-3 marca-nota">
                       <span>Despacho a domicilio:</span>
-                      <span className="font-monospace fw-semibold text-success">
+                      <span className="marca-mono marca-strong marca-exito">
                         {totales.despacho === 0 ? 'Gratis' : formatearCLP(totales.despacho)}
                       </span>
                     </div>
 
-                    <div className="cart-promo-alert alert alert-info py-2 px-3 small rounded-1 mb-3">
+                    <div className="cart-promo-alert alert alert-info py-2 px-3 marca-fino rounded-1 mb-3">
                       <i className="bi bi-truck me-1"></i>
                       Despacho gratis en compras superiores a $50.000 en la Región Metropolitana.
                     </div>
@@ -327,22 +363,22 @@ function Carrito() {
                     <hr />
 
                     <div className="d-flex justify-content-between align-items-center mb-4">
-                      <span className="fw-bold fs-5 text-dark">Total:</span>
-                      <span className="fw-bold fs-4 text-dark font-monospace">
+                      <span className="marca-bold marca-tam-5">Total:</span>
+                      <span className="marca-total">
                         {formatearCLP(totales.total)}
                       </span>
                     </div>
 
                     <button 
                       type="button" 
-                      className="btn btn-ambar w-100 fw-bold text-dark py-3 rounded-1 shadow-sm mb-2"
+                      className="btn btn-ambar w-100 marca-bold py-3 rounded-1 shadow-sm mb-2"
                       onClick={() => setPasoActual('checkout')}
                     >
                       Continuar al Pago →
                     </button>
 
-                    <div className="text-center small text-muted mt-2">
-                      <i className="bi bi-shield-check me-1 text-success"></i>
+                    <div className="marca-centro marca-nota mt-2">
+                      <i className="bi bi-shield-check me-1 marca-exito"></i>
                       Compra 100% segura con garantía de fábrica
                     </div>
                   </div>
@@ -363,10 +399,10 @@ function Carrito() {
                 
                 <div className="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
                   <div>
-                    <h2 className="h4 fw-bold text-dark mb-1 font-oswald">
+                    <h2 className="marca-titulo marca-tam-4 mb-1">
                       Paso de Pago y Despacho
                     </h2>
-                    <p className="text-muted small mb-0">
+                    <p className="marca-nota mb-0">
                       Completa los datos de envío y selecciona tu método de pago.
                     </p>
                   </div>
@@ -380,14 +416,14 @@ function Carrito() {
                 </div>
 
                 {sesion ? (
-                  <div className="alert alert-light border small text-dark mb-4 rounded-1 d-flex align-items-center gap-2">
-                    <i className="bi bi-person-check-fill text-success fs-5"></i>
+                  <div className="alert alert-light border marca-fino mb-4 rounded-1 d-flex align-items-center gap-2">
+                    <i className="bi bi-person-check-fill marca-exito marca-icono"></i>
                     <div>
                       Sesión activa: <strong>{sesion.nombre}</strong> ({sesion.email}). Los datos han sido precargados automáticamente.
                     </div>
                   </div>
                 ) : (
-                  <div className="alert alert-warning small text-dark mb-4 rounded-1 d-flex align-items-center justify-content-between">
+                  <div className="alert alert-warning marca-fino mb-4 rounded-1 d-flex align-items-center justify-content-between">
                     <div>
                       <i className="bi bi-info-circle-fill me-1"></i>
                       ¿Ya tienes cuenta? Inicia sesión para autocompletar tus datos.
@@ -398,67 +434,87 @@ function Carrito() {
                   </div>
                 )}
 
-                <form onSubmit={handleProcesarCompra}>
-                  <h3 className="checkout-section-title h6 fw-bold text-dark text-uppercase mb-3">
+                {Object.values(errores).some(Boolean) && (
+                  <div className="alert alert-danger marca-fino mb-4 rounded-1 d-flex align-items-center" role="alert">
+                    <i className="bi bi-exclamation-triangle-fill me-2"></i>
+                    <div>Revisa los campos marcados en rojo antes de confirmar tu compra.</div>
+                  </div>
+                )}
+
+                <form onSubmit={handleProcesarCompra} noValidate>
+                  <h3 className="checkout-section-title marca-titulo marca-tam-6 mb-3">
                     1. Información del Cliente
                   </h3>
 
                   <div className="row g-3 mb-4">
-                    <div className="col-12 col-md-4">
-                      <label className="form-label small fw-semibold">Nombre y Apellido *</label>
+                    <div className="col-12 col-md-6">
+                      <label className="form-label marca-label">Nombre y Apellido *</label>
                       <input 
                         type="text" 
-                        className="form-control form-control-sm rounded-1"
+                        className={claseCampo('nombre')}
                         placeholder="Ej: Pedro González"
                         value={formCliente.nombre}
-                        onChange={(e) => setFormCliente({ ...formCliente, nombre: e.target.value })}
+                        onChange={(e) => handleChange('nombre', e.target.value)}
+                        onBlur={() => handleBlur('nombre')}
                         required
                       />
+                      {errores.nombre && <div className="invalid-feedback">{errores.nombre}</div>}
                     </div>
-                    <div className="col-12 col-md-4">
-                      <label className="form-label small fw-semibold">Correo Electrónico *</label>
+                    <div className="col-12 col-md-6">
+                      <label className="form-label marca-label">RUT *</label>
+                      <input 
+                        type="text" 
+                        className={claseCampo('rut')}
+                        placeholder="Ej: 12.345.678-9"
+                        value={formCliente.rut}
+                        onChange={(e) => handleChange('rut', formatearRut(e.target.value))}
+                        onBlur={() => handleBlur('rut')}
+                        maxLength={12}
+                        required
+                      />
+                      {errores.rut && <div className="invalid-feedback">{errores.rut}</div>}
+                    </div>
+                    <div className="col-12 col-md-6">
+                      <label className="form-label marca-label">Correo Electrónico *</label>
                       <input 
                         type="email" 
-                        className="form-control form-control-sm rounded-1"
+                        className={claseCampo('email')}
                         placeholder="ejemplo@correo.cl"
                         value={formCliente.email}
-                        onChange={(e) => setFormCliente({ ...formCliente, email: e.target.value })}
+                        onChange={(e) => handleChange('email', e.target.value)}
+                        onBlur={() => handleBlur('email')}
                         required
                       />
+                      {errores.email && <div className="invalid-feedback">{errores.email}</div>}
                     </div>
-                    <div className="col-12 col-md-4">
-                      <label className="form-label small fw-semibold">Teléfono de Contacto *</label>
+                    <div className="col-12 col-md-6">
+                      <label className="form-label marca-label">Teléfono de Contacto *</label>
                       <input 
                         type="tel" 
-                        className="form-control form-control-sm rounded-1"
+                        className={claseCampo('telefono')}
                         placeholder="+56 9 1234 5678"
                         value={formCliente.telefono}
-                        onChange={(e) => setFormCliente({ ...formCliente, telefono: e.target.value })}
+                        onChange={(e) => handleChange('telefono', formatearTelefono(e.target.value))}
+                        onBlur={() => handleBlur('telefono')}
+                        inputMode="tel"
+                        maxLength={17}
                         required
                       />
+                      {errores.telefono && <div className="invalid-feedback">{errores.telefono}</div>}
                     </div>
                   </div>
 
-                  <h3 className="checkout-section-title h6 fw-bold text-dark text-uppercase mb-3">
+                  <h3 className="checkout-section-title marca-titulo marca-tam-6 mb-3">
                     2. Dirección y Opciones de Entrega
                   </h3>
 
                   <div className="row g-3 mb-4">
                     <div className="col-12 col-md-5">
-                      <label className="form-label small fw-semibold">Región *</label>
+                      <label className="form-label marca-label">Región *</label>
                       <select 
                         className="form-select form-select-sm rounded-1"
                         value={regionSeleccionada}
-                        onChange={(e) => {
-                          const nuevaReg = e.target.value;
-                          setRegionSeleccionada(nuevaReg);
-                          const comunasDisponibles = REGIONES_CHILE.find(r => r.region === nuevaReg)?.comunas || [];
-                          setFormCliente({ 
-                            ...formCliente, 
-                            region: nuevaReg, 
-                            comuna: comunasDisponibles[0] || '' 
-                          });
-                        }}
+                        onChange={(e) => handleCambiarRegion(e.target.value)}
                       >
                         {REGIONES_CHILE.map((r) => (
                           <option key={r.region} value={r.region}>{r.region}</option>
@@ -467,38 +523,42 @@ function Carrito() {
                     </div>
 
                     <div className="col-12 col-md-7">
-                      <label className="form-label small fw-semibold">
+                      <label className="form-label marca-label">
                         Comuna (Selecciona de las disponibles) *
                       </label>
                       <div className="input-group input-group-sm">
-                        <span className="input-group-text bg-light"><i className="bi bi-search text-muted"></i></span>
+                        <span className="input-group-text bg-light"><i className="bi bi-search marca-muted"></i></span>
                         <select 
-                          className="form-select form-select-sm rounded-end-1"
+                          className={`form-select form-select-sm rounded-end-1${errores.comuna ? ' is-invalid' : ''}`}
                           value={formCliente.comuna}
-                          onChange={(e) => setFormCliente({ ...formCliente, comuna: e.target.value })}
+                          onChange={(e) => handleChange('comuna', e.target.value)}
+                          onBlur={() => handleBlur('comuna')}
                           required
                         >
-                          {(REGIONES_CHILE.find(r => r.region === regionSeleccionada)?.comunas || []).map((com) => (
+                          {obtenerComunas(regionSeleccionada).map((com) => (
                             <option key={com} value={com}>{com}</option>
                           ))}
                         </select>
                       </div>
+                      {errores.comuna && <div className="invalid-feedback d-block">{errores.comuna}</div>}
                     </div>
 
                     <div className="col-12 col-md-8">
-                      <label className="form-label small fw-semibold">Calle, Número y Depto *</label>
+                      <label className="form-label marca-label">Calle, Número y Depto *</label>
                       <input 
                         type="text" 
-                        className="form-control form-control-sm rounded-1"
+                        className={claseCampo('direccion')}
                         placeholder="Ej: Av. Providencia 1240, Depto 502"
                         value={formCliente.direccion}
-                        onChange={(e) => setFormCliente({ ...formCliente, direccion: e.target.value })}
+                        onChange={(e) => handleChange('direccion', e.target.value)}
+                        onBlur={() => handleBlur('direccion')}
                         required
                       />
+                      {errores.direccion && <div className="invalid-feedback">{errores.direccion}</div>}
                     </div>
 
                     <div className="col-12 col-md-4">
-                      <label className="form-label small fw-semibold">Indicaciones de Entrega (Opcional)</label>
+                      <label className="form-label marca-label">Indicaciones de Entrega (Opcional)</label>
                       <input 
                         type="text" 
                         className="form-control form-control-sm rounded-1"
@@ -509,7 +569,7 @@ function Carrito() {
                     </div>
                   </div>
 
-                  <h3 className="checkout-section-title h6 fw-bold text-dark text-uppercase mb-3">
+                  <h3 className="checkout-section-title marca-titulo marca-tam-6 mb-3">
                     3. Método de Pago Simulado
                   </h3>
 
@@ -524,7 +584,7 @@ function Carrito() {
                         checked={formCliente.metodoPago === 'WebPay Plus (Débito)'}
                         onChange={(e) => setFormCliente({ ...formCliente, metodoPago: e.target.value })}
                       />
-                      <label className="form-check-label fw-semibold small text-dark" htmlFor="webpay">
+                      <label className="form-check-label marca-strong marca-fino" htmlFor="webpay">
                         WebPay Plus / RedCompra (Débito)
                       </label>
                     </div>
@@ -539,7 +599,7 @@ function Carrito() {
                         checked={formCliente.metodoPago === 'Tarjeta de Crédito'}
                         onChange={(e) => setFormCliente({ ...formCliente, metodoPago: e.target.value })}
                       />
-                      <label className="form-check-label fw-semibold small text-dark" htmlFor="credito">
+                      <label className="form-check-label marca-strong marca-fino" htmlFor="credito">
                         Tarjeta de Crédito (3 cuotas sin interés)
                       </label>
                     </div>
@@ -554,7 +614,7 @@ function Carrito() {
                         checked={formCliente.metodoPago === 'Transferencia Bancaria'}
                         onChange={(e) => setFormCliente({ ...formCliente, metodoPago: e.target.value })}
                       />
-                      <label className="form-check-label fw-semibold small text-dark" htmlFor="transferencia">
+                      <label className="form-check-label marca-strong marca-fino" htmlFor="transferencia">
                         Transferencia Electrónica Directa
                       </label>
                     </div>
@@ -562,25 +622,25 @@ function Carrito() {
 
                   {/* Resumen del cobro final */}
                   <div className="p-3 bg-platino border rounded-1 mb-4">
-                    <div className="d-flex justify-content-between mb-1 small">
+                    <div className="d-flex justify-content-between mb-1 marca-fino">
                       <span>Total de productos:</span>
-                      <span className="font-monospace">{formatearCLP(totales.subtotal)}</span>
+                      <span className="marca-mono">{formatearCLP(totales.subtotal)}</span>
                     </div>
-                    <div className="d-flex justify-content-between mb-2 small">
+                    <div className="d-flex justify-content-between mb-2 marca-fino">
                       <span>Costo de envío:</span>
-                      <span className="font-monospace text-success">
+                      <span className="marca-mono marca-exito">
                         {totales.despacho === 0 ? 'Gratis' : formatearCLP(totales.despacho)}
                       </span>
                     </div>
                     <div className="d-flex justify-content-between align-items-center pt-2 border-top">
-                      <strong className="fs-5 text-dark">Total a Pagar:</strong>
-                      <strong className="fs-4 text-dark font-monospace">{formatearCLP(totales.total)}</strong>
+                      <strong className="marca-bold marca-tam-5">Total a Pagar:</strong>
+                      <strong className="marca-total">{formatearCLP(totales.total)}</strong>
                     </div>
                   </div>
 
                   <button 
                     type="submit" 
-                    className="btn btn-ambar w-100 fw-bold text-dark py-3 rounded-1 shadow-sm fs-5"
+                    className="btn btn-ambar w-100 marca-bold py-3 rounded-1 shadow-sm marca-tam-5"
                   >
                     Confirmar y Pagar {formatearCLP(totales.total)}
                   </button>
@@ -600,65 +660,69 @@ function Carrito() {
             <div className="col-12 col-md-8 col-lg-7">
               <div className="bg-white border rounded-1 shadow-sm p-4 p-md-5">
                 
-                <div className="text-center pb-4 border-bottom mb-4">
-                  <div className="d-inline-flex p-3 bg-success-subtle text-success rounded-circle mb-3">
-                    <i className="bi bi-check-lg display-4"></i>
+                <div className="marca-centro pb-4 border-bottom mb-4">
+                  <div className="d-inline-flex p-3 bg-success-subtle marca-exito rounded-circle mb-3">
+                    <i className="bi bi-check-lg carrito-check-icon"></i>
                   </div>
-                  <h1 className="h4 fw-bold text-dark mb-1 font-oswald">
+                  <h1 className="marca-titulo marca-tam-4 mb-1">
                     ¡Se ha realizado la compra con éxito!
                   </h1>
                   <div className="d-flex justify-content-center gap-2 mt-2">
-                    <span className="badge bg-dark text-warning font-monospace px-3 py-2 rounded-1">
+                    <span className="marca-chip marca-chip--oscuro marca-mono px-3 py-2">
                       Orden: #{ordenCreada.idOrden}
                     </span>
-                    <span className="badge bg-secondary text-white font-monospace px-3 py-2 rounded-1">
+                    <span className="marca-chip marca-chip--gris marca-mono px-3 py-2">
                       N° Boleta: {ordenCreada.numeroBoleta}
                     </span>
                   </div>
                 </div>
 
                 {/* Datos del Cliente y Despacho */}
-                <div className="mb-4 small">
+                <div className="mb-4 marca-fino">
                   <div className="row g-2">
                     <div className="col-sm-6">
-                      <strong className="d-block text-secondary">Cliente:</strong>
-                      <span className="text-dark fw-semibold">{ordenCreada.cliente.nombre}</span>
+                      <strong className="d-block marca-muted">Cliente:</strong>
+                      <span className="marca-strong">{ordenCreada.cliente.nombre}</span>
                     </div>
                     <div className="col-sm-6">
-                      <strong className="d-block text-secondary">Correo:</strong>
-                      <span className="text-dark">{ordenCreada.cliente.email}</span>
+                      <strong className="d-block marca-muted">RUT:</strong>
+                      <span className="marca-oscuro">{ordenCreada.cliente.rut}</span>
+                    </div>
+                    <div className="col-sm-6 mt-2">
+                      <strong className="d-block marca-muted">Correo:</strong>
+                      <span className="marca-oscuro">{ordenCreada.cliente.email}</span>
                     </div>
                     <div className="col-12 mt-2">
-                      <strong className="d-block text-secondary">Dirección de Entrega:</strong>
-                      <span className="text-dark">{ordenCreada.cliente.direccion}</span>
+                      <strong className="d-block marca-muted">Dirección de Entrega:</strong>
+                      <span className="marca-oscuro">{ordenCreada.cliente.direccion}</span>
                     </div>
                     <div className="col-sm-6 mt-2">
-                      <strong className="d-block text-secondary">Fecha de Pago:</strong>
-                      <span className="text-dark">{ordenCreada.fecha}</span>
+                      <strong className="d-block marca-muted">Fecha de Pago:</strong>
+                      <span className="marca-oscuro">{ordenCreada.fecha}</span>
                     </div>
                     <div className="col-sm-6 mt-2">
-                      <strong className="d-block text-secondary">Método de Pago:</strong>
-                      <span className="text-dark">{ordenCreada.metodoPago}</span>
+                      <strong className="d-block marca-muted">Método de Pago:</strong>
+                      <span className="marca-oscuro">{ordenCreada.metodoPago}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Tabla de ítems adquiridos */}
                 <div className="table-responsive border rounded-1 mb-4">
-                  <table className="table table-sm align-middle mb-0 small">
+                  <table className="table table-sm align-middle mb-0 marca-fino">
                     <thead className="table-light">
                       <tr>
                         <th>Producto</th>
-                        <th className="text-center">Cant.</th>
-                        <th className="text-end">Subtotal</th>
+                        <th className="marca-centro">Cant.</th>
+                        <th className="marca-derecha">Subtotal</th>
                       </tr>
                     </thead>
                     <tbody>
                       {ordenCreada.items.map((it, idx) => (
                         <tr key={idx}>
                           <td>{it.nombre}</td>
-                          <td className="text-center">{it.cantidad}</td>
-                          <td className="text-end font-monospace">{formatearCLP(it.precioUnitario * it.cantidad)}</td>
+                          <td className="marca-centro">{it.cantidad}</td>
+                          <td className="marca-derecha marca-mono">{formatearCLP(it.precioUnitario * it.cantidad)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -667,8 +731,8 @@ function Carrito() {
 
                 {/* Total */}
                 <div className="d-flex justify-content-between align-items-center p-3 bg-platino border rounded-1 mb-4">
-                  <span className="fw-bold text-dark fs-5">Total Pagado:</span>
-                  <span className="fw-bold text-success fs-4 font-monospace">{formatearCLP(ordenCreada.total)}</span>
+                  <span className="marca-bold marca-tam-5">Total Pagado:</span>
+                  <span className="marca-total marca-exito">{formatearCLP(ordenCreada.total)}</span>
                 </div>
 
                 {/* Acciones */}
@@ -681,7 +745,7 @@ function Carrito() {
                     <i className="bi bi-printer me-1"></i>
                     Imprimir Boleta en PDF
                   </button>
-                  <Link to="/catalogo" className="btn btn-warning btn-sm text-dark fw-bold rounded-1 px-4">
+                  <Link to="/catalogo" className="btn btn-ambar btn-sm marca-strong rounded-1 px-4">
                     Volver al Catálogo
                   </Link>
                 </div>

@@ -43,7 +43,7 @@ function Navbar() {
   const inicialUsuario = sesion && sesion.nombre ? sesion.nombre.charAt(0).toUpperCase() : 'U';
 
   return (
-    <nav className="navbar navbar-expand-lg bg-platino border-bottom border-light-subtle shadow-sm py-2">
+    <nav className="navbar navbar-expand-lg bg-platino border-bottom shadow-sm py-2">
       <div className="container">
         
         {/* Logo */}
@@ -61,13 +61,13 @@ function Navbar() {
         <div className="d-flex align-items-center gap-2 d-lg-none">
           <Link 
             to="/carrito" 
-            className="navbar-cart-link text-dark d-flex align-items-center justify-content-center p-2 text-decoration-none me-1"
+            className="navbar-cart-link d-flex align-items-center justify-content-center p-2 me-1"
             title="Ver mi carrito de compras"
           >
             <div className="position-relative d-inline-flex align-items-center">
-              <i className="bi bi-cart3 fs-5"></i>
+              <i className="bi bi-cart3 navbar-cart-icon"></i>
               {totalesCarrito.totalArticulos > 0 && (
-                <span className="navbar-cart-badge badge rounded-pill bg-ambar text-dark fw-bold border border-white">
+                <span className="navbar-cart-badge">
                   {totalesCarrito.totalArticulos}
                 </span>
               )}
@@ -87,7 +87,7 @@ function Navbar() {
 
         <div className={`collapse navbar-collapse ${isOpen ? 'show' : ''}`} id="navbarMenu">
           {/* Enlaces de Navegación */}
-          <ul className="navbar-nav mx-auto mb-2 mb-lg-0 align-items-lg-center gap-lg-3 text-center my-3 my-lg-0">
+          <ul className="navbar-nav mx-auto mb-2 mb-lg-0 align-items-lg-center gap-lg-3 marca-centro my-3 my-lg-0">
             <li className="nav-item">
               <Link className="nav-link clever-nav-link" to="/catalogo" onClick={closeMenu}>
                 Catálogo
@@ -116,18 +116,18 @@ function Navbar() {
             {/* Carrito en Desktop (solo icono, sin texto) */}
             <Link 
               to="/carrito" 
-              className="navbar-cart-link text-dark d-none d-lg-flex align-items-center justify-content-center p-2 text-decoration-none me-2"
+              className="navbar-cart-link d-none d-lg-flex align-items-center justify-content-center p-2 me-2"
               onClick={closeMenu}
               title="Ver mi carrito de compras"
             >
               <div className="position-relative d-inline-flex align-items-center">
-                <i className="bi bi-cart3 fs-4"></i>
+                <i className="bi bi-cart3 navbar-cart-icon-lg"></i>
                 {totalesCarrito.totalArticulos > 0 ? (
-                  <span className="navbar-cart-badge badge rounded-pill bg-ambar text-dark fw-bold border border-white">
+                  <span className="navbar-cart-badge">
                     {totalesCarrito.totalArticulos}
                   </span>
                 ) : (
-                  <span className="navbar-cart-badge badge rounded-pill bg-secondary text-white">
+                  <span className="navbar-cart-badge navbar-cart-badge--empty">
                     0
                   </span>
                 )}
@@ -139,26 +139,26 @@ function Navbar() {
               {sesion ? (
                 // Usuario CON sesión iniciada: Avatar circular destacado
                 <button
-                  className="btn d-flex align-items-center gap-2 bg-white border border-light-subtle rounded-pill py-1 px-2 shadow-sm"
+                  className="btn navbar-account-btn d-flex align-items-center gap-2 rounded-pill py-1 px-2 shadow-sm"
                   type="button"
                   onClick={toggleAccount}
                   aria-expanded={isAccountOpen}
                   title={`Conectado como ${sesion.nombre}`}
                 >
-                  <div className="navbar-user-avatar rounded-circle d-flex align-items-center justify-content-center fw-bold text-dark shadow-sm">
+                  <div className="navbar-user-avatar rounded-circle d-flex align-items-center justify-content-center shadow-sm">
                     {inicialUsuario}
                   </div>
-                  <span className="navbar-user-name small fw-bold text-dark d-none d-sm-inline text-truncate">
+                  <span className="navbar-user-name d-none d-sm-inline-block">
                     {sesion.nombre.split(' ')[0]}
                   </span>
-                  <i className="bi bi-chevron-down small text-muted"></i>
+                  <i className="bi bi-chevron-down navbar-caret"></i>
                 </button>
               ) : (
                 // Usuario SIN sesión: Botón tradicional "Mi Cuenta"
                 <div className="d-flex align-items-center">
-                  <i className="bi bi-person-circle fs-5 text-dark me-1"></i>
+                  <i className="bi bi-person-circle navbar-account-icon me-1"></i>
                   <button
-                    className="clever-btn-signin dropdown-toggle bg-transparent border-0 px-1 py-1 shadow-none text-dark fw-semibold"
+                    className="clever-btn-signin dropdown-toggle bg-transparent border-0 px-1 py-1 shadow-none"
                     type="button"
                     onClick={toggleAccount}
                     aria-expanded={isAccountOpen}
@@ -172,17 +172,17 @@ function Navbar() {
               <ul className={`dropdown-menu dropdown-menu-end navbar-dropdown-menu shadow border-0 mt-2 rounded-3 ${isAccountOpen ? 'show' : ''}`}>
                 {sesion ? (
                   <>
-                    <li className="px-3 py-2 border-bottom bg-light rounded-top-3">
-                      <div className="small fw-bold text-dark text-truncate">{sesion.nombre}</div>
-                      <div className="navbar-user-email text-muted small text-truncate">{sesion.email}</div>
-                      <span className={`badge navbar-user-badge mt-1 rounded-1 ${sesion.rol === 'admin' ? 'bg-dark text-warning' : 'bg-secondary text-white'}`}>
+                    <li className="navbar-dropdown-head px-3 py-2 border-bottom rounded-top-3">
+                      <div className="navbar-user-fullname">{sesion.nombre}</div>
+                      <div className="navbar-user-email">{sesion.email}</div>
+                      <span className={`navbar-user-badge mt-1 ${sesion.rol === 'admin' ? 'navbar-user-badge--admin' : 'navbar-user-badge--cliente'}`}>
                         {sesion.rol === 'admin' ? 'Administrador' : 'Cliente Registrado'}
                       </span>
                     </li>
                     {sesion.rol === 'admin' && (
                       <li>
-                        <Link className="dropdown-item py-2 fw-semibold text-dark" to="/admin" onClick={closeMenu}>
-                          <i className="bi bi-shield-lock me-2 text-warning"></i>
+                        <Link className="dropdown-item py-2 navbar-item-strong" to="/admin" onClick={closeMenu}>
+                          <i className="bi bi-shield-lock me-2 navbar-icon-warn"></i>
                           Panel Administrativo
                         </Link>
                       </li>
@@ -195,7 +195,7 @@ function Navbar() {
                     </li>
                     <li><hr className="dropdown-divider my-1" /></li>
                     <li>
-                      <button className="dropdown-item py-2 text-danger fw-semibold d-flex align-items-center" onClick={handleLogout}>
+                      <button className="dropdown-item py-2 navbar-item-danger d-flex align-items-center" onClick={handleLogout}>
                         <i className="bi bi-box-arrow-right me-2"></i>
                         Cerrar Sesión
                       </button>

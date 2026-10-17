@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { obtenerProductoPorId, EVENTO_PRODUCTOS_ACTUALIZADOS } from '../data/productos';
+import { obtenerProductos, EVENTO_PRODUCTOS_ACTUALIZADOS } from '../data/productos';
 import { agregarAlCarrito } from '../data/carrito';
 
 function DetalleProducto() {
@@ -8,24 +8,25 @@ function DetalleProducto() {
   const navigate = useNavigate();
 
   const [cantidad, setCantidad] = useState(1);
-  const [agregadoAlCarrito, setAgregadoAlCarrito] = useState(false);
+  const [feedbackCarrito, setFeedbackCarrito] = useState(null);
 
-  // Buscar el producto correspondiente de forma reactiva desde localStorage
-  const [producto, setProducto] = useState(() => obtenerProductoPorId(id));
+  // Catálogo reactivo leído desde localStorage
+  const [productos, setProductos] = useState(obtenerProductos);
+
+  // Producto derivado del catálogo según el id de la ruta
+  const producto = productos.find((p) => String(p.idProducto) === String(id)) || null;
 
   // Escuchar si el producto fue modificado (ej. stock actualizado o precio)
   useEffect(() => {
-    setProducto(obtenerProductoPorId(id));
-
     const handleActualizacion = () => {
-      setProducto(obtenerProductoPorId(id));
+      setProductos(obtenerProductos());
     };
 
     window.addEventListener(EVENTO_PRODUCTOS_ACTUALIZADOS, handleActualizacion);
     return () => {
       window.removeEventListener(EVENTO_PRODUCTOS_ACTUALIZADOS, handleActualizacion);
     };
-  }, [id]);
+  }, []);
 
   // Scroll automático hacia arriba al cargar la página
   useEffect(() => {
@@ -35,14 +36,14 @@ function DetalleProducto() {
   // Si no se encuentra el producto
   if (!producto) {
     return (
-      <div className="container py-5 text-center my-5">
+      <div className="container py-5 marca-centro my-5">
         <div className="detalle-no-encontrado-card bg-platino p-5 rounded-4 shadow-sm mx-auto">
-          <i className="bi bi-exclamation-triangle display-2 text-warning mb-3 d-block"></i>
-          <h2 className="fw-bold mb-3">Producto no encontrado</h2>
-          <p className="text-secondary mb-4">
+          <i className="bi bi-exclamation-triangle detalle-error-icon mb-3 d-block"></i>
+          <h2 className="marca-titulo marca-tam-4 mb-3">Producto no encontrado</h2>
+          <p className="marca-parrafo mb-4">
             El producto con código <strong>#{id}</strong> no existe o no se encuentra disponible actualmente en nuestro catálogo.
           </p>
-          <Link to="/catalogo" className="btn btn-warning fw-semibold px-4 py-2 rounded-3 shadow-sm">
+          <Link to="/catalogo" className="btn btn-ambar marca-strong px-4 py-2 rounded-3 shadow-sm">
             <i className="bi bi-arrow-left me-2"></i>
             Volver al Catálogo
           </Link>
@@ -67,18 +68,14 @@ function DetalleProducto() {
     if (cantidad < producto.stock) setCantidad((prev) => prev + 1);
   };
 
-  const [feedbackCarrito, setFeedbackCarrito] = useState(null);
-
   const handleAgregarCarrito = () => {
     const res = agregarAlCarrito(producto, cantidad);
     if (!res.ok) {
       setFeedbackCarrito({ tipo: 'danger', mensaje: res.error });
       setTimeout(() => setFeedbackCarrito(null), 4000);
     } else {
-      setAgregadoAlCarrito(true);
       setFeedbackCarrito({ tipo: 'success', mensaje: res.mensaje });
       setTimeout(() => {
-        setAgregadoAlCarrito(false);
         setFeedbackCarrito(null);
       }, 4500);
     }
@@ -93,22 +90,21 @@ function DetalleProducto() {
         {/* Migas de pan y botón volver */}
         <div className="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
           <nav aria-label="breadcrumb">
-            <ol className="breadcrumb small mb-0">
+            <ol className="breadcrumb detalle-breadcrumb mb-0">
               <li className="breadcrumb-item">
-                <Link to="/" className="text-decoration-none text-muted">Inicio</Link>
+                <Link to="/">Inicio</Link>
               </li>
               <li className="breadcrumb-item">
-                <Link to="/catalogo" className="text-decoration-none text-muted">Catálogo</Link>
+                <Link to="/catalogo">Catálogo</Link>
               </li>
               <li className="breadcrumb-item">
                 <Link 
                   to={`/catalogo?categoria=${encodeURIComponent(producto.categoria)}`} 
-                  className="text-decoration-none text-muted"
                 >
                   {producto.categoria}
                 </Link>
               </li>
-              <li className="breadcrumb-item detalle-breadcrumb-item active text-truncate fw-semibold text-dark" aria-current="page">
+              <li className="breadcrumb-item detalle-breadcrumb-item active" aria-current="page">
                 {producto.nombre}
               </li>
             </ol>
@@ -138,22 +134,22 @@ function DetalleProducto() {
             </div>
 
             {/* Garantías y Confianza */}
-            <div className="row g-2 mt-3 text-center small text-secondary">
+            <div className="row g-2 mt-3 marca-centro marca-nota">
               <div className="col-4">
                 <div className="p-2 border rounded-3 bg-light">
-                  <i className="bi bi-truck fs-4 text-warning d-block mb-1"></i>
+                  <i className="bi bi-truck detalle-garantia-icon d-block mb-1"></i>
                   <span>Envío a todo Chile</span>
                 </div>
               </div>
               <div className="col-4">
                 <div className="p-2 border rounded-3 bg-light">
-                  <i className="bi bi-shield-check fs-4 text-warning d-block mb-1"></i>
+                  <i className="bi bi-shield-check detalle-garantia-icon d-block mb-1"></i>
                   <span>Garantía Oficial</span>
                 </div>
               </div>
               <div className="col-4">
                 <div className="p-2 border rounded-3 bg-light">
-                  <i className="bi bi-shop fs-4 text-warning d-block mb-1"></i>
+                  <i className="bi bi-shop detalle-garantia-icon d-block mb-1"></i>
                   <span>Retiro en Tienda</span>
                 </div>
               </div>
@@ -166,47 +162,47 @@ function DetalleProducto() {
               
               {/* Marca */}
               <div className="d-flex align-items-center gap-2 mb-2">
-                <span className="badge bg-warning text-dark fw-bold px-2 py-1 rounded">
+                <span className="marca-chip marca-chip--ambar">
                   {producto.marca}
                 </span>
-                <span className="text-muted small">Código Ref: #{producto.idProducto}</span>
+                <span className="marca-nota">Código Ref: #{producto.idProducto}</span>
               </div>
 
               {/* Título */}
-              <h1 className="detalle-producto-titulo fw-bold text-dark mb-3">
+              <h1 className="detalle-producto-titulo mb-3">
                 {producto.nombre}
               </h1>
 
               {/* Calificación estética */}
               <div className="d-flex align-items-center gap-2 mb-3">
-                <div className="text-warning">
+                <div className="detalle-estrellas">
                   <i className="bi bi-star-fill"></i>
                   <i className="bi bi-star-fill ms-1"></i>
                   <i className="bi bi-star-fill ms-1"></i>
                   <i className="bi bi-star-fill ms-1"></i>
                   <i className="bi bi-star-fill ms-1"></i>
                 </div>
-                <span className="small text-secondary fw-semibold">
+                <span className="detalle-valoracion">
                   5.0 (Valoraciones de clientes)
                 </span>
               </div>
 
               {/* Precio */}
               <div className="detalle-precio-box p-3 bg-light rounded-4 mb-4 border border-light-subtle">
-                <div className="small text-muted mb-1">Precio con IVA incluido:</div>
-                <div className="detalle-precio-valor display-6 fw-bold text-dark">
+                <div className="marca-nota mb-1">Precio con IVA incluido:</div>
+                <div className="detalle-precio-valor">
                   {precioFormateado}
                 </div>
               </div>
 
               {/* Breve extracto */}
-              <p className="text-secondary lh-base mb-4">
+              <p className="marca-parrafo mb-4">
                 {producto.descripcion}
               </p>
 
               {/* Controles de Compra */}
               <div className="mb-4">
-                <label className="form-label small fw-bold text-uppercase text-secondary mb-2">
+                <label className="form-label marca-etiqueta mb-2">
                   Cantidad:
                 </label>
                 <div className="d-flex align-items-center gap-3">
@@ -222,7 +218,7 @@ function DetalleProducto() {
                     </button>
                     <input 
                       type="text" 
-                      className="form-control text-center fw-bold bg-white" 
+                      className="form-control marca-centro marca-bold bg-white" 
                       value={cantidad} 
                       readOnly 
                     />
@@ -236,7 +232,7 @@ function DetalleProducto() {
                       <i className="bi bi-plus"></i>
                     </button>
                   </div>
-                  <span className="small text-muted">
+                  <span className="marca-nota">
                     Máximo: {producto.stock} unidades
                   </span>
                 </div>
@@ -248,9 +244,9 @@ function DetalleProducto() {
                   type="button"
                   onClick={handleAgregarCarrito}
                   disabled={producto.stock <= 0}
-                  className="btn btn-ambar btn-lg fw-bold py-3 rounded-2 shadow-sm d-flex align-items-center justify-content-center gap-2 text-dark"
+                  className="btn btn-ambar btn-lg py-3 rounded-2 shadow-sm d-flex align-items-center justify-content-center gap-2"
                 >
-                  <i className="bi bi-cart-plus-fill fs-5"></i>
+                  <i className="bi bi-cart-plus-fill marca-icono"></i>
                   {producto.stock > 0 ? 'Agregar al Carrito' : 'Agotado Temporalmente'}
                 </button>
               </div>
@@ -259,11 +255,11 @@ function DetalleProducto() {
               {feedbackCarrito && (
                 <div className={`alert alert-${feedbackCarrito.tipo} d-flex align-items-center justify-content-between gap-2 py-2 px-3 rounded-2 mb-4 shadow-sm`} role="alert">
                   <div className="d-flex align-items-center gap-2">
-                    <i className={`bi ${feedbackCarrito.tipo === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill'} fs-5`}></i>
-                    <span className="small">{feedbackCarrito.mensaje}</span>
+                    <i className={`bi ${feedbackCarrito.tipo === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill'} marca-icono`}></i>
+                    <span className="marca-fino">{feedbackCarrito.mensaje}</span>
                   </div>
                   {feedbackCarrito.tipo === 'success' && (
-                    <Link to="/carrito" className="btn btn-dark btn-sm rounded-1 text-nowrap">
+                    <Link to="/carrito" className="btn btn-dark btn-sm rounded-1 marca-nowrap">
                       Ver Carrito →
                     </Link>
                   )}
@@ -280,27 +276,27 @@ function DetalleProducto() {
           <div className="row g-4">
             
             <div className="col-12 col-lg-6">
-              <h3 className="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
-                <i className="bi bi-info-circle text-warning"></i>
+              <h3 className="mb-3 d-flex align-items-center gap-2">
+                <i className="bi bi-info-circle marca-icono-ambar"></i>
                 Descripción Detallada
               </h3>
-              <p className="text-secondary lh-lg mb-4">
+              <p className="marca-parrafo mb-4">
                 {producto.descripcion}
               </p>
               <div className="p-3 bg-light rounded-3 border">
-                <h6 className="fw-bold mb-2 text-dark">
-                  <i className="bi bi-geo-alt-fill text-danger me-1"></i>
+                <h6 className="marca-titulo marca-tam-6 mb-2">
+                  <i className="bi bi-geo-alt-fill marca-icono-rojo me-1"></i>
                   ¿Prefieres comprar presencialmente?
                 </h6>
-                <p className="small text-muted mb-0">
+                <p className="marca-nota mb-0">
                   Encuentra este producto en nuestro local ubicado en <strong>Antonio Varas 666, Providencia</strong>. Consulta disponibilidad y atención personalizada con nuestros expertos ferreteros.
                 </p>
               </div>
             </div>
 
             <div className="col-12 col-lg-6">
-              <h3 className="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
-                <i className="bi bi-tools text-warning"></i>
+              <h3 className="mb-3 d-flex align-items-center gap-2">
+                <i className="bi bi-tools marca-icono-ambar"></i>
                 Ficha Técnica
               </h3>
               
@@ -310,10 +306,10 @@ function DetalleProducto() {
                     <tbody>
                       {Object.entries(producto.especificaciones).map(([clave, valor]) => (
                         <tr key={clave}>
-                          <th scope="row" className="bg-platino text-dark py-3 ps-3 w-40 small fw-semibold">
+                          <th scope="row" className="bg-platino marca-strong py-3 ps-3 w-40 marca-fino">
                             {clave}
                           </th>
-                          <td className="py-3 ps-3 text-secondary small">
+                          <td className="py-3 ps-3 marca-parrafo marca-fino">
                             {valor}
                           </td>
                         </tr>
@@ -322,7 +318,7 @@ function DetalleProducto() {
                   </table>
                 </div>
               ) : (
-                <p className="text-muted">No hay especificaciones adicionales registradas.</p>
+                <p className="marca-muted">No hay especificaciones adicionales registradas.</p>
               )}
             </div>
 

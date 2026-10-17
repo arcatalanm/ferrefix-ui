@@ -23,7 +23,7 @@ function BannerPromocional({
             href={enlace}
             target={target}
             rel={target === '_blank' ? 'noopener noreferrer' : undefined}
-            className="d-block text-decoration-none banner-tira-link"
+            className="d-block banner-tira-link"
           >
             {contenido}
           </a>

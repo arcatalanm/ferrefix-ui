@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 function ProductCard({ producto }) {
   if (!producto) return null;
 
-  const { idProducto, nombre, marca, categoria, precioVenta, imagen } = producto;
+  const { idProducto, nombre, marca, precioVenta, imagen } = producto;
 
   // Formatear el precio a pesos chilenos (CLP)
   const precioFormateado = new Intl.NumberFormat('es-CL', {
@@ -14,18 +14,18 @@ function ProductCard({ producto }) {
 
   return (
     <div className="product-card">
-      <Link to={`/producto/${idProducto}`} className='text-decoration-none'>
+      <Link to={`/producto/${idProducto}`} className='product-card-link'>
 
         {/* Contenedor de la foto */}
         <div className="product-card-img-wrapper">
           <img 
-            src={imagen || '/arriendo-bosch.jpg'} 
+            src={imagen || '/banner-web.webp'} 
             alt={nombre} 
             className="product-card-img"
             loading="lazy" 
             onError={(e) => {
               e.currentTarget.onerror = null;
-              e.currentTarget.src = '/arriendo-bosch.jpg';
+              e.currentTarget.src = '/banner-web.webp';
             }}
           />
         </div>

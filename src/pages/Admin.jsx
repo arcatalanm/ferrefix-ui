@@ -1,21 +1,23 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  obtenerProductos, 
-  crearProducto, 
-  actualizarProducto, 
-  eliminarProducto, 
+import {
+  obtenerProductos,
+  crearProducto,
+  actualizarProducto,
+  eliminarProducto,
   restablecerProductos,
+  subirImagenProducto,
   CATEGORIAS_PRODUCTOS,
-  EVENTO_PRODUCTOS_ACTUALIZADOS 
+  EVENTO_PRODUCTOS_ACTUALIZADOS
 } from '../data/productos';
 import { obtenerOrdenes, EVENTO_ORDENES_ACTUALIZADAS } from '../data/ordenes';
-import { 
-  obtenerSesionActiva, 
-  iniciarSesion, 
-  cerrarSesion, 
-  EVENTO_SESION_ACTUALIZADA 
+import {
+  obtenerSesionActiva,
+  iniciarSesion,
+  cerrarSesion,
+  EVENTO_SESION_ACTUALIZADA
 } from '../data/auth';
+import ImagenProductoUploader from '../components/ImagenProductoUploader';
 
 const FORM_INICIAL = {
   idProducto: '',
@@ -49,6 +51,8 @@ function Admin() {
   const [modalAbierto, setModalAbierto] = useState(false);
   const [modoEdicion, setModoEdicion] = useState(false);
   const [formData, setFormData] = useState(FORM_INICIAL);
+  const [imagenArchivo, setImagenArchivo] = useState(null);
+  const [subiendoImagen, setSubiendoImagen] = useState(false);
   const [productoAEliminar, setProductoAEliminar] = useState(null);
   const [ordenSeleccionada, setOrdenSeleccionada] = useState(null);
   const [mensajeAlerta, setMensajeAlerta] = useState(null);
@@ -117,6 +121,7 @@ function Admin() {
   // Manejo de Modal Crear / Editar
   const abrirModalCrear = () => {
     setModoEdicion(false);
+    setImagenArchivo(null);
     setFormData({
       ...FORM_INICIAL,
       idProducto: String(Date.now()).slice(-8)
@@ -126,6 +131,7 @@ function Admin() {
 
   const abrirModalEditar = (prod) => {
     setModoEdicion(true);
+    setImagenArchivo(null);
     setFormData({
       idProducto: prod.idProducto,
       nombre: prod.nombre,
@@ -141,15 +147,30 @@ function Admin() {
 
   const cerrarModal = () => {
     setModalAbierto(false);
+    setImagenArchivo(null);
     setFormData(FORM_INICIAL);
   };
 
-  const handleSubmitForm = (e) => {
+  const handleSubmitForm = async (e) => {
     e.preventDefault();
 
     if (!formData.nombre.trim() || !formData.marca.trim()) {
       mostrarMensaje('Nombre y marca son requeridos.', 'danger');
       return;
+    }
+
+    // Si se eligió una imagen, se guarda en src/assets/products y se obtiene su URL.
+    let imagenFinal = formData.imagen.trim();
+    if (imagenArchivo) {
+      setSubiendoImagen(true);
+      try {
+        imagenFinal = await subirImagenProducto(imagenArchivo);
+      } catch (error) {
+        mostrarMensaje(error.message || 'No se pudo guardar la imagen.', 'danger');
+        setSubiendoImagen(false);
+        return;
+      }
+      setSubiendoImagen(false);
     }
 
     if (modoEdicion) {
@@ -160,7 +181,7 @@ function Admin() {
         precioVenta: Number(formData.precioVenta) || 0,
         stock: Number(formData.stock) || 0,
         descripcion: formData.descripcion.trim(),
-        imagen: formData.imagen.trim() || undefined
+        imagen: imagenFinal || undefined
       });
       mostrarMensaje(`Producto "${formData.nombre}" actualizado.`);
     } else {
@@ -172,7 +193,7 @@ function Admin() {
         precioVenta: Number(formData.precioVenta) || 0,
         stock: Number(formData.stock) || 0,
         descripcion: formData.descripcion.trim(),
-        imagen: formData.imagen.trim() || '/arriendo-bosch.jpg'
+        imagen: imagenFinal || '/banner-web.webp'
       });
       mostrarMensaje(`Producto "${formData.nombre}" registrado al final del catálogo con éxito.`);
     }
@@ -232,9 +253,9 @@ function Admin() {
         <div className="container">
           <div className="row justify-content-center">
             <div className="col-12 col-sm-9 col-md-6 col-lg-4">
-              <div className="admin-box p-4 bg-white shadow-sm">
-                
-                <div className="border-bottom pb-3 mb-3 text-center">
+              <div className="auth-card shadow-sm p-4">
+
+                <div className="auth-head border-bottom pb-3 mb-3">
                   <div className="mb-2">
                     <img 
                       src="/banner-web.webp" 
@@ -242,18 +263,18 @@ function Admin() {
                       className="admin-login-banner"
                     />
                   </div>
-                  <h1 className="h5 fw-bold text-dark mb-0">Iniciar Sesión Administrador</h1>
+                  <h1 className="auth-title mb-0">Iniciar Sesión Administrador</h1>
                 </div>
 
                 {errorLogin && (
-                  <div className="alert alert-danger py-2 px-3 small rounded-1 mb-3" role="alert">
+                  <div className="alert alert-danger auth-alert py-2 px-3 rounded-1 mb-3" role="alert">
                     {errorLogin}
                   </div>
                 )}
 
                 <form onSubmit={handleLoginSubmit}>
                   <div className="mb-3">
-                    <label className="form-label small fw-semibold text-secondary mb-1">Correo Electrónico</label>
+                    <label className="form-label admin-label mb-1">Correo Electrónico</label>
                     <input 
                       type="email" 
                       className="form-control form-control-sm rounded-1"
@@ -265,7 +286,7 @@ function Admin() {
                   </div>
 
                   <div className="mb-3">
-                    <label className="form-label small fw-semibold text-secondary mb-1">Contraseña</label>
+                    <label className="form-label admin-label mb-1">Contraseña</label>
                     <input 
                       type="password" 
                       className="form-control form-control-sm rounded-1"
@@ -278,14 +299,14 @@ function Admin() {
 
                   <button 
                     type="submit" 
-                    className="btn btn-ambar btn-sm w-100 fw-bold rounded-1 py-2 mb-3"
+                    className="btn btn-ambar auth-submit btn-sm w-100 rounded-1 py-2 mb-3"
                   >
                     Ingresar al Panel
                   </button>
                 </form>
 
-                <div className="text-center pt-2 border-top">
-                  <Link to="/" className="text-decoration-none text-muted small">
+                <div className="auth-foot pt-2 border-top">
+                  <Link to="/" className="auth-back-link">
                     ← Volver a la Tienda
                   </Link>
                 </div>
@@ -310,15 +331,13 @@ function Admin() {
           
           {/* Marca / Identificador */}
           <div className="d-flex align-items-center gap-3">
-            <Link to="/admin" className="text-decoration-none d-flex align-items-center gap-2">
+            <Link to="/admin" className="admin-brand-link d-flex align-items-center gap-2">
               <img 
                 src="/banner-web.webp" 
                 alt="Ferrefix Admin" 
                 className="admin-dashboard-banner"
               />
-              <span className="badge admin-brand-badge bg-secondary text-white fw-normal font-monospace rounded-1 px-2">
-                ADMIN
-              </span>
+              <span className="admin-brand-badge">ADMIN</span>
             </Link>
 
             {/* Pestañas de la barra */}
@@ -351,7 +370,7 @@ function Admin() {
           <div className="d-flex align-items-center gap-2">
             <button 
               type="button" 
-              className="btn btn-warning btn-sm fw-semibold text-dark rounded-1 px-3"
+              className="btn btn-ambar admin-btn-strong btn-sm rounded-1 px-3"
               onClick={abrirModalCrear}
             >
               + Agregar Producto
@@ -359,16 +378,16 @@ function Admin() {
 
             <button 
               type="button" 
-              className="btn btn-outline-secondary btn-sm text-light border-secondary rounded-1 px-2"
+              className="btn admin-btn-ghost btn-sm rounded-1 px-2"
               onClick={handleRestablecer}
               title="Restablecer base de datos inicial de fábrica"
             >
               Restablecer BD
             </button>
 
-            <div className="vr admin-vr bg-secondary mx-1 d-none d-md-block"></div>
+            <div className="vr admin-vr mx-1 d-none d-md-block"></div>
 
-            <span className="text-white-50 small d-none d-md-inline font-monospace">
+            <span className="admin-user-email d-none d-md-inline">
               {sesion.email}
             </span>
 
@@ -390,8 +409,8 @@ function Admin() {
 
         {/* Notificación informativa */}
         {mensajeAlerta && (
-          <div className="admin-box p-3 mb-3 bg-white d-flex justify-content-between align-items-center" role="alert">
-            <span className="small fw-semibold text-dark">
+          <div className="admin-box p-3 mb-3 d-flex justify-content-between align-items-center" role="alert">
+            <span className="admin-notice-text">
               {mensajeAlerta.texto}
             </span>
             <button 
@@ -412,13 +431,13 @@ function Admin() {
             <div className="row g-3 mb-4">
               <div className="col-12 col-sm-6 col-xl-3">
                 <div className="admin-kpi-box">
-                  <div className="admin-kpi-title text-secondary small fw-semibold text-uppercase">
+                  <div className="admin-kpi-title">
                     Productos en Catálogo
                   </div>
-                  <div className="fs-3 fw-bold text-dark mt-1">
+                  <div className="admin-kpi-value mt-1">
                     {metricas.totalProductos}
                   </div>
-                  <div className="admin-kpi-subtitle text-muted small mt-1">
+                  <div className="admin-kpi-subtitle mt-1">
                     Artículos registrados
                   </div>
                 </div>
@@ -426,13 +445,13 @@ function Admin() {
 
               <div className="col-12 col-sm-6 col-xl-3">
                 <div className="admin-kpi-box">
-                  <div className="admin-kpi-title text-secondary small fw-semibold text-uppercase">
+                  <div className="admin-kpi-title">
                     Stock Crítico (≤ 5 unids)
                   </div>
-                  <div className="fs-3 fw-bold text-dark mt-1">
+                  <div className="admin-kpi-value mt-1">
                     {metricas.stockCriticoCount}
                   </div>
-                  <div className="admin-kpi-subtitle text-muted small mt-1">
+                  <div className="admin-kpi-subtitle mt-1">
                     {metricas.stockCriticoCount > 0 ? 'Requieren reposición' : 'Niveles óptimos'}
                   </div>
                 </div>
@@ -440,13 +459,13 @@ function Admin() {
 
               <div className="col-12 col-sm-6 col-xl-3">
                 <div className="admin-kpi-box">
-                  <div className="admin-kpi-title text-secondary small fw-semibold text-uppercase">
+                  <div className="admin-kpi-title">
                     Valor Total Inventario
                   </div>
-                  <div className="admin-kpi-value-mono fw-bold text-dark mt-1 font-monospace">
+                  <div className="admin-kpi-value admin-kpi-value-mono mt-1">
                     {formatearCLP(metricas.valorInventario)}
                   </div>
-                  <div className="admin-kpi-subtitle text-muted small mt-1">
+                  <div className="admin-kpi-subtitle mt-1">
                     Precio venta × stock
                   </div>
                 </div>
@@ -454,13 +473,13 @@ function Admin() {
 
               <div className="col-12 col-sm-6 col-xl-3">
                 <div className="admin-kpi-box">
-                  <div className="admin-kpi-title text-secondary small fw-semibold text-uppercase">
+                  <div className="admin-kpi-title">
                     Ventas Registradas
                   </div>
-                  <div className="admin-kpi-value-mono fw-bold text-dark mt-1 font-monospace">
+                  <div className="admin-kpi-value admin-kpi-value-mono mt-1">
                     {formatearCLP(metricas.totalVentas)}
                   </div>
-                  <div className="admin-kpi-subtitle text-muted small mt-1">
+                  <div className="admin-kpi-subtitle mt-1">
                     {metricas.totalOrdenes} órdenes procesadas
                   </div>
                 </div>
@@ -470,11 +489,11 @@ function Admin() {
             {/* Tabla de Inventario Crítico extendida a ancho completo */}
             <div className="row g-4">
               <div className="col-12">
-                <div className="admin-box p-3 bg-white">
+                <div className="admin-box p-3">
                   <div className="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
                     <div>
-                      <h2 className="h6 fw-bold text-dark mb-0">Inventario con Stock Crítico (≤ 5)</h2>
-                      <span className="text-muted small">Productos que requieren reposición prioritaria de inventario</span>
+                      <h2 className="admin-section-title mb-0">Inventario con Stock Crítico (≤ 5)</h2>
+                      <span className="admin-muted">Productos que requieren reposición prioritaria de inventario</span>
                     </div>
                     <button 
                       type="button"
@@ -489,7 +508,7 @@ function Admin() {
                   </div>
 
                   {metricas.stockCriticoCount === 0 ? (
-                    <div className="p-3 text-secondary bg-light text-center rounded-1 small">
+                    <div className="admin-empty admin-ta-center p-3">
                       Todos los productos cuentan con stock superior a 5 unidades.
                     </div>
                   ) : (
@@ -500,9 +519,9 @@ function Admin() {
                             <th>Código</th>
                             <th>Producto</th>
                             <th>Categoría</th>
-                            <th className="text-center">Stock Disponible</th>
-                            <th className="text-end">Precio (CLP)</th>
-                            <th className="text-end">Acción</th>
+                            <th className="admin-ta-center">Stock Disponible</th>
+                            <th className="admin-ta-end">Precio (CLP)</th>
+                            <th className="admin-ta-end">Acción</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -510,19 +529,19 @@ function Admin() {
                             .filter((p) => Number(p.stock) <= 5)
                             .map((p) => (
                               <tr key={p.idProducto}>
-                                <td className="font-monospace small text-muted">#{p.idProducto}</td>
+                                <td className="admin-cell-code">#{p.idProducto}</td>
                                 <td>
-                                  <div className="fw-semibold text-dark small">{p.nombre}</div>
-                                  <div className="admin-item-brand text-muted">{p.marca}</div>
+                                  <div className="admin-cell-strong">{p.nombre}</div>
+                                  <div className="admin-item-brand">{p.marca}</div>
                                 </td>
-                                <td><span className="badge bg-light text-dark border rounded-1">{p.categoria}</span></td>
-                                <td className="text-center">
-                                  <span className="badge bg-secondary text-white rounded-1">
+                                <td><span className="admin-badge-soft">{p.categoria}</span></td>
+                                <td className="admin-ta-center">
+                                  <span className="admin-badge-dark">
                                     {p.stock} unids (Bajo)
                                   </span>
                                 </td>
-                                <td className="text-end font-monospace small">{formatearCLP(p.precioVenta)}</td>
-                                <td className="text-end">
+                                <td className="admin-ta-end admin-cell-price">{formatearCLP(p.precioVenta)}</td>
+                                <td className="admin-ta-end">
                                   <button 
                                     type="button"
                                     className="btn btn-sm btn-outline-dark rounded-1 py-0 px-2"
@@ -547,7 +566,7 @@ function Admin() {
         {/* VISTA: INVENTARIO DE PRODUCTOS (CRUD)                          */}
         {/* ============================================================== */}
         {tabActiva === 'productos' && (
-          <div className="admin-box p-3 bg-white">
+          <div className="admin-box p-3">
             
             {/* Barra de Filtros y Búsqueda */}
             <div className="row g-2 align-items-center mb-3 pb-3 border-bottom">
@@ -583,10 +602,10 @@ function Admin() {
                 </button>
               </div>
 
-              <div className="col-12 col-md-2 text-md-end">
+              <div className="col-12 col-md-2 admin-ta-md-end">
                 <button 
                   type="button" 
-                  className="btn btn-warning btn-sm w-100 fw-semibold text-dark rounded-1"
+                  className="btn btn-ambar admin-btn-strong btn-sm w-100 rounded-1"
                   onClick={abrirModalCrear}
                 >
                   + Agregar Producto
@@ -604,15 +623,15 @@ function Admin() {
                     <th>Nombre / Descripción</th>
                     <th>Marca</th>
                     <th>Categoría</th>
-                    <th className="text-end">Precio (CLP)</th>
-                    <th className="text-center">Stock</th>
-                    <th className="admin-th-actions text-end">Acciones</th>
+                    <th className="admin-ta-end">Precio (CLP)</th>
+                    <th className="admin-ta-center">Stock</th>
+                    <th className="admin-th-actions admin-ta-end">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
                   {productosFiltrados.length === 0 ? (
                     <tr>
-                      <td colSpan="8" className="text-center py-4 text-muted small">
+                      <td colSpan="8" className="admin-ta-center admin-muted py-4">
                         No se encontraron productos registrados con los filtros aplicados.
                       </td>
                     </tr>
@@ -629,27 +648,27 @@ function Admin() {
                               onError={(e) => { e.target.src = '/banner-web.webp'; }}
                             />
                           </td>
-                          <td className="font-monospace small text-muted">
+                          <td className="admin-cell-code">
                             #{prod.idProducto}
                           </td>
                           <td>
-                            <div className="fw-semibold text-dark small">{prod.nombre}</div>
+                            <div className="admin-cell-strong">{prod.nombre}</div>
                           </td>
-                          <td className="small text-secondary">{prod.marca}</td>
+                          <td className="admin-muted">{prod.marca}</td>
                           <td>
-                            <span className="badge bg-light text-dark border rounded-1">
+                            <span className="admin-badge-soft">
                               {prod.categoria}
                             </span>
                           </td>
-                          <td className="text-end font-monospace small fw-semibold">
+                          <td className="admin-ta-end admin-cell-price">
                             {formatearCLP(prod.precioVenta)}
                           </td>
-                          <td className="text-center">
-                            <span className={`badge rounded-1 ${esBajo ? 'bg-dark text-warning border' : 'bg-light text-dark border'}`}>
+                          <td className="admin-ta-center">
+                            <span className={`${esBajo ? 'admin-badge-warn' : 'admin-badge-soft'}`}>
                               {prod.stock} unids {esBajo ? '(Bajo)' : ''}
                             </span>
                           </td>
-                          <td className="text-end">
+                          <td className="admin-ta-end">
                             <div className="btn-group btn-group-sm">
                               <button 
                                 type="button"
@@ -677,7 +696,7 @@ function Admin() {
               </table>
             </div>
 
-            <div className="d-flex justify-content-between align-items-center mt-3 pt-3 border-top small text-muted">
+            <div className="admin-muted d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
               <span>Mostrando {productosFiltrados.length} de {productos.length} productos en total</span>
               <span>Categoría: {filtroCategoria}</span>
             </div>
@@ -689,13 +708,13 @@ function Admin() {
         {/* VISTA: ÓRDENES / BOLETAS                                      */}
         {/* ============================================================== */}
         {tabActiva === 'ordenes' && (
-          <div className="admin-box p-3 bg-white">
+          <div className="admin-box p-3">
             <div className="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
               <div>
-                <h2 className="h6 fw-bold text-dark mb-0">Registro de Órdenes y Ventas</h2>
-                <span className="text-muted small">Listado de transacciones registradas</span>
+                <h2 className="admin-section-title mb-0">Registro de Órdenes y Ventas</h2>
+                <span className="admin-muted">Listado de transacciones registradas</span>
               </div>
-              <span className="badge bg-light text-dark border rounded-1">
+              <span className="admin-badge-soft">
                 {ordenes.length} órdenes registradas
               </span>
             </div>
@@ -709,35 +728,35 @@ function Admin() {
                     <th>Cliente</th>
                     <th>Dirección de Entrega</th>
                     <th>Método de Pago</th>
-                    <th className="text-end">Total Pagado</th>
+                    <th className="admin-ta-end">Total Pagado</th>
                     <th>Estado</th>
-                    <th className="text-end">Acción</th>
+                    <th className="admin-ta-end">Acción</th>
                   </tr>
                 </thead>
                 <tbody>
                   {ordenes.map((ord) => (
                     <tr key={ord.idOrden}>
-                      <td className="font-monospace small fw-bold text-dark">
+                      <td className="admin-cell-price">
                         #{ord.idOrden}
                       </td>
-                      <td className="small text-muted">{ord.fecha}</td>
+                      <td className="admin-muted">{ord.fecha}</td>
                       <td>
-                        <div className="fw-semibold text-dark small">{ord.cliente.nombre}</div>
-                        <div className="admin-order-email text-muted">{ord.cliente.email}</div>
+                        <div className="admin-cell-strong">{ord.cliente.nombre}</div>
+                        <div className="admin-order-email">{ord.cliente.email}</div>
                       </td>
-                      <td className="admin-td-address small text-muted text-truncate">
+                      <td className="admin-td-address admin-muted marca-truncar">
                         {ord.cliente.direccion}
                       </td>
-                      <td className="small text-secondary">{ord.metodoPago}</td>
-                      <td className="text-end font-monospace small fw-bold text-dark">
+                      <td className="admin-muted">{ord.metodoPago}</td>
+                      <td className="admin-ta-end admin-cell-price">
                         {formatearCLP(ord.total)}
                       </td>
                       <td>
-                        <span className="badge bg-light text-dark border rounded-1">
+                        <span className="admin-badge-soft">
                           {ord.estado}
                         </span>
                       </td>
-                      <td className="text-end">
+                      <td className="admin-ta-end">
                         <button 
                           type="button"
                           className="btn btn-sm btn-outline-dark rounded-1 py-0 px-2"
@@ -765,8 +784,8 @@ function Admin() {
           <div className="modal-dialog modal-lg modal-dialog-centered">
             <div className="modal-content rounded-1 border-0 shadow">
               
-              <div className="modal-header border-bottom bg-light py-2 px-3">
-                <h5 className="modal-title fw-bold text-dark h6 mb-0">
+              <div className="modal-header admin-modal-head border-bottom py-2 px-3">
+                <h5 className="modal-title admin-modal-title mb-0">
                   {modoEdicion ? 'Editar Producto' : 'Agregar Nuevo Producto'}
                 </h5>
                 <button type="button" className="btn-close btn-close-sm" onClick={cerrarModal} aria-label="Cerrar"></button>
@@ -776,10 +795,10 @@ function Admin() {
                 <div className="modal-body p-3">
                   <div className="row g-3">
                     <div className="col-12 col-md-4">
-                      <label className="form-label small fw-semibold text-secondary mb-1">Código ID</label>
+                      <label className="form-label admin-label mb-1">Código ID</label>
                       <input 
                         type="text" 
-                        className="form-control form-control-sm rounded-1 font-monospace"
+                        className="form-control form-control-sm rounded-1 admin-mono"
                         value={formData.idProducto}
                         disabled={modoEdicion}
                         onChange={(e) => setFormData({ ...formData, idProducto: e.target.value })}
@@ -788,7 +807,7 @@ function Admin() {
                     </div>
 
                     <div className="col-12 col-md-8">
-                      <label className="form-label small fw-semibold text-secondary mb-1">Nombre del Producto *</label>
+                      <label className="form-label admin-label mb-1">Nombre del Producto *</label>
                       <input 
                         type="text" 
                         className="form-control form-control-sm rounded-1"
@@ -800,7 +819,7 @@ function Admin() {
                     </div>
 
                     <div className="col-12 col-md-6">
-                      <label className="form-label small fw-semibold text-secondary mb-1">Marca *</label>
+                      <label className="form-label admin-label mb-1">Marca *</label>
                       <input 
                         type="text" 
                         className="form-control form-control-sm rounded-1"
@@ -812,7 +831,7 @@ function Admin() {
                     </div>
 
                     <div className="col-12 col-md-6">
-                      <label className="form-label small fw-semibold text-secondary mb-1">Categoría *</label>
+                      <label className="form-label admin-label mb-1">Categoría *</label>
                       <select 
                         className="form-select form-select-sm rounded-1"
                         value={formData.categoria}
@@ -825,12 +844,12 @@ function Admin() {
                     </div>
 
                     <div className="col-12 col-md-6">
-                      <label className="form-label small fw-semibold text-secondary mb-1">Precio Unitario (CLP) *</label>
+                      <label className="form-label admin-label mb-1">Precio Unitario (CLP) *</label>
                       <input 
                         type="number" 
                         min="0"
                         step="100"
-                        className="form-control form-control-sm rounded-1 font-monospace"
+                        className="form-control form-control-sm rounded-1 admin-mono"
                         placeholder="129990"
                         value={formData.precioVenta}
                         onChange={(e) => setFormData({ ...formData, precioVenta: e.target.value })}
@@ -839,11 +858,11 @@ function Admin() {
                     </div>
 
                     <div className="col-12 col-md-6">
-                      <label className="form-label small fw-semibold text-secondary mb-1">Stock Disponible *</label>
+                      <label className="form-label admin-label mb-1">Stock Disponible *</label>
                       <input 
                         type="number" 
                         min="0"
-                        className="form-control form-control-sm rounded-1 font-monospace"
+                        className="form-control form-control-sm rounded-1 admin-mono"
                         placeholder="10"
                         value={formData.stock}
                         onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
@@ -852,18 +871,30 @@ function Admin() {
                     </div>
 
                     <div className="col-12">
-                      <label className="form-label small fw-semibold text-secondary mb-1">URL de Imagen (Opcional)</label>
-                      <input 
-                        type="text" 
-                        className="form-control form-control-sm rounded-1"
-                        placeholder="Por defecto: /arriendo-bosch.jpg"
-                        value={formData.imagen}
-                        onChange={(e) => setFormData({ ...formData, imagen: e.target.value })}
+                      <label className="form-label admin-label mb-1">
+                        Imagen del Producto {!imagenArchivo && !formData.imagen ? '(Opcional)' : ''}
+                      </label>
+                      <ImagenProductoUploader
+                        archivo={imagenArchivo}
+                        onSeleccionar={setImagenArchivo}
+                        onQuitar={() => setImagenArchivo(null)}
+                        imagenActual={formData.imagen}
                       />
+                      {!imagenArchivo && formData.imagen && (
+                        <div className="d-flex justify-content-end mt-2">
+                          <button
+                            type="button"
+                            className="btn btn-sm btn-outline-secondary rounded-1 py-0 px-2"
+                            onClick={() => setFormData({ ...formData, imagen: '' })}
+                          >
+                            Usar imagen por defecto
+                          </button>
+                        </div>
+                      )}
                     </div>
 
                     <div className="col-12">
-                      <label className="form-label small fw-semibold text-secondary mb-1">Descripción</label>
+                      <label className="form-label admin-label mb-1">Descripción</label>
                       <textarea 
                         className="form-control form-control-sm rounded-1"
                         rows="3"
@@ -875,12 +906,23 @@ function Admin() {
                   </div>
                 </div>
 
-                <div className="modal-footer bg-light border-top py-2 px-3">
-                  <button type="button" className="btn btn-sm btn-outline-secondary rounded-1" onClick={cerrarModal}>
+                <div className="modal-footer admin-modal-foot border-top py-2 px-3">
+                  <button 
+                    type="button" 
+                    className="btn btn-sm btn-outline-secondary rounded-1" 
+                    onClick={cerrarModal}
+                    disabled={subiendoImagen}
+                  >
                     Cancelar
                   </button>
-                  <button type="submit" className="btn btn-sm btn-warning text-dark fw-semibold rounded-1 px-3">
-                    {modoEdicion ? 'Guardar Cambios' : 'Registrar Producto'}
+                  <button 
+                    type="submit" 
+                    className="btn btn-ambar admin-btn-strong btn-sm rounded-1 px-3"
+                    disabled={subiendoImagen}
+                  >
+                    {subiendoImagen
+                      ? 'Guardando imagen...'
+                      : modoEdicion ? 'Guardar Cambios' : 'Registrar Producto'}
                   </button>
                 </div>
               </form>
@@ -897,9 +939,9 @@ function Admin() {
         <div className="modal modal-backdrop-custom fade show d-block" tabIndex="-1">
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content rounded-1 border-0 shadow">
-              <div className="modal-body p-4 text-center">
-                <h5 className="fw-bold text-dark h6 mb-2">¿Eliminar producto?</h5>
-                <p className="small text-secondary mb-4">
+              <div className="modal-body admin-ta-center p-4">
+                <h5 className="admin-modal-title mb-2">¿Eliminar producto?</h5>
+                <p className="admin-muted mb-4">
                   Se dará de baja el producto <strong>"{productoAEliminar.nombre}"</strong> (#{productoAEliminar.idProducto}) del catálogo en localStorage.
                 </p>
                 <div className="d-flex justify-content-center gap-2">
@@ -931,8 +973,8 @@ function Admin() {
         <div className="modal modal-backdrop-custom fade show d-block" tabIndex="-1">
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content rounded-1 border-0 shadow">
-              <div className="modal-header border-bottom py-2 px-3 bg-light">
-                <h5 className="modal-title h6 fw-bold mb-0">
+              <div className="modal-header admin-modal-head border-bottom py-2 px-3">
+                <h5 className="modal-title admin-modal-title mb-0">
                   Boleta Electrónica #{ordenSeleccionada.idOrden}
                 </h5>
                 <button type="button" className="btn-close btn-close-sm" onClick={() => setOrdenSeleccionada(null)}></button>
@@ -940,11 +982,11 @@ function Admin() {
 
               <div className="modal-body p-3">
                 <div className="border-bottom pb-2 mb-3">
-                  <div className="fw-bold text-dark">FERREFIX</div>
-                  <small className="text-muted">RUT: 76.845.120-K | Antonio Varas 666, Providencia</small>
+                  <div className="admin-cell-strong">FERREFIX</div>
+                  <small className="admin-muted">RUT: 76.845.120-K | Antonio Varas 666, Providencia</small>
                 </div>
 
-                <div className="small mb-3">
+                <div className="admin-muted mb-3">
                   <div><strong>Fecha:</strong> {ordenSeleccionada.fecha}</div>
                   <div><strong>Cliente:</strong> {ordenSeleccionada.cliente.nombre}</div>
                   <div><strong>Email:</strong> {ordenSeleccionada.cliente.email}</div>
@@ -953,20 +995,20 @@ function Admin() {
                 </div>
 
                 <div className="table-responsive border rounded-1 mb-3">
-                  <table className="table table-sm align-middle mb-0 small">
+                  <table className="table table-sm align-middle mb-0 admin-ticket-table">
                     <thead className="table-light">
                       <tr>
                         <th>Ítem</th>
-                        <th className="text-center">Cant.</th>
-                        <th className="text-end">Subtotal</th>
+                        <th className="admin-ta-center">Cant.</th>
+                        <th className="admin-ta-end">Subtotal</th>
                       </tr>
                     </thead>
                     <tbody>
                       {ordenSeleccionada.items.map((item, idx) => (
                         <tr key={idx}>
                           <td>{item.nombre}</td>
-                          <td className="text-center">{item.cantidad}</td>
-                          <td className="text-end font-monospace">{formatearCLP(item.precioUnitario * item.cantidad)}</td>
+                          <td className="admin-ta-center">{item.cantidad}</td>
+                          <td className="admin-ta-end admin-mono">{formatearCLP(item.precioUnitario * item.cantidad)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -974,12 +1016,12 @@ function Admin() {
                 </div>
 
                 <div className="d-flex justify-content-between align-items-center pt-2 border-top">
-                  <span className="fw-bold text-dark">Total:</span>
-                  <span className="fw-bold text-dark fs-5 font-monospace">{formatearCLP(ordenSeleccionada.total)}</span>
+                  <span className="admin-cell-strong">Total:</span>
+                  <span className="admin-total-value">{formatearCLP(ordenSeleccionada.total)}</span>
                 </div>
               </div>
 
-              <div className="modal-footer border-top py-2 px-3 bg-light">
+              <div className="modal-footer admin-modal-foot border-top py-2 px-3">
                 <button 
                   type="button" 
                   className="btn btn-outline-dark btn-sm rounded-1"

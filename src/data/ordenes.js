@@ -1,7 +1,4 @@
-// ===============================================================
-// SISTEMA DE GESTIÓN Y PERSISTENCIA DE ÓRDENES / BOLETAS (MOCK BD)
-// Requerimiento rúbrica Duoc UC: Registro y visualización de compras
-// ===============================================================
+// SISTEMA DE GESTIÓN Y PERSISTENCIA DE ÓRDENES / BOLETAS
 
 const STORAGE_KEY_ORDENES = 'ferrefix_ordenes_v1';
 export const EVENTO_ORDENES_ACTUALIZADAS = 'ferrefix:ordenes_actualizadas';

@@ -19,7 +19,7 @@ function Footer() {
             </div>
 
             {/* Descripción */}
-            <p className="text-footer-descr pe-lg-3 mb-4 lh-base">
+            <p className="text-footer-descr pe-lg-3 mb-4">
               Especialistas en materiales de construcción, herramientas de alta gama, 
               fijaciones y maquinaria. Comprometidos con brindar soluciones rápidas y 
               confiables tanto a maestros de la construcción como a particulares.
@@ -59,7 +59,7 @@ function Footer() {
 
           {/* Navegación Principal */}
           <div className="col-6 col-md-3 col-lg-2">
-            <h6 className="text-uppercase fw-bold text-footer-title tracking-wider mb-3">
+            <h6 className="text-footer-title mb-3">
               Navegación
             </h6>
             <ul className="list-unstyled d-flex flex-column gap-2 mb-0">
@@ -80,7 +80,7 @@ function Footer() {
 
           {/* Servicios y Soporte */}
           <div className="col-6 col-md-3 col-lg-2">
-            <h6 className="text-uppercase fw-bold text-footer-title tracking-wider mb-3">
+            <h6 className="text-footer-title mb-3">
               Servicios
             </h6>
             <ul className="list-unstyled d-flex flex-column gap-2 mb-0">
@@ -101,24 +101,24 @@ function Footer() {
 
           {/* Contacto Directo */}
           <div className="col-12 col-md-6 col-lg-3">
-            <h6 className="text-uppercase fw-bold text-footer-title tracking-wider mb-3">
+            <h6 className="text-footer-title mb-3">
               Contacto Directo
             </h6>
             <ul className="list-unstyled d-flex flex-column gap-3 mb-0">
               <li className="d-flex align-items-center gap-2">
-                <i className="bi bi-telephone fs-5 footer-contact-icon"></i>
+                <i className="bi bi-telephone footer-contact-icon"></i>
                 <a href="tel:+56912345678" className="footer-link">
                   +56 9 1234 5678
                 </a>
               </li>
               <li className="d-flex align-items-center gap-2">
-                <i className="bi bi-envelope fs-5 footer-contact-icon"></i>
+                <i className="bi bi-envelope footer-contact-icon"></i>
                 <a href="mailto:contacto@ferrefix.cl" className="footer-link">
                   contacto@ferrefix.cl
                 </a>
               </li>
               <li className="d-flex align-items-center gap-2">
-                <i className="bi bi-geo-alt fs-5 footer-contact-icon"></i>
+                <i className="bi bi-geo-alt footer-contact-icon"></i>
                 <span className="text-footer-descr">
                   Antonio Varas 666, Providencia
                 </span>
@@ -129,7 +129,7 @@ function Footer() {
         </div>
 
         {/* Línea Divisoria */}
-        <hr className="border-dark my-4 opacity-25" />
+        <hr className="footer-divider my-4" />
 
         {/* Términos y privacidad */}
         <div className="d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2">

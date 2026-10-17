@@ -31,6 +31,110 @@
 
 
 
+/* ==========================================================================
+   Utilidades de texto con identidad de marca (reutilizables)
+   ========================================================================== */
+.marca-titulo {
+  font-family: "Oswald", sans-serif;
+  font-weight: 700;
+  color: var(--color-oscuro);
+}
+
+.marca-tam-1 { font-size: 2.2rem; }
+.marca-tam-2 { font-size: 1.75rem; }
+.marca-tam-3 { font-size: 1.5rem; }
+.marca-tam-4 { font-size: 1.35rem; }
+.marca-tam-5 { font-size: 1.2rem; }
+.marca-tam-6 { font-size: 1rem; }
+
+.marca-parrafo {
+  color: #4b5563;
+  line-height: 1.6;
+}
+
+.marca-nota {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.marca-muted { color: #6b7280; }
+.marca-oscuro { color: var(--color-oscuro); }
+.marca-exito { color: #1b7a34; }
+
+.marca-fino { font-size: 0.875rem; }
+.marca-bold { font-weight: 700; }
+
+.marca-strong {
+  font-weight: 600;
+  color: var(--color-oscuro);
+}
+
+.marca-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.marca-etiqueta {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+.marca-mono { font-family: monospace; }
+
+.marca-precio {
+  font-family: monospace;
+  font-weight: 700;
+  color: var(--color-oscuro);
+}
+
+.marca-total {
+  font-family: monospace;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-oscuro);
+}
+
+.marca-icono { font-size: 1.25rem; }
+.marca-icono-ambar { color: var(--color-ambar); }
+.marca-icono-rojo { color: #dc3545; }
+
+.marca-centro { text-align: center; }
+.marca-derecha { text-align: right; }
+.marca-nowrap { white-space: nowrap; }
+
+.marca-truncar {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.marca-chip {
+  display: inline-block;
+  padding: 0.35em 0.6em;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border-radius: 4px;
+}
+
+.marca-chip--ambar {
+  background-color: var(--color-ambar);
+  color: var(--color-oscuro);
+}
+
+.marca-chip--oscuro {
+  background-color: var(--color-oscuro);
+  color: var(--color-dorado);
+}
+
+.marca-chip--gris {
+  background-color: #6c757d;
+  color: #ffffff;
+}
+
 /* -- Topbar -- */
 .topbar-section {
   font-size: 0.85rem;
@@ -41,6 +145,34 @@
 .topbar-phone-icon,
 .topbar-instagram-icon {
   font-size: 0.95rem;
+}
+
+.topbar-schedule-item,
+.topbar-location-link,
+.topbar-phone-link,
+.topbar-whatsapp-link,
+.topbar-instagram-link {
+  color: #ffffff;
+}
+
+.topbar-location-link,
+.topbar-phone-link,
+.topbar-whatsapp-link,
+.topbar-instagram-link {
+  text-decoration: none;
+}
+
+.topbar-whatsapp-link,
+.topbar-instagram-link {
+  font-weight: 600;
+}
+
+.topbar-sep {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.topbar-nowrap {
+  white-space: nowrap;
 }
 
 
@@ -56,6 +188,11 @@
   font-weight: 500;
   font-size: 16px;
   font-style: normal;
+}
+
+.clever-btn-signin {
+  color: var(--color-oscuro);
+  font-weight: 600;
 }
 
 
@@ -170,6 +307,7 @@
 .cat-title {
   color: var(--color-oscuro);
   font-family: "Oswald", sans-serif;
+  font-weight: 700;
   font-optical-sizing: auto;
 }
 
@@ -177,6 +315,7 @@
   width: 120px;
   max-width: 100%;
   margin: 0 auto;
+  text-decoration: none;
 }
 
 .categoria-circulo-wrapper {
@@ -207,22 +346,12 @@
 .categoria-texto-label {
   color: #1e293b;
   font-size: 0.78rem;
+  font-weight: 500;
   line-height: 1.15;
 }
 
-
-/* -- Arriendo Maquinaria -- */
-.arriendo-card {
-  min-height: 320px;
-  background-color: var(--color-platino);
-}
-
-.arriendo-img {
-  transition: transform 0.35s ease;
-}
-
-.arriendo-card:hover .arriendo-img {
-  transform: scale(1.03);
+.banner-tira-link {
+  text-decoration: none;
 }
 
 
@@ -234,7 +363,6 @@
 .banner-tira-img {
   height: auto;
   object-fit: cover;
-  border-radius: 0.5rem;
 }
 
 
@@ -362,17 +490,33 @@
 }
 
 .text-footer-title {
-  color: #0f172a !important;
+  font-family: "Oswald", sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--color-oscuro);
 }
 
-.text-footer-descr {  
-  color: #334155 !important;
+.text-footer-descr {
+  color: #3f3f3f;
   font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+.footer-contact-icon {
+  font-size: 1.1rem;
+  color: var(--color-oscuro);
+}
+
+.footer-divider {
+  border-color: var(--color-oscuro);
+  opacity: 0.25;
 }
 
 .footer-link {
   position: relative;
-  color: #334155 !important;
+  color: #3f3f3f;
   text-decoration: none;
   font-size: 0.92rem;
   font-weight: 500;
@@ -396,7 +540,7 @@
 
 /* Efecto Links cursor */
 .footer-link:hover {
-  color: var(--color-oscuro) !important;
+  color: var(--color-oscuro);
 }
 
 .footer-link:hover::after {
@@ -435,8 +579,14 @@
    ========================================================================== */
 .catalogo-titulo {
   font-family: "Oswald", sans-serif;
+  font-weight: 700;
   color: var(--color-oscuro);
   font-size: 2.2rem;
+}
+
+.catalogo-divisor {
+  border-color: var(--color-oscuro);
+  opacity: 0.2;
 }
 
 .catalogo-bar-filtros {
@@ -463,6 +613,15 @@
   border: 1px dashed #cbd5e1;
 }
 
+.product-grid-empty-icon {
+  font-size: 3rem;
+  color: #9ca3af;
+}
+
+.product-card-link {
+  text-decoration: none;
+}
+
 .product-grid-empty-desc {
   max-width: 480px;
 }
@@ -474,7 +633,9 @@
 .detalle-producto-titulo {
   font-family: "Oswald", sans-serif;
   font-size: 2.1rem;
+  font-weight: 700;
   line-height: 1.25;
+  color: var(--color-oscuro);
 }
 
 .detalle-img-card {
@@ -491,12 +652,16 @@
 
 .detalle-precio-valor {
   font-family: "Oswald", sans-serif;
+  font-size: 2.2rem;
+  font-weight: 700;
   color: var(--color-oscuro);
 }
 
 .detalle-ficha-seccion h3 {
   font-family: "Oswald", sans-serif;
   font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-oscuro);
 }
 
 .detalle-no-encontrado-card {
@@ -505,17 +670,73 @@
 
 .detalle-breadcrumb-item {
   max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .detalle-cantidad-group {
   width: 135px;
 }
 
+.detalle-error-icon {
+  font-size: 3.5rem;
+  color: var(--color-ambar);
+}
+
+.detalle-garantia-icon {
+  font-size: 1.3rem;
+  color: var(--color-ambar);
+}
+
+.detalle-estrellas {
+  color: var(--color-ambar);
+}
+
+.detalle-valoracion {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+/* ==========================================================================
+   Carrito de Compras y Checkout
+   ========================================================================== */
+.carrito-page {
+  background-color: var(--color-platino);
+  min-height: 75vh;
+}
+
+.carrito-vacio-icon {
+  font-size: 3.5rem;
+  color: #9ca3af;
+}
+
+.carrito-check-icon {
+  font-size: 3rem;
+}
+
+.carrito-item-nombre {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-oscuro);
+  text-decoration: none;
+}
+
+.carrito-item-nombre:hover {
+  color: var(--color-bronce);
+}
+
+.checkout-section-title {
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
 /* ==========================================================================
    Panel de Administración (Backoffice Profesional Cuadrado)
    ========================================================================== */
 .admin-wrapper {
-  background-color: #f1f5f9;
+  background-color: var(--color-platino);
   min-height: 100vh;
 }
 
@@ -593,6 +814,7 @@
 /* Navbar */
 .navbar-cart-link {
   color: var(--color-oscuro);
+  text-decoration: none;
   transition: transform 0.2s ease, color 0.2s ease;
 }
 
@@ -605,41 +827,310 @@
   position: absolute;
   top: 2px;
   right: -9px;
+  display: inline-block;
   font-size: 0.65rem;
+  font-weight: 700;
   padding: 0.2em 0.42em;
   line-height: 1;
+  background-color: var(--color-ambar);
+  color: var(--color-oscuro);
+  border: 1px solid #ffffff;
+  border-radius: 50rem;
+}
+
+.navbar-cart-badge--empty {
+  background-color: #6c757d;
+  color: #ffffff;
+  border-color: #6c757d;
+}
+
+.navbar-cart-icon {
+  font-size: 1.25rem;
+}
+
+.navbar-cart-icon-lg {
+  font-size: 1.5rem;
+}
+
+.navbar-account-btn {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+}
+
+.navbar-account-icon {
+  font-size: 1.1rem;
+  color: var(--color-oscuro);
+}
+
+.navbar-caret {
+  font-size: 0.75rem;
+  color: #6b7280;
 }
 
 .navbar-user-avatar {
   width: 32px;
   height: 32px;
+  font-weight: 700;
+  color: var(--color-oscuro);
   background-color: var(--color-dorado);
   border: 2px solid var(--color-oscuro);
 }
 
 .navbar-user-name {
   max-width: 120px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-oscuro);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .navbar-dropdown-menu {
   min-width: 220px;
 }
 
+.navbar-dropdown-head {
+  background-color: var(--color-platino);
+}
+
+.navbar-user-fullname {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-oscuro);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .navbar-user-email {
   font-size: 0.78rem;
+  color: #6b7280;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .navbar-user-badge {
+  display: inline-block;
+  padding: 0.35em 0.5em;
   font-size: 0.7rem;
+  font-weight: 600;
+  border-radius: 4px;
+}
+
+.navbar-user-badge--admin {
+  background-color: var(--color-oscuro);
+  color: var(--color-dorado);
+}
+
+.navbar-user-badge--cliente {
+  background-color: #6c757d;
+  color: #ffffff;
+}
+
+.navbar-item-strong {
+  font-weight: 600;
+  color: var(--color-oscuro);
+}
+
+.navbar-icon-warn {
+  color: var(--color-dorado);
+}
+
+.navbar-item-danger {
+  color: #dc3545;
+  font-weight: 600;
+}
+
+/* -- Hero de página con identidad de marca (Cotizaciones / Nosotros) -- */
+.brand-hero {
+  background-color: var(--color-oscuro);
+  box-shadow: inset 6px 0 0 0 var(--color-dorado);
+}
+
+.brand-hero-title {
+  font-family: "Oswald", sans-serif;
+  font-size: clamp(1.6rem, 3.5vw, 2.1rem);
+  font-weight: 700;
+  line-height: 1.2;
+  color: #ffffff;
+}
+
+.brand-hero-text {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Migas de pan de páginas */
+.cot-breadcrumb,
+.nosotros-breadcrumb,
+.arriendos-breadcrumb,
+.catalogo-breadcrumb,
+.detalle-breadcrumb,
+.carrito-breadcrumb {
+  font-size: 0.85rem;
+}
+
+.cot-breadcrumb .breadcrumb-item a,
+.nosotros-breadcrumb .breadcrumb-item a,
+.arriendos-breadcrumb .breadcrumb-item a,
+.catalogo-breadcrumb .breadcrumb-item a,
+.detalle-breadcrumb .breadcrumb-item a,
+.carrito-breadcrumb .breadcrumb-item a {
+  color: #6b7280;
+  text-decoration: none;
+}
+
+.cot-breadcrumb .breadcrumb-item a:hover,
+.nosotros-breadcrumb .breadcrumb-item a:hover,
+.arriendos-breadcrumb .breadcrumb-item a:hover,
+.catalogo-breadcrumb .breadcrumb-item a:hover,
+.detalle-breadcrumb .breadcrumb-item a:hover,
+.carrito-breadcrumb .breadcrumb-item a:hover {
+  color: var(--color-bronce);
+}
+
+.cot-breadcrumb .breadcrumb-item.active,
+.nosotros-breadcrumb .breadcrumb-item.active,
+.arriendos-breadcrumb .breadcrumb-item.active,
+.catalogo-breadcrumb .breadcrumb-item.active,
+.detalle-breadcrumb .breadcrumb-item.active,
+.carrito-breadcrumb .breadcrumb-item.active {
+  color: var(--color-oscuro);
+  font-weight: 600;
+}
+
+/* -- Autenticación (Login / Registro y Acceso Administrador) -- */
+.auth-card {
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-top: 3px solid var(--color-dorado);
+  border-radius: 4px;
+}
+
+.auth-head {
+  text-align: center;
+}
+
+.auth-title {
+  font-family: "Oswald", sans-serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--color-oscuro);
+}
+
+.auth-sub {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.auth-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.auth-alert {
+  font-size: 0.85rem;
+}
+
+.auth-foot {
+  text-align: center;
+}
+
+.auth-back-link {
+  color: #6b7280;
+  font-size: 0.85rem;
+  text-decoration: none;
+}
+
+.auth-back-link:hover {
+  color: var(--color-bronce);
+}
+
+.auth-submit {
+  font-weight: 700;
+}
+
+.login-page {
+  background-color: var(--color-platino);
+  min-height: 75vh;
+}
+
+.login-mode-btn {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-oscuro);
+  background-color: transparent;
+  border: 1px solid var(--color-oscuro);
+}
+
+.login-mode-btn:hover,
+.login-mode-btn:focus {
+  color: var(--color-oscuro);
+  background-color: rgba(28, 34, 38, 0.06);
+}
+
+.login-mode-btn.active {
+  color: #ffffff;
+  background-color: var(--color-oscuro);
+  border-color: var(--color-oscuro);
 }
 
 /* Nosotros */
+.nosotros-page {
+  background-color: var(--color-platino);
+}
+
+.nosotros-stat-card {
+  border: 1px solid #e2e5e8;
+  border-top: 3px solid var(--color-dorado);
+  text-align: center;
+}
+
+.nosotros-stat-value {
+  font-family: "Oswald", sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--color-oscuro);
+}
+
 .nosotros-stat-label {
   font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--color-bronce);
 }
 
 .nosotros-stat-desc {
   font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.nosotros-section-title {
+  font-family: "Oswald", sans-serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--color-oscuro);
+}
+
+.nosotros-text {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: #4b5563;
+}
+
+.nosotros-info-label {
+  font-weight: 700;
+  color: var(--color-oscuro);
+}
+
+.nosotros-info-value {
+  color: #6b7280;
 }
 
 .nosotros-map-container {
@@ -648,6 +1139,101 @@
 
 .nosotros-map-iframe {
   border: 0;
+}
+
+.nosotros-hero-figura {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+
+.nosotros-hero-figura-img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  max-height: 440px;
+  height: auto;
+  border-radius: 4px;
+}
+
+/* Cotizaciones y Contacto */
+.contacto-cotizacion-page {
+  background-color: var(--color-platino);
+}
+
+.cot-channel-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e5e8;
+  border-top: 3px solid var(--color-ambar);
+}
+
+.cot-channel-title {
+  font-weight: 700;
+  color: var(--color-oscuro);
+}
+
+.cot-channel-sub {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.cot-channel-link,
+.cot-channel-value {
+  font-family: monospace;
+  color: var(--color-oscuro);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.cot-channel-value {
+  font-size: 0.9rem;
+}
+
+.cot-channel-link:hover {
+  color: var(--color-bronce);
+}
+
+.cot-form-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e5e8;
+  border-top: 3px solid var(--color-dorado);
+}
+
+.cot-form-header {
+  border-bottom: 1px solid #e2e5e8;
+}
+
+.cot-form-title {
+  font-family: "Oswald", sans-serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--color-oscuro);
+}
+
+.cot-form-sub {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.cot-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.cot-check-label {
+  font-size: 0.85rem;
+  color: #4b5563;
+}
+
+.cot-alert-icon {
+  font-size: 1.1rem;
+}
+
+.cot-submit-btn {
+  font-weight: 700;
+  letter-spacing: 0.3px;
 }
 
 /* Carrito y Checkout */
@@ -677,28 +1263,228 @@
 }
 
 /* Arriendos */
-.arriendos-hero-img {
-  max-height: 380px;
+.arriendos-page {
+  background-color: var(--color-platino);
 }
 
-.arriendo-item-img {
-  max-height: 200px;
+.arriendos-section-title {
+  font-family: "Oswald", sans-serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--color-oscuro);
+}
+
+.arriendos-section-sub {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.arriendo-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e5e8;
+  border-top: 3px solid var(--color-dorado);
+  border-radius: 4px;
+}
+
+.arriendo-card--disponible {
+  border-top-color: #1b7a34;
+}
+
+.arriendo-card--arrendada {
+  border-top-color: #9ca3af;
+}
+
+.arriendo-estado-badge {
+  display: inline-block;
+  padding: 0.3em 0.6em;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1;
+  border-radius: 4px;
+  border: 1px solid transparent;
+}
+
+.arriendo-estado-badge--disponible {
+  background-color: #e6f4ea;
+  color: #1b7a34;
+  border-color: #b7e0c3;
+}
+
+.arriendo-estado-badge--arrendada {
+  background-color: #6c757d;
+  color: #ffffff;
+}
+
+.arriendo-nombre {
+  font-family: "Oswald", sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-oscuro);
+}
+
+.arriendo-meta {
+  font-size: 0.85rem;
+  color: #6b7280;
 }
 
 .arriendo-specs-list {
   font-size: 0.8rem;
+  color: #4b5563;
+}
+
+.arriendo-card-footer {
+  border-top: 1px solid #e2e5e8;
+  padding-top: 0.75rem;
 }
 
 .arriendo-rate-label {
   font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.arriendo-rate-value {
+  font-family: monospace;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-oscuro);
+}
+
+.arriendo-btn {
+  font-weight: 700;
+}
+
+/* Modal de arriendo */
+.arriendo-modal-head,
+.arriendo-modal-foot {
+  background-color: var(--color-platino);
+}
+
+.arriendo-modal-title {
+  font-family: "Oswald", sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-oscuro);
 }
 
 .arriendo-modal-section-title {
+  font-size: 0.85rem;
+  font-weight: 700;
   letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--color-bronce);
+}
+
+.arriendo-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #4b5563;
 }
 
 .arriendo-help-text {
   font-size: 0.72rem;
+  color: #6b7280;
+}
+
+.arriendo-mono {
+  font-family: monospace;
+}
+
+.arriendo-alert {
+  font-size: 0.85rem;
+}
+
+.arriendo-input-icon {
+  background-color: var(--color-platino);
+  color: #6b7280;
+}
+
+.arriendo-summary {
+  background-color: var(--color-platino);
+  border: 1px solid #e2e5e8;
+  border-radius: 4px;
+}
+
+.arriendo-summary-name {
+  font-weight: 700;
+  color: var(--color-oscuro);
+}
+
+.arriendo-summary-meta {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.arriendo-summary-label {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.arriendo-summary-end {
+  text-align: right;
+}
+
+.arriendo-summary-value {
+  font-family: monospace;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-oscuro);
+}
+
+.arriendo-total-label {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.arriendo-total-name {
+  font-weight: 700;
+  color: var(--color-oscuro);
+}
+
+.arriendo-total-value {
+  font-family: monospace;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--color-oscuro);
+}
+
+/* Comprobante de contrato de arriendo */
+.arriendo-ok-icon {
+  font-size: 2rem;
+  color: #1b7a34;
+}
+
+.arriendo-contract-head {
+  text-align: center;
+}
+
+.arriendo-contract-title {
+  font-family: "Oswald", sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-oscuro);
+}
+
+.arriendo-contract-code {
+  display: inline-block;
+  padding: 0.3em 0.7em;
+  font-family: monospace;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-dorado);
+  background-color: var(--color-oscuro);
+  border-radius: 4px;
+}
+
+.arriendo-contract-list {
+  font-size: 0.85rem;
+  color: #4b5563;
+}
+
+.arriendo-contract-total {
+  font-family: monospace;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1b7a34;
 }
 
 /* Panel Administrativo */
@@ -724,28 +1510,50 @@
 }
 
 .admin-brand-badge {
+  display: inline-block;
+  font-family: monospace;
   font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  color: #ffffff;
+  background-color: #64748b;
+  padding: 0.35em 0.55em;
+  border-radius: 4px;
 }
 
 .admin-vr {
   height: 24px;
+  background-color: #64748b;
 }
 
 .admin-kpi-title {
   font-size: 0.75rem;
+  font-weight: 600;
   letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.admin-kpi-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--color-oscuro);
+}
+
+.admin-kpi-value-mono {
+  font-family: monospace;
+  font-size: 1.3rem;
 }
 
 .admin-kpi-subtitle {
   font-size: 0.8rem;
-}
-
-.admin-kpi-value-mono {
-  font-size: 1.4rem;
+  color: #6b7280;
 }
 
 .admin-item-brand {
   font-size: 0.78rem;
+  color: #6b7280;
 }
 
 .admin-th-thumb {
@@ -761,6 +1569,47 @@
   height: 38px;
 }
 
+/* Zona de carga de imagen de producto (ImagenProductoUploader.jsx) */
+.admin-upload-zone {
+  border: 2px dashed #cbd5e1;
+  background-color: #f8fafc;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.admin-upload-zone:hover,
+.admin-upload-zone:focus-visible {
+  border-color: #94a3b8;
+  background-color: #f1f5f9;
+  outline: none;
+}
+
+.admin-upload-zone-active {
+  border-color: var(--color-ambar, #f59e0b);
+  background-color: #fffbeb;
+}
+
+.admin-upload-icon {
+  font-size: 1.75rem;
+  color: #94a3b8;
+}
+
+.admin-upload-hint {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.admin-upload-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-oscuro);
+}
+
+.admin-upload-preview {
+  width: 130px;
+  height: 130px;
+}
+
 .admin-order-email {
   font-size: 0.75rem;
 }
@@ -769,33 +1618,172 @@
   max-width: 220px;
 }
 
-/* OfertaDestacada.jsx */
-.oferta-titulo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 16px;
+/* Acciones y utilidades de texto del panel admin */
+.admin-btn-strong {
+  font-weight: 600;
 }
- 
-.oferta-titulo-texto {
-  margin: 0;
+
+.admin-btn-ghost {
+  color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background-color: transparent;
+}
+
+.admin-btn-ghost:hover,
+.admin-btn-ghost:focus {
+  color: #ffffff;
+  border-color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.admin-user-email {
+  font-family: monospace;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.admin-brand-link {
+  text-decoration: none;
+}
+
+.admin-notice-text {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-oscuro);
+}
+
+.admin-section-title {
+  font-family: "Oswald", sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-oscuro);
+}
+
+.admin-muted {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.admin-cell-code {
+  font-family: monospace;
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.admin-cell-strong {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-oscuro);
+}
+
+.admin-cell-price {
+  font-family: monospace;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-oscuro);
+}
+
+.admin-total-value {
+  font-family: monospace;
   font-size: 1.25rem;
   font-weight: 700;
-  color: #2b2b2b;
+  color: var(--color-oscuro);
 }
- 
-.oferta-titulo-barra {
-  display: block;
-  width: 190px;
-  height: 2px;
-  background-color: #2ecc71;
+
+.admin-empty {
+  font-size: 0.85rem;
+  color: #64748b;
+  background-color: var(--color-platino);
+  border-radius: 4px;
 }
+
+.admin-ta-center {
+  text-align: center;
+}
+
+.admin-ta-end {
+  text-align: right;
+}
+
+@media (min-width: 768px) {
+  .admin-ta-md-end {
+    text-align: right;
+  }
+}
+
+.admin-badge-soft {
+  display: inline-block;
+  padding: 0.35em 0.55em;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-oscuro);
+  background-color: var(--color-platino);
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+}
+
+.admin-badge-dark {
+  display: inline-block;
+  padding: 0.35em 0.55em;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #ffffff;
+  background-color: #64748b;
+  border: 1px solid #64748b;
+  border-radius: 4px;
+}
+
+.admin-badge-warn {
+  display: inline-block;
+  padding: 0.35em 0.55em;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-dorado);
+  background-color: var(--color-oscuro);
+  border: 1px solid var(--color-oscuro);
+  border-radius: 4px;
+}
+
+.admin-modal-head,
+.admin-modal-foot {
+  background-color: var(--color-platino);
+}
+
+.admin-modal-title {
+  font-family: "Oswald", sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-oscuro);
+}
+
+.admin-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.admin-mono {
+  font-family: monospace;
+}
+
+.admin-ticket-table {
+  font-size: 0.85rem;
+}
+
+/* OfertaDestacada.jsx */
 
 .oferta-img {
   width: 100%;
   object-fit: cover;
   border-radius: 6px;
   display: block;
+}
+
+/* Enlace contenedor de la imagen */
+.oferta-link {
+  display: block;
+  overflow: hidden;
+  border-radius: 6px;
 }
 
 .oferta-img-banner {
@@ -805,9 +1793,7 @@
 .oferta-img-1,
 .oferta-img-2,
 .oferta-img-3,
-.oferta-img-4,
-.oferta-img-5,
-.oferta-img-6,
-.oferta-img-7 {
-  height: 260px;
+.oferta-img-4 {
+  aspect-ratio: 1320 / 1560;
+  height: auto;
 }

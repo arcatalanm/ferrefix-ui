@@ -6,26 +6,29 @@ import {
   EVENTO_MAQUINARIAS_ACTUALIZADAS 
 } from '../data/maquinarias';
 import { obtenerSesionActiva } from '../data/auth';
+import { REGIONES_CHILE, REGION_POR_DEFECTO, obtenerComunas, obtenerComunaPorDefecto } from '../data/chile';
+import {
+  validadores,
+  validarFormulario,
+  formatearRut,
+  formatearTelefono
+} from '../data/validaciones';
 
-const REGIONES_CHILE = [
-  {
-    region: 'Región Metropolitana',
-    comunas: [
-      'Santiago', 'Providencia', 'Las Condes', 'Ñuñoa', 'Cerrillos',
-      'Maipú', 'Puente Alto', 'La Florida', 'San Miguel', 'San Bernardo',
-      'Quilicura', 'Pudahuel', 'Recoleta', 'Independencia', 'Huechuraba',
-      'Vitacura', 'Lo Barnechea', 'Peñalolén', 'Macul', 'Estación Central'
-    ]
-  },
-  {
-    region: 'Región de Valparaíso',
-    comunas: ['Valparaíso', 'Viña del Mar', 'Quilpué', 'Villa Alemana', 'Concón', 'Quillota', 'San Antonio']
-  },
-  {
-    region: 'Región del Biobío',
-    comunas: ['Concepción', 'Talcahuano', 'San Pedro de la Paz', 'Chiguayante', 'Coronel', 'Los Ángeles']
+// Reglas de validación del formulario de arriendo.
+const REGLAS_VALIDACION = {
+  rutUsuario: validadores.rut,
+  nombreUsuario: validadores.nombre,
+  email: validadores.email,
+  telefono: validadores.telefono,
+  direccion: validadores.direccion,
+  comuna: validadores.requerido('La comuna'),
+  diasArriendo: (valor) => {
+    const dias = Number(valor);
+    if (!dias || dias < 1) return 'Ingresa al menos 1 día de arriendo.';
+    if (dias > 90) return 'El máximo de arriendo es de 90 días.';
+    return '';
   }
-];
+};
 
 function Arriendos() {
   const sesion = obtenerSesionActiva();
@@ -33,16 +36,19 @@ function Arriendos() {
   const [maquinaSeleccionada, setMaquinaSeleccionada] = useState(null);
   const [contratoGenerado, setContratoGenerado] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
+  const [errores, setErrores] = useState({});
+  const [touched, setTouched] = useState({});
 
   // Formulario de arriendo con campos limpios y placeholders de ejemplo
-  const [regionSeleccionada, setRegionSeleccionada] = useState('Región Metropolitana');
+  const [regionSeleccionada, setRegionSeleccionada] = useState(REGION_POR_DEFECTO);
   const [form, setForm] = useState({
     rutUsuario: '',
     nombreUsuario: sesion ? sesion.nombre : '',
     email: sesion ? sesion.email : '',
     telefono: '',
     direccion: '',
-    comuna: 'Santiago',
+    region: REGION_POR_DEFECTO,
+    comuna: obtenerComunaPorDefecto(REGION_POR_DEFECTO),
     diasArriendo: 3,
     fechaInicio: new Date().toISOString().slice(0, 10)
   });
@@ -64,6 +70,8 @@ function Arriendos() {
   const abrirModalArriendo = (maq) => {
     setMaquinaSeleccionada(maq);
     setErrorMsg('');
+    setErrores({});
+    setTouched({});
   };
 
   const cerrarModal = () => {
@@ -71,18 +79,42 @@ function Arriendos() {
     setErrorMsg('');
   };
 
-  // Validación básica de RUN chileno
-  const validarRutChileno = (rut) => {
-    const limpio = rut.replace(/\./g, '').replace(/-/g, '').trim().toUpperCase();
-    return limpio.length >= 8 && limpio.length <= 9;
+  const handleChange = (campo, valor) => {
+    setForm((prev) => ({ ...prev, [campo]: valor }));
+    if (touched[campo]) {
+      const validador = REGLAS_VALIDACION[campo];
+      if (validador) setErrores((prev) => ({ ...prev, [campo]: validador(valor) }));
+    }
+  };
+
+  const handleBlur = (campo) => {
+    setTouched((prev) => ({ ...prev, [campo]: true }));
+    const validador = REGLAS_VALIDACION[campo];
+    if (validador) setErrores((prev) => ({ ...prev, [campo]: validador(form[campo]) }));
+  };
+
+  const claseCampo = (campo, base = 'form-control form-control-sm rounded-1') =>
+    `${base}${errores[campo] ? ' is-invalid' : ''}`;
+
+  const handleCambiarRegion = (nuevaRegion) => {
+    setRegionSeleccionada(nuevaRegion);
+    const comuna = obtenerComunaPorDefecto(nuevaRegion);
+    setForm((prev) => ({ ...prev, region: nuevaRegion, comuna }));
+    setErrores((prev) => ({ ...prev, comuna: '' }));
   };
 
   const handleConfirmarArriendo = (e) => {
     e.preventDefault();
     setErrorMsg('');
 
-    if (!validarRutChileno(form.rutUsuario)) {
-      setErrorMsg('Por favor ingresa un RUN / RUT chileno válido (Ej: 12.345.678-9).');
+    const nuevosErrores = validarFormulario(REGLAS_VALIDACION, form);
+    setErrores(nuevosErrores);
+    setTouched(
+      Object.keys(REGLAS_VALIDACION).reduce((acc, campo) => ({ ...acc, [campo]: true }), {})
+    );
+
+    if (Object.keys(nuevosErrores).length > 0) {
+      setErrorMsg('Revisa los campos marcados en rojo antes de confirmar el arriendo.');
       return;
     }
 
@@ -104,55 +136,41 @@ function Arriendos() {
       return;
     }
 
+    setErrores({});
+    setTouched({});
     setContratoGenerado(res.contrato);
     setMaquinaSeleccionada(null);
   };
 
   return (
-    <div className="arriendos-page py-4 py-lg-5 bg-light min-vh-75">
+    <div className="arriendos-page py-4 py-lg-5">
       <div className="container">
-        
+
         {/* Breadcrumb */}
         <nav aria-label="breadcrumb" className="mb-4">
-          <ol className="breadcrumb small mb-0">
-            <li className="breadcrumb-item"><Link to="/" className="text-decoration-none text-muted">Inicio</Link></li>
-            <li className="breadcrumb-item active text-dark fw-semibold" aria-current="page">Arriendo de Maquinaria</li>
+          <ol className="breadcrumb arriendos-breadcrumb mb-0">
+            <li className="breadcrumb-item"><Link to="/">Inicio</Link></li>
+            <li className="breadcrumb-item active" aria-current="page">Arriendo de Maquinaria</li>
           </ol>
         </nav>
 
-        {/* Hero Banner Destacado con Imagen Oficial de Bosch */}
-        <div className="bg-white border rounded-1 overflow-hidden shadow-sm mb-5">
-          <div className="row g-0 align-items-center">
-            
-            <div className="col-12 col-lg-6 p-4 p-md-5">
-              <h1 className="display-6 fw-bold text-dark mb-2 font-oswald">
-                Arriendo de Maquinaria Profesional en Santiago
-              </h1>
-              <p className="text-secondary lh-base mb-4">
-                Equipos de alto rendimiento listos para operar en faena sin requerir inversión en compras de capital. Registro y verificación de arriendo por <strong>RUN de cliente</strong> con entrega garantizada y servicio técnico en obra.
-              </p>
-            </div>
-
-            <div className="col-12 col-lg-6 bg-dark text-center">
-              <img 
-                src="/arriendo-bosch.jpg" 
-                alt="Bosch Potencia Imparable - Martillo Demoledor en Arriendo"
-                className="arriendos-hero-img w-100 object-fit-cover"
-              />
-            </div>
-
-          </div>
+        {/* Hero Banner */}
+        <div className="brand-hero rounded-1 p-4 p-md-5 mb-5">
+          <h1 className="brand-hero-title mb-3">
+            Arriendo de Maquinaria Profesional en Santiago
+          </h1>
+          <p className="brand-hero-text mb-0">
+            Equipos de alto rendimiento listos para operar en faena sin requerir inversión en compras de capital. Registro y verificación de arriendo por <strong>RUN de cliente</strong> con entrega garantizada y servicio técnico en obra.
+          </p>
         </div>
 
         {/* Catálogo de Maquinarias para Arriendo */}
         <div id="catalogo-maquinas" className="mb-4">
-          <div className="d-flex justify-content-between align-items-center mb-3">
-            <div>
-              <h2 className="h4 fw-bold text-dark mb-0 font-oswald">
-                Equipos y Maquinarias en Arriendo
-              </h2>
-              <span className="text-muted small">Tarifas diarias transparentes con mantención oficial de fábrica</span>
-            </div>
+          <div className="mb-3">
+            <h2 className="arriendos-section-title mb-1">
+              Equipos y Maquinarias en Arriendo
+            </h2>
+            <span className="arriendos-section-sub">Tarifas diarias transparentes con mantención oficial de fábrica</span>
           </div>
 
           <div className="row g-4">
@@ -160,60 +178,49 @@ function Arriendos() {
               const estaDisponible = maq.estado === 'Disponible';
 
               return (
-                <div key={maq.idMaquina} className="col-12 col-md-6 col-lg-6">
-                  <div className="bg-white border rounded-1 shadow-sm h-100 d-flex flex-column overflow-hidden">
-                    
-                    <div className="row g-0 flex-grow-1">
-                      <div className="col-12 col-sm-5 bg-platino d-flex align-items-center justify-content-center p-3 border-end border-light-subtle">
-                        <img 
-                          src={maq.imagen} 
-                          alt={maq.nombre} 
-                          className="arriendo-item-img img-fluid object-fit-contain"
-                          onError={(e) => { e.target.src = '/banner-web.webp'; }}
-                        />
+                <div key={maq.idMaquina} className="col-12 col-md-6">
+                  <div className={`arriendo-card shadow-sm h-100 d-flex flex-column ${estaDisponible ? 'arriendo-card--disponible' : 'arriendo-card--arrendada'}`}>
+
+                    <div className="p-4 d-flex flex-column justify-content-between flex-grow-1">
+                      <div>
+                        <div className="mb-2">
+                          <span className={`arriendo-estado-badge ${estaDisponible ? 'arriendo-estado-badge--disponible' : 'arriendo-estado-badge--arrendada'}`}>
+                            {estaDisponible ? '● Disponible' : '■ En Faena (Arrendada)'}
+                          </span>
+                        </div>
+
+                        <h3 className="arriendo-nombre mb-1">
+                          {maq.nombre}
+                        </h3>
+                        <div className="arriendo-meta mb-2">{maq.marca} | {maq.categoria}</div>
+
+                        <div className="arriendo-specs-list mb-3">
+                          <ul className="list-unstyled mb-0">
+                            {Object.entries(maq.especificaciones).slice(0, 3).map(([k, v]) => (
+                              <li key={k}><strong>{k}:</strong> {v}</li>
+                            ))}
+                          </ul>
+                        </div>
                       </div>
 
-                      <div className="col-12 col-sm-7 p-3 d-flex flex-column justify-content-between">
+                      <div className="arriendo-card-footer d-flex justify-content-between align-items-center">
                         <div>
-                          <div className="d-flex justify-content-between align-items-start mb-1">
-                            <span className={`badge rounded-1 ${estaDisponible ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-secondary text-white'}`}>
-                              {estaDisponible ? '● Disponible' : '■ En Faena (Arrendada)'}
-                            </span>
-                          </div>
-
-                          <h3 className="h6 fw-bold text-dark mb-1">
-                            {maq.nombre}
-                          </h3>
-                          <div className="text-muted small mb-2">{maq.marca} | {maq.categoria}</div>
-
-                          <div className="small text-secondary mb-3">
-                            <ul className="arriendo-specs-list list-unstyled mb-0">
-                              {Object.entries(maq.especificaciones).slice(0, 3).map(([k, v]) => (
-                                <li key={k}><strong>{k}:</strong> {v}</li>
-                              ))}
-                            </ul>
-                          </div>
+                          <span className="arriendo-rate-label d-block">Tarifa por día:</span>
+                          <span className="arriendo-rate-value">
+                            {formatearCLP(maq.tarifaDia)}
+                          </span>
                         </div>
 
-                        <div className="border-top pt-2 d-flex justify-content-between align-items-center">
-                          <div>
-                            <span className="arriendo-rate-label text-muted small d-block">Tarifa por día:</span>
-                            <span className="fw-bold text-dark font-monospace fs-5">
-                              {formatearCLP(maq.tarifaDia)}
-                            </span>
-                          </div>
-
-                          <button 
-                            type="button" 
-                            className={`btn btn-sm rounded-1 px-3 ${estaDisponible ? 'btn-warning text-dark fw-bold' : 'btn-outline-secondary'}`}
-                            disabled={!estaDisponible}
-                            onClick={() => abrirModalArriendo(maq)}
-                          >
-                            {estaDisponible ? 'Arrendar' : 'No Disponible'}
-                          </button>
-                        </div>
-
+                        <button 
+                          type="button" 
+                          className={`btn btn-sm rounded-1 px-3 ${estaDisponible ? 'btn-ambar arriendo-btn' : 'btn-outline-secondary'}`}
+                          disabled={!estaDisponible}
+                          onClick={() => abrirModalArriendo(maq)}
+                        >
+                          {estaDisponible ? 'Arrendar' : 'No Disponible'}
+                        </button>
                       </div>
+
                     </div>
 
                   </div>
@@ -232,117 +239,124 @@ function Arriendos() {
         <div className="modal modal-backdrop-custom fade show d-block" tabIndex="-1">
           <div className="modal-dialog modal-lg modal-dialog-centered">
             <div className="modal-content rounded-1 border-0 shadow">
-              
-              <div className="modal-header border-bottom py-2 px-3 bg-light">
-                <h5 className="modal-title h6 fw-bold mb-0">
+
+              <div className="modal-header arriendo-modal-head border-bottom py-2 px-3">
+                <h5 className="modal-title arriendo-modal-title mb-0">
                   Solicitud de Arriendo de Equipo: {maquinaSeleccionada.nombre}
                 </h5>
                 <button type="button" className="btn-close btn-close-sm" onClick={cerrarModal}></button>
               </div>
 
-              <form onSubmit={handleConfirmarArriendo}>
+              <form onSubmit={handleConfirmarArriendo} noValidate>
                 <div className="modal-body p-3 p-md-4">
-                  
+
                   {/* Ficha Resumen de la Máquina */}
-                  <div className="p-3 bg-platino border rounded-1 mb-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                  <div className="arriendo-summary p-3 mb-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
                     <div>
-                      <strong className="text-dark d-block">{maquinaSeleccionada.nombre}</strong>
-                      <small className="text-muted">Código: {maquinaSeleccionada.idMaquina} | Marca: {maquinaSeleccionada.marca}</small>
+                      <strong className="arriendo-summary-name d-block">{maquinaSeleccionada.nombre}</strong>
+                      <small className="arriendo-summary-meta">Código: {maquinaSeleccionada.idMaquina} | Marca: {maquinaSeleccionada.marca}</small>
                     </div>
-                    <div className="text-end">
-                      <span className="text-muted small d-block">Tarifa Diaria:</span>
-                      <strong className="text-dark font-monospace fs-5">{formatearCLP(maquinaSeleccionada.tarifaDia)}</strong>
+                    <div className="arriendo-summary-end">
+                      <span className="arriendo-summary-label d-block">Tarifa Diaria:</span>
+                      <strong className="arriendo-summary-value">{formatearCLP(maquinaSeleccionada.tarifaDia)}</strong>
                     </div>
                   </div>
 
                   {errorMsg && (
-                    <div className="alert alert-danger py-2 px-3 small rounded-1 mb-3">
+                    <div className="alert alert-danger arriendo-alert py-2 px-3 rounded-1 mb-3">
                       <i className="bi bi-exclamation-triangle-fill me-1"></i>
                       {errorMsg}
                     </div>
                   )}
 
-                  <h4 className="arriendo-modal-section-title h6 fw-bold text-dark text-uppercase mb-3">
+                  <h4 className="arriendo-modal-section-title mb-3">
                     1. Identificación del Cliente (Validación de RUN)
                   </h4>
 
                   <div className="row g-3 mb-4">
                     <div className="col-12 col-md-6">
-                      <label className="form-label small fw-semibold text-secondary mb-1">
+                      <label className="form-label arriendo-label mb-1">
                         RUN / RUT del Usuario *
                       </label>
                       <input 
                         type="text" 
-                        className="form-control form-control-sm rounded-1 font-monospace"
+                        className={claseCampo('rutUsuario', 'form-control form-control-sm rounded-1 arriendo-mono')}
                         placeholder="Ej: 12.345.678-9"
                         value={form.rutUsuario}
-                        onChange={(e) => setForm({ ...form, rutUsuario: e.target.value })}
+                        onChange={(e) => handleChange('rutUsuario', formatearRut(e.target.value))}
+                        onBlur={() => handleBlur('rutUsuario')}
+                        maxLength={12}
                         required
                       />
-                      <small className="arriendo-help-text text-muted">Requerido para la emisión del contrato</small>
+                      {errores.rutUsuario
+                        ? <div className="invalid-feedback d-block">{errores.rutUsuario}</div>
+                        : <small className="arriendo-help-text">Requerido para la emisión del contrato</small>}
                     </div>
 
                     <div className="col-12 col-md-6">
-                      <label className="form-label small fw-semibold text-secondary mb-1">
+                      <label className="form-label arriendo-label mb-1">
                         Nombre Completo del Responsable *
                       </label>
                       <input 
                         type="text" 
-                        className="form-control form-control-sm rounded-1"
+                        className={claseCampo('nombreUsuario')}
                         placeholder="Ej: Juan Carlos Soto"
                         value={form.nombreUsuario}
-                        onChange={(e) => setForm({ ...form, nombreUsuario: e.target.value })}
+                        onChange={(e) => handleChange('nombreUsuario', e.target.value)}
+                        onBlur={() => handleBlur('nombreUsuario')}
                         required
                       />
+                      {errores.nombreUsuario && <div className="invalid-feedback">{errores.nombreUsuario}</div>}
                     </div>
 
                     <div className="col-12 col-md-6">
-                      <label className="form-label small fw-semibold text-secondary mb-1">
+                      <label className="form-label arriendo-label mb-1">
                         Correo Electrónico (Gmail o Corporativo) *
                       </label>
                       <input 
                         type="email" 
-                        className="form-control form-control-sm rounded-1"
+                        className={claseCampo('email')}
                         placeholder="ejemplo@gmail.com"
                         value={form.email}
-                        onChange={(e) => setForm({ ...form, email: e.target.value })}
+                        onChange={(e) => handleChange('email', e.target.value)}
+                        onBlur={() => handleBlur('email')}
                         required
                       />
+                      {errores.email && <div className="invalid-feedback">{errores.email}</div>}
                     </div>
 
                     <div className="col-12 col-md-6">
-                      <label className="form-label small fw-semibold text-secondary mb-1">
+                      <label className="form-label arriendo-label mb-1">
                         Teléfono Móvil de Contacto *
                       </label>
                       <input 
                         type="tel" 
-                        className="form-control form-control-sm rounded-1"
+                        className={claseCampo('telefono')}
                         placeholder="+56 9 9876 5432"
                         value={form.telefono}
-                        onChange={(e) => setForm({ ...form, telefono: e.target.value })}
+                        onChange={(e) => handleChange('telefono', formatearTelefono(e.target.value))}
+                        onBlur={() => handleBlur('telefono')}
+                        inputMode="tel"
+                        maxLength={17}
                         required
                       />
+                      {errores.telefono && <div className="invalid-feedback">{errores.telefono}</div>}
                     </div>
                   </div>
 
-                  <h4 className="arriendo-modal-section-title h6 fw-bold text-dark text-uppercase mb-3">
+                  <h4 className="arriendo-modal-section-title mb-3">
                     2. Ubicación de la Faena / Obra
                   </h4>
 
                   <div className="row g-3 mb-4">
                     <div className="col-12 col-md-5">
-                      <label className="form-label small fw-semibold text-secondary mb-1">
+                      <label className="form-label arriendo-label mb-1">
                         Región *
                       </label>
                       <select 
                         className="form-select form-select-sm rounded-1"
                         value={regionSeleccionada}
-                        onChange={(e) => {
-                          const nuevaReg = e.target.value;
-                          setRegionSeleccionada(nuevaReg);
-                          const comunasDisponibles = REGIONES_CHILE.find(r => r.region === nuevaReg)?.comunas || [];
-                          setForm({ ...form, comuna: comunasDisponibles[0] || '' });
-                        }}
+                        onChange={(e) => handleCambiarRegion(e.target.value)}
                       >
                         {REGIONES_CHILE.map((r) => (
                           <option key={r.region} value={r.region}>{r.region}</option>
@@ -351,46 +365,50 @@ function Arriendos() {
                     </div>
 
                     <div className="col-12 col-md-7">
-                      <label className="form-label small fw-semibold text-secondary mb-1">
+                      <label className="form-label arriendo-label mb-1">
                         Comuna (Opciones autorizadas) *
                       </label>
                       <div className="input-group input-group-sm">
-                        <span className="input-group-text bg-light"><i className="bi bi-search text-muted"></i></span>
+                        <span className="input-group-text arriendo-input-icon"><i className="bi bi-search"></i></span>
                         <select 
-                          className="form-select form-select-sm rounded-end-1"
+                          className={`form-select form-select-sm rounded-end-1${errores.comuna ? ' is-invalid' : ''}`}
                           value={form.comuna}
-                          onChange={(e) => setForm({ ...form, comuna: e.target.value })}
+                          onChange={(e) => handleChange('comuna', e.target.value)}
+                          onBlur={() => handleBlur('comuna')}
                           required
                         >
-                          {(REGIONES_CHILE.find(r => r.region === regionSeleccionada)?.comunas || []).map((com) => (
+                          {obtenerComunas(regionSeleccionada).map((com) => (
                             <option key={com} value={com}>{com}</option>
                           ))}
                         </select>
                       </div>
+                      {errores.comuna && <div className="invalid-feedback d-block">{errores.comuna}</div>}
                     </div>
 
                     <div className="col-12">
-                      <label className="form-label small fw-semibold text-secondary mb-1">
+                      <label className="form-label arriendo-label mb-1">
                         Dirección Exacta de la Obra *
                       </label>
                       <input 
                         type="text" 
-                        className="form-control form-control-sm rounded-1"
+                        className={claseCampo('direccion')}
                         placeholder="Ej: Pasaje Los Aromos 740, Faena Constructora Sur"
                         value={form.direccion}
-                        onChange={(e) => setForm({ ...form, direccion: e.target.value })}
+                        onChange={(e) => handleChange('direccion', e.target.value)}
+                        onBlur={() => handleBlur('direccion')}
                         required
                       />
+                      {errores.direccion && <div className="invalid-feedback">{errores.direccion}</div>}
                     </div>
                   </div>
 
-                  <h4 className="arriendo-modal-section-title h6 fw-bold text-dark text-uppercase mb-3">
+                  <h4 className="arriendo-modal-section-title mb-3">
                     3. Período de Arriendo y Cálculo de Tarifa
                   </h4>
 
                   <div className="row g-3 mb-3">
                     <div className="col-12 col-md-6">
-                      <label className="form-label small fw-semibold text-secondary mb-1">Fecha de Inicio *</label>
+                      <label className="form-label arriendo-label mb-1">Fecha de Inicio *</label>
                       <input 
                         type="date" 
                         className="form-control form-control-sm rounded-1"
@@ -401,39 +419,41 @@ function Arriendos() {
                     </div>
 
                     <div className="col-12 col-md-6">
-                      <label className="form-label small fw-semibold text-secondary mb-1">Días de Arriendo *</label>
+                      <label className="form-label arriendo-label mb-1">Días de Arriendo *</label>
                       <input 
                         type="number" 
                         min="1" 
                         max="90"
-                        className="form-control form-control-sm rounded-1 font-monospace"
+                        className={claseCampo('diasArriendo', 'form-control form-control-sm rounded-1 arriendo-mono')}
                         value={form.diasArriendo}
-                        onChange={(e) => setForm({ ...form, diasArriendo: Math.max(1, Number(e.target.value)) })}
+                        onChange={(e) => handleChange('diasArriendo', e.target.value)}
+                        onBlur={() => handleBlur('diasArriendo')}
                         required
                       />
+                      {errores.diasArriendo && <div className="invalid-feedback">{errores.diasArriendo}</div>}
                     </div>
                   </div>
 
                   {/* Cálculo en vivo */}
-                  <div className="p-3 bg-light border rounded-1 d-flex justify-content-between align-items-center">
+                  <div className="arriendo-summary p-3 d-flex justify-content-between align-items-center">
                     <div>
-                      <span className="small text-muted d-block">
+                      <span className="arriendo-total-label d-block">
                         {form.diasArriendo} día(s) × {formatearCLP(maquinaSeleccionada.tarifaDia)}
                       </span>
-                      <strong className="text-dark">Total del Contrato de Arriendo:</strong>
+                      <strong className="arriendo-total-name">Total del Contrato de Arriendo:</strong>
                     </div>
-                    <strong className="text-dark font-monospace fs-4">
+                    <strong className="arriendo-total-value">
                       {formatearCLP(maquinaSeleccionada.tarifaDia * form.diasArriendo)}
                     </strong>
                   </div>
 
                 </div>
 
-                <div className="modal-footer border-top py-2 px-3 bg-light">
+                <div className="modal-footer arriendo-modal-foot border-top py-2 px-3">
                   <button type="button" className="btn btn-outline-secondary btn-sm rounded-1" onClick={cerrarModal}>
                     Cancelar
                   </button>
-                  <button type="submit" className="btn btn-warning text-dark fw-bold btn-sm rounded-1 px-4 shadow-sm">
+                  <button type="submit" className="btn btn-ambar arriendo-btn btn-sm rounded-1 px-4 shadow-sm">
                     Confirmar Arriendo
                   </button>
                 </div>
@@ -451,23 +471,23 @@ function Arriendos() {
         <div className="modal modal-backdrop-custom fade show d-block" tabIndex="-1">
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content rounded-1 border-0 shadow">
-              <div className="modal-header border-bottom py-2 px-3 bg-light">
-                <h5 className="modal-title h6 fw-bold mb-0">
+              <div className="modal-header arriendo-modal-head border-bottom py-2 px-3">
+                <h5 className="modal-title arriendo-modal-title mb-0">
                   Contrato de Arriendo #{contratoGenerado.idContrato}
                 </h5>
                 <button type="button" className="btn-close btn-close-sm" onClick={() => setContratoGenerado(null)}></button>
               </div>
 
               <div className="modal-body p-4">
-                <div className="text-center pb-3 border-bottom mb-3">
-                  <div className="text-success fs-1 mb-1">✓</div>
-                  <h6 className="fw-bold text-dark mb-1">¡Arriendo Registrado Exitosamente!</h6>
-                  <span className="badge bg-dark text-warning font-monospace">
+                <div className="arriendo-contract-head pb-3 border-bottom mb-3">
+                  <div className="arriendo-ok-icon mb-1">✓</div>
+                  <h6 className="arriendo-contract-title mb-2">¡Arriendo Registrado Exitosamente!</h6>
+                  <span className="arriendo-contract-code">
                     Código: #{contratoGenerado.idContrato}
                   </span>
                 </div>
 
-                <div className="small mb-3">
+                <div className="arriendo-contract-list mb-3">
                   <div><strong>Máquina:</strong> {contratoGenerado.nombreMaquina} (#{contratoGenerado.idMaquina})</div>
                   <div><strong>Cliente:</strong> {contratoGenerado.usuario.nombre}</div>
                   <div><strong>RUN:</strong> {contratoGenerado.usuario.rut}</div>
@@ -476,17 +496,17 @@ function Arriendos() {
                   <div><strong>Vigencia:</strong> {contratoGenerado.diasArriendo} días desde {contratoGenerado.fechaInicio}</div>
                 </div>
 
-                <div className="p-3 bg-platino border rounded-1 d-flex justify-content-between align-items-center">
-                  <span className="fw-bold text-dark">Total Arriendo:</span>
-                  <span className="fw-bold text-success fs-5 font-monospace">{formatearCLP(contratoGenerado.totalPagar)}</span>
+                <div className="arriendo-summary p-3 d-flex justify-content-between align-items-center">
+                  <span className="arriendo-total-name">Total Arriendo:</span>
+                  <span className="arriendo-contract-total">{formatearCLP(contratoGenerado.totalPagar)}</span>
                 </div>
               </div>
 
-              <div className="modal-footer border-top py-2 px-3 bg-light">
+              <div className="modal-footer arriendo-modal-foot border-top py-2 px-3">
                 <button type="button" className="btn btn-outline-dark btn-sm rounded-1" onClick={() => window.print()}>
                   Imprimir Contrato
                 </button>
-                <button type="button" className="btn btn-warning text-dark fw-bold btn-sm rounded-1" onClick={() => setContratoGenerado(null)}>
+                <button type="button" className="btn btn-ambar arriendo-btn btn-sm rounded-1" onClick={() => setContratoGenerado(null)}>
                   Aceptar
                 </button>
               </div>

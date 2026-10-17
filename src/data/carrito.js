@@ -1,7 +1,4 @@
-// ===============================================================
 // SISTEMA DE CARRITO DE COMPRAS CON PERSISTENCIA EN LOCALSTORAGE
-// Validación de stock, cantidades, cálculo de subtotales y totales
-// ===============================================================
 
 const STORAGE_KEY_CARRITO = 'ferrefix_carrito_v1';
 export const EVENTO_CARRITO_ACTUALIZADO = 'ferrefix:carrito_actualizado';

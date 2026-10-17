@@ -213,13 +213,68 @@ export const CATEGORIAS_PRODUCTOS = [
   'Seguridad'
 ];
 
-// ===============================================================
 // SISTEMA DE PERSISTENCIA Y OPERACIONES CRUD (SIMULACIÓN DE BD)
-// Requerimiento rúbrica Duoc UC: Datos en JS + Persistencia Local
-// ===============================================================
-
 const STORAGE_KEY = 'ferrefix_productos_v1';
 export const EVENTO_PRODUCTOS_ACTUALIZADOS = 'ferrefix:productos_actualizados';
+
+// Ruta del endpoint que guarda las imágenes dentro de src/assets/products
+const API_SUBIR_IMAGEN = '/api/productos/imagen';
+export const TAMANO_MAXIMO_IMAGEN_BYTES = 6 * 1024 * 1024; // 6 MB
+
+/**
+ * Convierte un archivo de imagen a Data URL (respaldo cuando no hay servidor).
+ */
+const archivoADataUrl = (archivo) =>
+  new Promise((resolve, reject) => {
+    const lector = new FileReader();
+    lector.onload = () => resolve(lector.result);
+    lector.onerror = () => reject(new Error('No se pudo leer el archivo de imagen.'));
+    lector.readAsDataURL(archivo);
+  });
+
+/**
+ * Sube una imagen de producto al servidor de desarrollo, la cual queda guardada
+ * físicamente en la carpeta `src/assets/products` y retorna su URL pública.
+ * Si el servidor no está disponible, se devuelve la imagen como Data URL para
+ * que siga funcionando sin perder el registro.
+ */
+export const subirImagenProducto = async (archivo) => {
+  if (!archivo) return null;
+
+  if (!archivo.type || !archivo.type.startsWith('image/')) {
+    throw new Error('El archivo seleccionado no es una imagen válida.');
+  }
+
+  if (archivo.size > TAMANO_MAXIMO_IMAGEN_BYTES) {
+    throw new Error('La imagen supera el tamaño máximo permitido (6 MB).');
+  }
+
+  try {
+    const respuesta = await fetch(API_SUBIR_IMAGEN, {
+      method: 'POST',
+      headers: {
+        'Content-Type': archivo.type,
+        'X-File-Name': encodeURIComponent(archivo.name || 'imagen')
+      },
+      body: archivo
+    });
+
+    const tipoRespuesta = respuesta.headers.get('content-type') || '';
+
+    // Solo se considera exitoso si el servidor de Vite guardó el archivo y
+    // respondió con la ruta pública de la imagen.
+    if (respuesta.ok && tipoRespuesta.includes('application/json')) {
+      const datos = await respuesta.json();
+      if (datos.url) return datos.url;
+    }
+
+    // El servidor no pudo guardar el archivo: se usa la imagen embebida.
+    return archivoADataUrl(archivo);
+  } catch {
+    // Sin servidor (sitio publicado como estático): se usa Data URL.
+    return archivoADataUrl(archivo);
+  }
+};
 
 /**
  * Notifica a los componentes React que los productos cambiaron en tiempo real
@@ -268,14 +323,14 @@ export const obtenerProductoPorId = (id) => {
  */
 export const crearProducto = (nuevoProducto) => {
   const productos = obtenerProductos();
-  
+
   const productoAInsertar = {
     ...nuevoProducto,
     idProducto: nuevoProducto.idProducto || String(Date.now()),
     stock: Number(nuevoProducto.stock) || 0,
     precioVenta: Number(nuevoProducto.precioVenta) || 0,
     categoria: nuevoProducto.categoria || 'Herramientas',
-    imagen: (nuevoProducto.imagen && nuevoProducto.imagen.trim()) || '/arriendo-bosch.jpg',
+    imagen: (nuevoProducto.imagen && nuevoProducto.imagen.trim()) || '/banner-web.webp',
     descripcion: nuevoProducto.descripcion || 'Producto de alta calidad disponible en Ferrefix.',
     especificaciones: nuevoProducto.especificaciones || {
       'Disponibilidad': 'Entrega inmediata en tienda o despacho a domicilio',

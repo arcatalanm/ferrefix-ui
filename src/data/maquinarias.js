@@ -1,7 +1,4 @@
-// ===============================================================
 // SISTEMA DE GESTIÓN Y PERSISTENCIA DE ARRIENDO DE MAQUINARIA
-// Control de máquinas, estados (Disponible/Arrendada) y contratos
-// ===============================================================
 
 const STORAGE_KEY_MAQUINARIAS = 'ferrefix_maquinarias_v1';
 const STORAGE_KEY_CONTRATOS = 'ferrefix_contratos_arriendo_v1';
@@ -14,7 +11,6 @@ const MAQUINARIAS_INICIALES = [
     marca: 'Bosch',
     categoria: 'Demolición y Perforación Pesada',
     tarifaDia: 28990,
-    imagen: '/arriendo-bosch.jpg',
     estado: 'Disponible', // 'Disponible' | 'Arrendada'
     especificaciones: {
       'Potencia Absorbida': '1.750 Watts',
@@ -32,7 +28,6 @@ const MAQUINARIAS_INICIALES = [
     marca: 'Ingco Heavy',
     categoria: 'Hormigón y Mezcla',
     tarifaDia: 18990,
-    imagen: '/banner-web.webp',
     estado: 'Disponible',
     especificaciones: {
       'Capacidad de Tambor': '150 Litros',
@@ -48,7 +43,6 @@ const MAQUINARIAS_INICIALES = [
     marca: 'Krafter Pro',
     categoria: 'Energía y Grupos Electrógenos',
     tarifaDia: 24990,
-    imagen: '/banner-web.webp',
     estado: 'Disponible',
     especificaciones: {
       'Potencia Nominal': '5.500 Watts (Peak 6.500W)',
@@ -64,7 +58,6 @@ const MAQUINARIAS_INICIALES = [
     marca: 'Husqvarna Construction',
     categoria: 'Compactación y Pavimento',
     tarifaDia: 22990,
-    imagen: '/banner-web.webp',
     estado: 'Disponible',
     especificaciones: {
       'Peso Operativo': '90 kg',
@@ -106,7 +99,7 @@ export const obtenerContratosArriendo = () => {
   try {
     const data = localStorage.getItem(STORAGE_KEY_CONTRATOS);
     return data ? JSON.parse(data) : [];
-  } catch (e) {
+  } catch {
     return [];
   }
 };

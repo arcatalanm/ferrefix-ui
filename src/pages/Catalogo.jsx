@@ -94,15 +94,15 @@ function Catalogo() {
         {/* Encabezado del Catálogo */}
         <div className="catalogo-header mb-4">
           <nav aria-label="breadcrumb">
-            <ol className="breadcrumb small mb-2">
-              <li className="breadcrumb-item"><a href="/" className="text-decoration-none text-muted">Inicio</a></li>
-              <li className="breadcrumb-item active text-dark fw-semibold" aria-current="page">Catálogo de Productos</li>
+            <ol className="breadcrumb catalogo-breadcrumb mb-2">
+              <li className="breadcrumb-item"><a href="/">Inicio</a></li>
+              <li className="breadcrumb-item active" aria-current="page">Catálogo de Productos</li>
             </ol>
           </nav>
           <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
             <div>
-              <h1 className="catalogo-titulo fw-bold mb-1">Catálogo de Productos</h1>
-              <p className="text-secondary mb-0">
+              <h1 className="catalogo-titulo mb-1">Catálogo de Productos</h1>
+              <p className="marca-parrafo mb-0">
                 Explora nuestra variedad de herramientas, materiales de construcción y artículos de ferretería.
               </p>
             </div>
@@ -116,7 +116,7 @@ function Catalogo() {
             {/* Input de Búsqueda por texto */}
             <div className="col-12 col-md-6 col-lg-5">
               <div className="input-group">
-                <span className="input-group-text bg-white border-end-0 text-muted">
+                <span className="input-group-text bg-white border-end-0 marca-muted">
                   <i className="bi bi-search"></i>
                 </span>
                 <input
@@ -142,7 +142,7 @@ function Catalogo() {
             {/* Ordenamiento por precio */}
             <div className="col-12 col-sm-6 col-md-3 col-lg-4 ms-auto">
               <div className="d-flex align-items-center gap-2">
-                <label htmlFor="ordenarPor" className="form-label small fw-semibold text-secondary text-nowrap mb-0">
+                <label htmlFor="ordenarPor" className="form-label marca-label marca-nowrap mb-0">
                   <i className="bi bi-arrow-down-up me-1"></i> Ordenar:
                 </label>
                 <select
@@ -176,9 +176,9 @@ function Catalogo() {
           </div>
 
           {/* Filtro por Categorías */}
-          <hr className="my-3 text-secondary opacity-25" />
+          <hr className="catalogo-divisor my-3" />
           <div className="catalogo-categorias-container">
-            <span className="small fw-bold text-uppercase text-secondary d-block mb-2">
+            <span className="marca-etiqueta d-block mb-2">
               Categorías:
             </span>
             <div className="d-flex flex-wrap gap-2">
@@ -191,7 +191,7 @@ function Catalogo() {
                     onClick={() => handleCambiarCategoria(cat)}
                     className={`btn btn-sm rounded-pill px-3 py-1 transition-all ${
                       esActiva 
-                        ? 'btn-dark fw-bold shadow-sm' 
+                        ? 'btn-dark shadow-sm' 
                         : 'btn-outline-secondary'
                     }`}
                   >

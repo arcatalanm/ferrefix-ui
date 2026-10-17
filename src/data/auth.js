@@ -1,7 +1,4 @@
-// ===============================================================
 // SISTEMA DE AUTENTICACIÓN Y ROLES EN LOCALSTORAGE
-// Simulación de control de acceso para Administradores y Clientes
-// ===============================================================
 
 const STORAGE_KEY_USUARIOS = 'ferrefix_usuarios_v1';
 const STORAGE_KEY_SESION = 'ferrefix_sesion_activa_v1';
