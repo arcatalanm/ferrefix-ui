@@ -1,3 +1,4 @@
+import { mostrarToast } from "../components/ToastNotificacion";
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { obtenerSesionActiva } from '../data/auth';
@@ -86,6 +87,11 @@ function ContactoCotizacion() {
     }
 
     setMensajeEnviado(cotizacion.idCotizacion);
+    mostrarToast({
+      titulo: "¡Cotización Registrada!",
+      mensaje: `Solicitud #${cotizacion.idCotizacion} enviada con éxito. Te responderemos a la brevedad.`,
+      tipo: "success"
+    });
     setForm({ ...valorInicial, nombre: '', email: '' });
     setErrores({});
     setTouched({});

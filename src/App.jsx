@@ -1,3 +1,4 @@
+import ToastNotificacion from "./components/ToastNotificacion";
 import { Routes, Route, useLocation } from 'react-router-dom';
 import Topbar from './components/Topbar';
 import Navbar from './components/Navbar';
@@ -24,6 +25,7 @@ function App() {
 
   return (
     <>
+      <ToastNotificacion />
       {!esRutaAdmin && <Topbar />}
       {!esRutaAdmin && <Navbar />}
       <Routes>

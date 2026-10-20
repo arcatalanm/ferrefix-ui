@@ -2144,3 +2144,102 @@
 .info-legal-section .info-text:last-child {
   margin-bottom: 0;
 }
+
+/* =============================================================== */
+/* NOTIFICACIONES FLOTANTES FERREFIX (TOAST INFERIOR DERECHO)      */
+/* =============================================================== */
+
+.toast-ferrefix-contenedor {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 380px;
+  width: calc(100% - 32px);
+  pointer-events: none;
+}
+
+.toast-ferrefix-tarjeta {
+  pointer-events: auto;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 12px 32px rgba(18, 30, 49, 0.16), 0 2px 8px rgba(0, 0, 0, 0.06);
+  border-radius: 4px !important;
+  animation: toastSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.toast-ferrefix-tarjeta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 36px rgba(18, 30, 49, 0.22);
+}
+
+.toast-ferrefix-img-wrapper {
+  width: 48px;
+  height: 48px;
+  background-color: var(--color-platino, #f4f6f8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toast-ferrefix-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.toast-ferrefix-titulo {
+  font-family: 'Oswald', sans-serif;
+  letter-spacing: 0.3px;
+  font-size: 0.95rem;
+}
+
+.toast-ferrefix-mensaje {
+  font-size: 0.83rem;
+  color: #555e68;
+}
+
+.toast-ferrefix-progreso {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  width: 100%;
+  opacity: 0.85;
+  animation-name: toastProgresoAnim;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@keyframes toastSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(28px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes toastProgresoAnim {
+  0% {
+    width: 100%;
+  }
+  100% {
+    width: 0%;
+  }
+}
+
+@media (max-width: 576px) {
+  .toast-ferrefix-contenedor {
+    bottom: 16px;
+    right: 16px;
+    left: 16px;
+    width: auto;
+  }
+}

@@ -2,13 +2,14 @@ import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { obtenerProductos, EVENTO_PRODUCTOS_ACTUALIZADOS } from '../data/productos';
 import { agregarAlCarrito } from '../data/carrito';
+import { mostrarToast } from '../components/ToastNotificacion';
 
 function DetalleProducto() {
   const { id } = useParams();
   const navigate = useNavigate();
 
   const [cantidad, setCantidad] = useState(1);
-  const [feedbackCarrito, setFeedbackCarrito] = useState(null);
+  const [botonAnimado, setBotonAnimado] = useState(false);
 
   // Catálogo reactivo leído desde localStorage
   const [productos, setProductos] = useState(obtenerProductos);
@@ -71,13 +72,23 @@ function DetalleProducto() {
   const handleAgregarCarrito = () => {
     const res = agregarAlCarrito(producto, cantidad);
     if (!res.ok) {
-      setFeedbackCarrito({ tipo: 'danger', mensaje: res.error });
-      setTimeout(() => setFeedbackCarrito(null), 4000);
+      mostrarToast({
+        titulo: "Stock Insuficiente",
+        mensaje: res.error,
+        tipo: "danger"
+      });
     } else {
-      setFeedbackCarrito({ tipo: 'success', mensaje: res.mensaje });
-      setTimeout(() => {
-        setFeedbackCarrito(null);
-      }, 4500);
+      setBotonAnimado(true);
+      setTimeout(() => setBotonAnimado(false), 1800);
+
+      mostrarToast({
+        titulo: "¡Añadido al Carrito!",
+        mensaje: `${producto.nombre} (${cantidad} ${cantidad === 1 ? "unidad" : "unidades"})`,
+        tipo: "success",
+        imagen: producto.imagen,
+        link: "/carrito",
+        linkTexto: "Ver Carrito"
+      });
     }
   };
 
@@ -244,27 +255,19 @@ function DetalleProducto() {
                   type="button"
                   onClick={handleAgregarCarrito}
                   disabled={producto.stock <= 0}
-                  className="btn btn-ambar btn-lg py-3 rounded-2 shadow-sm d-flex align-items-center justify-content-center gap-2"
+                  className={`btn btn-lg py-3 rounded-2 shadow-sm d-flex align-items-center justify-content-center gap-2 transition-all ${
+                    botonAnimado ? "btn-success text-white" : "btn-ambar"
+                  }`}
+                  style={{ transition: "all 0.25s ease" }}
                 >
-                  <i className="bi bi-cart-plus-fill marca-icono"></i>
-                  {producto.stock > 0 ? 'Agregar al Carrito' : 'Agotado Temporalmente'}
+                  <i className={`bi ${botonAnimado ? "bi-check2-circle" : "bi-cart-plus-fill"} marca-icono`}></i>
+                  {producto.stock <= 0 
+                    ? "Agotado Temporalmente" 
+                    : botonAnimado 
+                    ? "¡Añadido con éxito! ✓" 
+                    : "Agregar al Carrito"}
                 </button>
               </div>
-
-              {/* Mensaje de confirmación o error de stock */}
-              {feedbackCarrito && (
-                <div className={`alert alert-${feedbackCarrito.tipo} d-flex align-items-center justify-content-between gap-2 py-2 px-3 rounded-2 mb-4 shadow-sm`} role="alert">
-                  <div className="d-flex align-items-center gap-2">
-                    <i className={`bi ${feedbackCarrito.tipo === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill'} marca-icono`}></i>
-                    <span className="marca-fino">{feedbackCarrito.mensaje}</span>
-                  </div>
-                  {feedbackCarrito.tipo === 'success' && (
-                    <Link to="/carrito" className="btn btn-dark btn-sm rounded-1 marca-nowrap">
-                      Ver Carrito →
-                    </Link>
-                  )}
-                </div>
-              )}
 
             </div>
           </div>
