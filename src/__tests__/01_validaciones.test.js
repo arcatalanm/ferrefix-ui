@@ -1,7 +1,10 @@
-import { describe, it, expect } from 'vitest';
+// ============================================================
+// MÓDULOS 1–5: Validaciones
+// ============================================================
+import { describe, it, expect, vi } from 'vitest';
 import { validarRut, validadores } from '../data/validaciones.js';
 
-// MÓDULO 1: validarRut
+// ─── MÓDULO 1: validarRut ───────────────────────────────────
 describe('Módulo 1: validarRut', () => {
   it('1. Caso correcto: valida un RUT chileno con dígito verificador numérico', () => {
     expect(validarRut('11.111.111-1')).toBe(true);
@@ -11,7 +14,11 @@ describe('Módulo 1: validarRut', () => {
     expect(validarRut('11.111.111-2')).toBe(false);
   });
 
-  it('3. Caso borde: acepta RUT válido con dígito verificador K en minúscula', () => {
+  // FIX #3 — limpiarRut() llama toUpperCase() internamente, así que la 'k'
+  // minúscula se convierte a 'K' antes de comparar → el test sí debe pasar.
+  it('3. Caso borde: acepta RUT válido con dígito verificador k en minúscula (normalizado a K)', () => {
+    // 10.000.013-K es un RUT cuyo DV real es K.
+    // limpiarRut convierte a mayúsculas, por lo que 'k' es aceptado.
     expect(validarRut('10.000.013-k')).toBe(true);
   });
 
@@ -20,7 +27,7 @@ describe('Módulo 1: validarRut', () => {
   });
 });
 
-// MÓDULO 2: validadores.email
+// ─── MÓDULO 2: validadores.email ───────────────────────────
 describe('Módulo 2: validadores.email', () => {
   it('5. Caso correcto: retorna string vacío cuando el correo tiene formato válido', () => {
     expect(validadores.email('contacto@ferrefix.cl')).toBe('');
@@ -39,7 +46,7 @@ describe('Módulo 2: validadores.email', () => {
   });
 });
 
-// MÓDULO 3: validadores.nombre
+// ─── MÓDULO 3: validadores.nombre ──────────────────────────
 describe('Módulo 3: validadores.nombre', () => {
   it('9. Caso correcto: acepta un nombre válido con apellidos', () => {
     expect(validadores.nombre('Juan Carlos Pérez')).toBe('');
@@ -58,7 +65,7 @@ describe('Módulo 3: validadores.nombre', () => {
   });
 });
 
-// MÓDULO 4: validadores.telefono
+// ─── MÓDULO 4: validadores.telefono ────────────────────────
 describe('Módulo 4: validadores.telefono', () => {
   it('13. Caso correcto: acepta un teléfono móvil chileno válido con prefijo +56', () => {
     expect(validadores.telefono('+56 9 1234 5678')).toBe('');
@@ -77,7 +84,7 @@ describe('Módulo 4: validadores.telefono', () => {
   });
 });
 
-// MÓDULO 5: validadores.direccion
+// ─── MÓDULO 5: validadores.direccion ───────────────────────
 describe('Módulo 5: validadores.direccion', () => {
   it('17. Caso correcto: acepta una dirección con numeración y caracteres válidos', () => {
     expect(validadores.direccion('Av. Antonio Varas #666, Providencia')).toBe('');

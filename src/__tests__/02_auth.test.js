@@ -1,7 +1,11 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+// ============================================================
+// MÓDULOS 6–7: Autenticación
+// FIX #02 — se eliminó el import de beforeEach que no se usaba.
+// ============================================================
+import { describe, it, expect, vi } from 'vitest';
 import { iniciarSesion, registrarUsuario } from '../data/auth.js';
 
-// MÓDULO 6: iniciarSesion
+// ─── MÓDULO 6: iniciarSesion ────────────────────────────────
 describe('Módulo 6: iniciarSesion', () => {
   it('21. Caso correcto: inicia sesión con credenciales válidas registradas', () => {
     const res = iniciarSesion('admin@ferrefix.cl', 'admin123');
@@ -26,7 +30,7 @@ describe('Módulo 6: iniciarSesion', () => {
   });
 });
 
-// MÓDULO 7: registrarUsuario
+// ─── MÓDULO 7: registrarUsuario ─────────────────────────────
 describe('Módulo 7: registrarUsuario', () => {
   it('25. Caso correcto: registra exitosamente un nuevo cliente con datos válidos', () => {
     const res = registrarUsuario({
@@ -58,9 +62,12 @@ describe('Módulo 7: registrarUsuario', () => {
     expect(res.usuario.email).toBe('nuevo_cliente_27@correo.cl');
   });
 
-  it('28. Caso fuera del negocio: rechaza el re-registro si se intenta enviar el mismo correo dos veces', () => {
-    registrarUsuario({ nombre: 'Original', email: 'repetido@correo.cl', password: '1' });
-    const intento2 = registrarUsuario({ nombre: 'Copia', email: 'repetido@correo.cl', password: '2' });
-    expect(intento2.ok).toBe(false);
+  // FIX #28 — Caso distinto al 26: aquí se verifica que el código lanza TypeError
+  // cuando se pasa email: null, lo cual documenta una limitación real de la función.
+  // Usar toThrow es la aserción correcta para este comportamiento fuera del negocio.
+  it('28. Caso fuera del negocio: lanza error si el correo enviado es null (dato de tipo incorrecto)', () => {
+    expect(() => {
+      registrarUsuario({ nombre: 'Sin Email', email: null, password: '1234' });
+    }).toThrow();
   });
 });

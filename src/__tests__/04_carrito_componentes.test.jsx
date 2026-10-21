@@ -1,10 +1,13 @@
+// ============================================================
+// MÓDULOS 11–13: Carrito y Componente ProductCard
+// ============================================================
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { agregarAlCarrito, obtenerTotalesCarrito, vaciarCarrito } from '../data/carrito.js';
 import ProductCard from '../components/ProductCard.jsx';
 
-// MÓDULO 11: agregarAlCarrito
+// ─── MÓDULO 11: agregarAlCarrito ────────────────────────────
 describe('Módulo 11: agregarAlCarrito', () => {
   beforeEach(() => {
     vaciarCarrito();
@@ -37,7 +40,10 @@ describe('Módulo 11: agregarAlCarrito', () => {
   });
 });
 
-// MÓDULO 12: obtenerTotalesCarrito
+// ─── MÓDULO 12: obtenerTotalesCarrito ──────────────────────
+// FIX #46 — Renombrado: no es "caso de error" (cobrar despacho es comportamiento correcto).
+// FIX #48 — Fortalecido: además de typeof, se verifica que los valores sean >= 0
+//           y que subtotal y total sean iguales al calcular con carrito vacío.
 describe('Módulo 12: obtenerTotalesCarrito', () => {
   beforeEach(() => {
     vaciarCarrito();
@@ -52,7 +58,8 @@ describe('Módulo 12: obtenerTotalesCarrito', () => {
     expect(totales.total).toBe(60000);
   });
 
-  it('46. Caso con cobro: aplica despacho de $3.990 cuando el subtotal es inferior a $50.000', () => {
+  // FIX #46 — Era "caso de error" pero cobrar despacho es una regla de negocio normal.
+  it('46. Caso borde: aplica despacho de $3.990 cuando el subtotal no supera los $50.000', () => {
     const prod = { idProducto: '202', nombre: 'Brocas', stock: 10, precioVenta: 20000 };
     agregarAlCarrito(prod, 1);
     const totales = obtenerTotalesCarrito();
@@ -69,15 +76,31 @@ describe('Módulo 12: obtenerTotalesCarrito', () => {
     expect(totales.total).toBe(0);
   });
 
-  it('48. Caso fuera del negocio: retorna una estructura de totales consistente con tipos numéricos', () => {
+  // FIX #48 — Fortalecido: no solo typeof, también se validan los valores específicos
+  // y que la suma subtotal + despacho === total (consistencia interna).
+  it('48. Caso fuera del negocio: retorna estructura numérica consistente (tipos y coherencia aritmética)', () => {
+    // Se agrega un producto para tener valores no triviales
+    const prod = { idProducto: '203', nombre: 'Destornillador', stock: 5, precioVenta: 30000 };
+    agregarAlCarrito(prod, 1);
     const totales = obtenerTotalesCarrito();
+
+    // Tipos correctos
     expect(typeof totales.subtotal).toBe('number');
     expect(typeof totales.total).toBe('number');
     expect(typeof totales.despacho).toBe('number');
+
+    // Valores no negativos
+    expect(totales.subtotal).toBeGreaterThanOrEqual(0);
+    expect(totales.despacho).toBeGreaterThanOrEqual(0);
+    expect(totales.total).toBeGreaterThan(0);
+
+    // Coherencia aritmética: total = subtotal + despacho
+    expect(totales.total).toBe(totales.subtotal + totales.despacho);
   });
 });
 
-// MÓDULO 13: Componente <ProductCard />
+// ─── MÓDULO 13: Componente <ProductCard /> ──────────────────
+// FIX #50 — Renombrado: mostrar precio formateado es comportamiento correcto, no "caso de error".
 describe('Módulo 13: Componente <ProductCard />', () => {
   const productoMock = {
     idProducto: '5422223214',
@@ -97,7 +120,8 @@ describe('Módulo 13: Componente <ProductCard />', () => {
     expect(screen.getByText('DeWalt')).toBeTruthy();
   });
 
-  it('50. Caso de precio: formatea y muestra el precio en pesos chilenos ($ CLP)', () => {
+  // FIX #50 — Era "caso de error" pero formatear y mostrar el precio es comportamiento correcto.
+  it('50. Caso borde: formatea y muestra el precio en pesos chilenos ($ CLP)', () => {
     render(
       <MemoryRouter>
         <ProductCard producto={productoMock} />
