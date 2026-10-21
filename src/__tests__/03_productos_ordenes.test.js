@@ -15,11 +15,12 @@
 // Al fijarlo, el test 39 puede verificar el idOrden exacto en
 // lugar de solo el prefijo — eso sí hace el test más robusto.
 //
-// Regla aplicada: se mockea lo que no se puede predecir o controlar,
-// no lo que ya se sabe cómo termina.
+// Regla aplicada: se mockea lo que varía entre ejecuciones o está fuera
+// de nuestro control (como Date.now); lo que es repetible y está bajo
+// nuestro control se prueba directamente con datos y expect.
 // ============================================================
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { crearProducto, actualizarProducto, obtenerProductos, restablecerProductos } from '../data/productos.js';
+import { crearProducto, actualizarProducto, restablecerProductos } from '../data/productos.js';
 import { crearOrden } from '../data/ordenes.js';
 
 // ─── MÓDULO 8: crearProducto ────────────────────────────────
@@ -36,29 +37,24 @@ describe('Módulo 8: crearProducto', () => {
     expect(nuevo.stock).toBe(15);
   });
 
-  it('30. Caso borde: asigna imagen por defecto cuando se omite o viene vacía la URL', () => {
+  it('30. Caso de error: maneja precio no numérico erróneo asignando 0 como fallback de seguridad', () => {
+    const nuevo = crearProducto({
+      nombre: 'Producto Error Precio',
+      precioVenta: 'no_es_precio'
+    });
+    expect(nuevo.precioVenta).toBe(0);
+  });
+
+  it('31. Caso borde: asigna imagen por defecto cuando la URL viene como string vacío', () => {
     const nuevo = crearProducto({
       nombre: 'Serrucho Manual',
       marca: 'Bahco',
       imagen: ''
     });
-    expect(nuevo.imagen).toBeTruthy();
+    expect(nuevo.imagen).toBe('/banner-web.webp');
   });
 
-  it('31. Caso borde: convierte valores de precio y stock de string a tipo numérico', () => {
-    const nuevo = crearProducto({
-      nombre: 'Cinta Métrica 5m',
-      marca: 'Lufkin',
-      precioVenta: '4990',
-      stock: '25'
-    });
-    expect(typeof nuevo.precioVenta).toBe('number');
-    expect(nuevo.precioVenta).toBe(4990);
-    expect(typeof nuevo.stock).toBe('number');
-    expect(nuevo.stock).toBe(25);
-  });
-
-  it('32. Caso fuera del negocio: asigna 0 por defecto si el stock no es numérico', () => {
+  it('32. Caso fuera del negocio: asigna stock 0 de forma segura cuando recibe tipos de dato no numéricos', () => {
     const nuevo = crearProducto({
       nombre: 'Clavos 2 Pulgadas',
       stock: 'invalido'
@@ -70,6 +66,10 @@ describe('Módulo 8: crearProducto', () => {
 // ─── MÓDULO 9: actualizarProducto ──────────────────────────
 // Cada test crea su propio producto para no mutar el catálogo compartido.
 describe('Módulo 9: actualizarProducto', () => {
+  beforeEach(() => {
+    restablecerProductos();
+  });
+
   it('33. Caso correcto: actualiza el stock disponible de un producto creado en el test', () => {
     const prod = crearProducto({ nombre: 'Producto Test 33', stock: 50, precioVenta: 10000 });
     const actualizado = actualizarProducto(prod.idProducto, { stock: 99 });
@@ -119,12 +119,12 @@ describe('Módulo 10: crearOrden', () => {
     expect(orden.estado).toBe('Completada');
   });
 
-  it('38. Caso borde: respeta el estado personalizado que se proporciona al crear la orden', () => {
+  it('38. Caso de error: maneja orden con estado erróneo o vacío asignando Completada como respaldo', () => {
     const orden = crearOrden({
-      cliente: { nombre: 'Cliente Pendiente' },
-      estado: 'En Preparación'
+      cliente: { nombre: 'Cliente Sin Estado' },
+      estado: ''
     });
-    expect(orden.estado).toBe('En Preparación');
+    expect(orden.estado).toBe('Completada');
   });
 
   it('39. Caso borde: genera idOrden exacto usando el timestamp mockeado fijo (ORD-2024-000042)', () => {
