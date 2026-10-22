@@ -1,3 +1,44 @@
+const CONTRATOS_INICIALES = [
+  {
+    idContrato: 'ARR-924110',
+    fechaContrato: '19/10/2024, 09:30:00',
+    idMaquina: 'MAQ-BET-02',
+    nombreMaquina: 'Betonera Trompo Eléctrica 150 Litros 0.75HP',
+    marcaMaquina: 'Ingco Heavy',
+    tarifaDia: 18990,
+    diasArriendo: 5,
+    fechaInicio: '2024-10-20',
+    totalPagar: 94950,
+    usuario: {
+      idUsuario: 'USR-003',
+      rut: '15.432.890-K',
+      nombre: 'Juan Maestro',
+      telefono: '+56 9 8765 4321',
+      email: 'cliente@ferrefix.cl',
+      direccion: 'Av. Providencia 1240, Depto 502',
+      region: 'Región Metropolitana',
+      comuna: 'Providencia'
+    },
+    estado: 'Vigente'
+  }
+];
+
+import boschImg from "../assets/maquinarias/arriendo-bosch.webp";
+import ingcoImg from "../assets/maquinarias/arriendo-ingco.webp";
+import krafterImg from "../assets/maquinarias/arriendo-krafter.webp";
+import husqvarnaImg from "../assets/maquinarias/arriendo-husqvarna.webp";
+
+export const IMAGENES_MAQUINARIAS = {
+  "MAQ-BOSCH-01": boschImg,
+  "MAQ-BET-02": ingcoImg,
+  "MAQ-GEN-03": krafterImg,
+  "MAQ-PLAC-04": husqvarnaImg,
+  "Bosch": boschImg,
+  "Ingco Heavy": ingcoImg,
+  "Krafter Pro": krafterImg,
+  "Husqvarna Construction": husqvarnaImg
+};
+
 // SISTEMA DE GESTIÓN Y PERSISTENCIA DE ARRIENDO DE MAQUINARIA
 
 const STORAGE_KEY_MAQUINARIAS = 'ferrefix_maquinarias_v1';
@@ -7,6 +48,7 @@ export const EVENTO_MAQUINARIAS_ACTUALIZADAS = 'ferrefix:maquinarias_actualizada
 const MAQUINARIAS_INICIALES = [
   {
     idMaquina: 'MAQ-BOSCH-01',
+    imagen: boschImg,
     nombre: 'Martillo Demoledor Bosch GSH 16-28 Professional 1750W',
     marca: 'Bosch',
     categoria: 'Demolición y Perforación Pesada',
@@ -24,6 +66,7 @@ const MAQUINARIAS_INICIALES = [
   },
   {
     idMaquina: 'MAQ-BET-02',
+    imagen: ingcoImg,
     nombre: 'Betonera Trompo Eléctrica 150 Litros 0.75HP',
     marca: 'Ingco Heavy',
     categoria: 'Hormigón y Mezcla',
@@ -39,6 +82,7 @@ const MAQUINARIAS_INICIALES = [
   },
   {
     idMaquina: 'MAQ-GEN-03',
+    imagen: krafterImg,
     nombre: 'Generador Eléctrico a Gasolina 6.5kVA Monofásico',
     marca: 'Krafter Pro',
     categoria: 'Energía y Grupos Electrógenos',
@@ -54,6 +98,7 @@ const MAQUINARIAS_INICIALES = [
   },
   {
     idMaquina: 'MAQ-PLAC-04',
+    imagen: husqvarnaImg,
     nombre: 'Placa Compactadora Vibratoria 90kg Motor 6.5HP',
     marca: 'Husqvarna Construction',
     categoria: 'Compactación y Pavimento',
@@ -85,7 +130,11 @@ export const obtenerMaquinarias = () => {
       localStorage.setItem(STORAGE_KEY_MAQUINARIAS, JSON.stringify(MAQUINARIAS_INICIALES));
       return MAQUINARIAS_INICIALES;
     }
-    return JSON.parse(data);
+    const parsed = JSON.parse(data);
+    return parsed.map((m) => ({
+      ...m,
+      imagen: IMAGENES_MAQUINARIAS[m.idMaquina] || IMAGENES_MAQUINARIAS[m.marca] || m.imagen
+    }));
   } catch (error) {
     console.error('Error al leer maquinarias:', error);
     return MAQUINARIAS_INICIALES;
@@ -94,13 +143,17 @@ export const obtenerMaquinarias = () => {
 
 export const obtenerContratosArriendo = () => {
   if (typeof window === 'undefined' || !window.localStorage) {
-    return [];
+    return CONTRATOS_INICIALES;
   }
   try {
     const data = localStorage.getItem(STORAGE_KEY_CONTRATOS);
-    return data ? JSON.parse(data) : [];
+    if (!data) {
+      localStorage.setItem(STORAGE_KEY_CONTRATOS, JSON.stringify(CONTRATOS_INICIALES));
+      return CONTRATOS_INICIALES;
+    }
+    return JSON.parse(data);
   } catch {
-    return [];
+    return CONTRATOS_INICIALES;
   }
 };
 

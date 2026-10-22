@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom';
 import EspacioImagen from '../components/EspacioImagen';
+import fleteImg from '../assets/info/flete-despacho.webp';
+import fleteFaenaImg from '../assets/info/flete-faena.webp';
 
 const MODALIDADES = [
   {
@@ -103,6 +105,8 @@ function Fletes() {
             </div>
             <div className="col-12 col-lg-6">
               <EspacioImagen
+                src={fleteImg}
+                alt="Flota de reparto y despacho Ferrefix"
                 proporcion="4x3"
                 icono="bi-truck"
                 etiqueta="Imagen: flota de despacho"
@@ -162,6 +166,8 @@ function Fletes() {
             </div>
             <div className="col-12 col-lg-6">
               <EspacioImagen
+                src={fleteFaenaImg}
+                alt="Flete y traslado de carga pesada a obra y faena"
                 proporcion="4x3"
                 icono="bi-box-seam"
                 etiqueta="Imagen: flete a obra / faena"

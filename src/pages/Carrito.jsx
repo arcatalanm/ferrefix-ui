@@ -40,17 +40,18 @@ function Carrito() {
   const [alertaStock, setAlertaStock] = useState(null);
 
   // Formulario de despacho (Inicia vacío con placeholders de ejemplo; autocompleta nombre y correo si hay sesión)
-  const [regionSeleccionada, setRegionSeleccionada] = useState(REGION_POR_DEFECTO);
+  const regionInicial = normalizarRegion(sesion?.region || REGION_POR_DEFECTO);
+  const [regionSeleccionada, setRegionSeleccionada] = useState(regionInicial);
   const [formCliente, setFormCliente] = useState({
     nombre: sesion ? sesion.nombre : '',
-    rut: '',
+    rut: sesion ? (sesion.rut || '15.432.890-K') : '',
     email: sesion ? sesion.email : '',
-    telefono: '',
-    direccion: '',
-    region: REGION_POR_DEFECTO,
-    comuna: obtenerComunaPorDefecto(REGION_POR_DEFECTO),
+    telefono: sesion ? (sesion.telefono || '+56 9 8765 4321') : '',
+    direccion: sesion ? (sesion.direccion || 'Av. Providencia 1240, Depto 502') : '',
+    region: regionInicial,
+    comuna: sesion && sesion.comuna ? sesion.comuna : obtenerComunaPorDefecto(REGION_POR_DEFECTO),
     indicaciones: '',
-    metodoEntrega: 'despacho', // 'despacho' | 'retiro'
+    metodoEntrega: 'despacho',
     metodoPago: 'WebPay Plus (Débito)'
   });
   const [errores, setErrores] = useState({});
@@ -117,7 +118,8 @@ function Carrito() {
     `${base}${errores[campo] ? ' is-invalid' : ''}`;
 
   const handleCambiarRegion = (nuevaRegion) => {
-    setRegionSeleccionada(nuevaRegion);
+    const regionNorm = normalizarRegion(nuevaRegion);
+    setRegionSeleccionada(regionNorm);
     const comuna = obtenerComunaPorDefecto(nuevaRegion);
     setFormCliente((prev) => ({ ...prev, region: nuevaRegion, comuna }));
     setErrores((prev) => ({ ...prev, comuna: '' }));
@@ -148,12 +150,13 @@ function Carrito() {
     // 2. Registrar la orden en el módulo de órdenes
     const ordenGenerada = crearOrden({
       idOrden: `ORD-${Date.now().toString().slice(-6)}`,
+      idUsuario: sesion ? sesion.idUsuario : null,
       cliente: {
-        nombre: formCliente.nombre,
-        rut: formCliente.rut,
-        email: formCliente.email,
-        telefono: formCliente.telefono,
-        direccion: `${formCliente.direccion}, ${formCliente.comuna}, ${formCliente.region}`
+        nombre: formCliente.nombre || (sesion ? sesion.nombre : ''),
+        rut: formCliente.rut || (sesion ? (sesion.rut || '15.432.890-K') : ''),
+        email: formCliente.email || (sesion ? sesion.email : ''),
+        telefono: formCliente.telefono || (sesion ? (sesion.telefono || '+56 9 8765 4321') : ''),
+        direccion: `${formCliente.direccion || (sesion ? sesion.direccion : '')}, ${formCliente.comuna}, ${formCliente.region}`
       },
       items: items.map((i) => ({
         idProducto: i.idProducto,
@@ -415,14 +418,7 @@ function Carrito() {
                   </button>
                 </div>
 
-                {sesion ? (
-                  <div className="alert alert-light border marca-fino mb-4 rounded-1 d-flex align-items-center gap-2">
-                    <i className="bi bi-person-check-fill marca-exito marca-icono"></i>
-                    <div>
-                      Sesión activa: <strong>{sesion.nombre}</strong> ({sesion.email}). Los datos han sido precargados automáticamente.
-                    </div>
-                  </div>
-                ) : (
+                {!sesion && (
                   <div className="alert alert-warning marca-fino mb-4 rounded-1 d-flex align-items-center justify-content-between">
                     <div>
                       <i className="bi bi-info-circle-fill me-1"></i>
@@ -441,7 +437,147 @@ function Carrito() {
                   </div>
                 )}
 
-                <form onSubmit={handleProcesarCompra} noValidate>
+                {sesion ? (
+                  // USUARIO REGISTRADO: DATOS AUTOMÁTICOS, SOLO PEDIR MÉTODO DE PAGO
+                  <form onSubmit={handleProcesarCompra} noValidate>
+                    <div className="border rounded-1 p-4 mb-4 bg-white shadow-sm">
+                      <div className="d-flex flex-wrap justify-content-between align-items-center pb-3 mb-3 border-bottom gap-2">
+                        <div className="d-flex align-items-center gap-2">
+                          <i className="bi bi-person-check-fill text-success fs-4"></i>
+                          <div>
+                            <h3 className="marca-titulo marca-tam-6 mb-0">Datos de Despacho del Cliente Registrado</h3>
+                            <span className="text-muted small">Tus datos de entrega fueron cargados automáticamente</span>
+                          </div>
+                        </div>
+                        <Link to="/cuenta" className="btn btn-outline-dark btn-sm rounded-1 px-3">
+                          <i className="bi bi-pencil me-1"></i> Modificar datos en mi cuenta
+                        </Link>
+                      </div>
+
+                      <div className="row g-3 small">
+                        <div className="col-12 col-md-6">
+                          <div className="p-2 bg-light rounded-1 border">
+                            <span className="text-muted d-block small">Destinatario:</span>
+                            <strong className="text-dark">{formCliente.nombre || sesion.nombre}</strong>
+                          </div>
+                        </div>
+                        <div className="col-12 col-md-6">
+                          <div className="p-2 bg-light rounded-1 border">
+                            <span className="text-muted d-block small">RUN / RUT:</span>
+                            <strong className="text-dark font-monospace">{formCliente.rut || sesion.rut || "15.432.890-K"}</strong>
+                          </div>
+                        </div>
+                        <div className="col-12 col-md-6">
+                          <div className="p-2 bg-light rounded-1 border">
+                            <span className="text-muted d-block small">Correo de Contacto:</span>
+                            <strong className="text-dark font-monospace">{formCliente.email || sesion.email}</strong>
+                          </div>
+                        </div>
+                        <div className="col-12 col-md-6">
+                          <div className="p-2 bg-light rounded-1 border">
+                            <span className="text-muted d-block small">Teléfono de Entrega:</span>
+                            <strong className="text-dark">{formCliente.telefono || sesion.telefono || "+56 9 8765 4321"}</strong>
+                          </div>
+                        </div>
+                        <div className="col-12">
+                          <div className="p-2 bg-light rounded-1 border">
+                            <span className="text-muted d-block small">Dirección de Despacho:</span>
+                            <strong className="text-dark">
+                              {formCliente.direccion || sesion.direccion || "Av. Providencia 1240, Depto 502"}, {formCliente.comuna || sesion.comuna || "Providencia"}, {formCliente.region || sesion.region || "Región Metropolitana"}
+                            </strong>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <h3 className="checkout-section-title marca-titulo marca-tam-6 mb-3">
+                      Selecciona tu Método de Pago
+                    </h3>
+
+                    <div className="mb-4">
+                      <div className="form-check p-2 border rounded-1 mb-2 bg-light d-flex align-items-center">
+                        <input 
+                          className="form-check-input ms-1 me-3" 
+                          type="radio" 
+                          name="metodoPagoReg" 
+                          id="webpayReg" 
+                          value="WebPay Plus (Débito)"
+                          checked={formCliente.metodoPago === "WebPay Plus (Débito)"}
+                          onChange={(e) => setFormCliente({ ...formCliente, metodoPago: e.target.value })}
+                        />
+                        <label className="form-check-label marca-strong marca-fino flex-grow-1" htmlFor="webpayReg">
+                          WebPay Plus / RedCompra (Débito)
+                        </label>
+                      </div>
+
+                      <div className="form-check p-2 border rounded-1 mb-2 bg-light d-flex align-items-center">
+                        <input 
+                          className="form-check-input ms-1 me-3" 
+                          type="radio" 
+                          name="metodoPagoReg" 
+                          id="creditoReg" 
+                          value="Tarjeta de Crédito"
+                          checked={formCliente.metodoPago === "Tarjeta de Crédito"}
+                          onChange={(e) => setFormCliente({ ...formCliente, metodoPago: e.target.value })}
+                        />
+                        <label className="form-check-label marca-strong marca-fino flex-grow-1" htmlFor="creditoReg">
+                          Tarjeta de Crédito (3 cuotas sin interés)
+                        </label>
+                      </div>
+
+                      <div className="form-check p-2 border rounded-1 bg-light d-flex align-items-center">
+                        <input 
+                          className="form-check-input ms-1 me-3" 
+                          type="radio" 
+                          name="metodoPagoReg" 
+                          id="transferenciaReg" 
+                          value="Transferencia Bancaria"
+                          checked={formCliente.metodoPago === "Transferencia Bancaria"}
+                          onChange={(e) => setFormCliente({ ...formCliente, metodoPago: e.target.value })}
+                        />
+                        <label className="form-check-label marca-strong marca-fino flex-grow-1" htmlFor="transferenciaReg">
+                          Transferencia Bancaria Electrónica Directa
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* Resumen del cobro final */}
+                    <div className="p-3 bg-platino border rounded-1 mb-4">
+                      <div className="d-flex justify-content-between mb-1 marca-fino">
+                        <span>Total de productos:</span>
+                        <span className="marca-mono">{formatearCLP(totales.subtotal)}</span>
+                      </div>
+                      <div className="d-flex justify-content-between mb-2 marca-fino">
+                        <span>Costo de envío:</span>
+                        <span className="marca-mono marca-exito">
+                          {totales.despacho === 0 ? "Gratis" : formatearCLP(totales.despacho)}
+                        </span>
+                      </div>
+                      <div className="d-flex justify-content-between align-items-center pt-2 border-top">
+                        <span className="marca-bold marca-tam-5">Total a Pagar:</span>
+                        <span className="marca-total marca-exito">{formatearCLP(totales.total)}</span>
+                      </div>
+                    </div>
+
+                    <div className="d-flex justify-content-between">
+                      <button 
+                        type="button" 
+                        className="btn btn-outline-secondary btn-sm rounded-1"
+                        onClick={() => setPasoActual("carrito")}
+                      >
+                        ← Volver al Carrito
+                      </button>
+                      <button 
+                        type="submit" 
+                        className="btn btn-ambar btn-sm marca-strong rounded-1 px-4 py-2 shadow-sm"
+                      >
+                        Confirmar y Pagar {formatearCLP(totales.total)}
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  // USUARIO SIN SESIÓN (INVITADO): FORMULARIO COMPLETO
+                  <form onSubmit={handleProcesarCompra} noValidate>
                   <h3 className="checkout-section-title marca-titulo marca-tam-6 mb-3">
                     1. Información del Cliente
                   </h3>
@@ -646,6 +782,7 @@ function Carrito() {
                   </button>
 
                 </form>
+                )}
 
               </div>
             </div>
@@ -737,14 +874,6 @@ function Carrito() {
 
                 {/* Acciones */}
                 <div className="d-flex flex-wrap gap-2 justify-content-center">
-                  <button 
-                    type="button" 
-                    className="btn btn-outline-dark btn-sm rounded-1 px-3"
-                    onClick={() => window.print()}
-                  >
-                    <i className="bi bi-printer me-1"></i>
-                    Imprimir Boleta en PDF
-                  </button>
                   <Link to="/catalogo" className="btn btn-ambar btn-sm marca-strong rounded-1 px-4">
                     Volver al Catálogo
                   </Link>

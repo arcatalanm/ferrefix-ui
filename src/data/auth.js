@@ -4,27 +4,42 @@ const STORAGE_KEY_USUARIOS = 'ferrefix_usuarios_v1';
 const STORAGE_KEY_SESION = 'ferrefix_sesion_activa_v1';
 export const EVENTO_SESION_ACTUALIZADA = 'ferrefix:sesion_actualizada';
 
-// Usuarios precargados por defecto
+// Usuarios precargados por defecto con datos completos de despacho
 const USUARIOS_PRECARGADOS = [
   {
     idUsuario: 'USR-001',
     nombre: 'Administrador Ferrefix',
+    rut: '11.222.333-4',
     email: 'admin@ferrefix.cl',
     password: 'admin123',
+    telefono: '+56 9 9345 6575',
+    direccion: 'Av. Andrés Bello 2457, Local 12',
+    region: 'Región Metropolitana',
+    comuna: 'Providencia',
     rol: 'admin'
   },
   {
     idUsuario: 'USR-002',
     nombre: 'Ariel (Administrador)',
+    rut: '12.345.678-5',
     email: 'ariel@ferrefix.cl',
     password: 'admin123',
+    telefono: '+56 9 9123 4567',
+    direccion: 'Av. Providencia 1240, Oficina 401',
+    region: 'Región Metropolitana',
+    comuna: 'Providencia',
     rol: 'admin'
   },
   {
     idUsuario: 'USR-003',
     nombre: 'Juan Maestro',
+    rut: '15.432.890-K',
     email: 'cliente@ferrefix.cl',
     password: 'cliente123',
+    telefono: '+56 9 8765 4321',
+    direccion: 'Av. Providencia 1240, Depto 502',
+    region: 'Región Metropolitana',
+    comuna: 'Providencia',
     rol: 'cliente'
   }
 ];
@@ -48,7 +63,15 @@ export const obtenerUsuarios = () => {
       localStorage.setItem(STORAGE_KEY_USUARIOS, JSON.stringify(USUARIOS_PRECARGADOS));
       return USUARIOS_PRECARGADOS;
     }
-    return JSON.parse(data);
+    const usuarios = JSON.parse(data);
+    // Asegurar que usuarios existentes tengan datos base
+    return usuarios.map((u) => {
+      const precargado = USUARIOS_PRECARGADOS.find((p) => p.email.toLowerCase() === u.email.toLowerCase());
+      return {
+        ...precargado,
+        ...u
+      };
+    });
   } catch (error) {
     console.error('Error al leer usuarios de localStorage:', error);
     return USUARIOS_PRECARGADOS;
@@ -56,7 +79,7 @@ export const obtenerUsuarios = () => {
 };
 
 /**
- * Retorna el usuario de la sesión actual o null si no ha iniciado sesión
+ * Retorna el usuario de la sesión actual enriquecido con sus datos de perfil
  */
 export const obtenerSesionActiva = () => {
   if (typeof window === 'undefined' || !window.localStorage) {
@@ -64,7 +87,24 @@ export const obtenerSesionActiva = () => {
   }
   try {
     const data = localStorage.getItem(STORAGE_KEY_SESION);
-    return data ? JSON.parse(data) : null;
+    if (!data) return null;
+    const sesion = JSON.parse(data);
+    const usuarios = obtenerUsuarios();
+    const usuarioFull = usuarios.find(
+      (u) => u.idUsuario === sesion.idUsuario || u.email.toLowerCase() === sesion.email.toLowerCase()
+    );
+    if (usuarioFull) {
+      return {
+        ...usuarioFull,
+        ...sesion,
+        rut: sesion.rut || usuarioFull.rut || '',
+        telefono: sesion.telefono || usuarioFull.telefono || '',
+        direccion: sesion.direccion || usuarioFull.direccion || '',
+        region: sesion.region || usuarioFull.region || 'Región Metropolitana',
+        comuna: sesion.comuna || usuarioFull.comuna || 'Providencia'
+      };
+    }
+    return sesion;
   } catch (error) {
     console.error('Error al leer sesión de localStorage:', error);
     return null;
@@ -90,7 +130,12 @@ export const iniciarSesion = (email, password) => {
   const sesion = {
     idUsuario: usuarioEncontrado.idUsuario,
     nombre: usuarioEncontrado.nombre,
+    rut: usuarioEncontrado.rut || '',
     email: usuarioEncontrado.email,
+    telefono: usuarioEncontrado.telefono || '',
+    direccion: usuarioEncontrado.direccion || '',
+    region: usuarioEncontrado.region || 'Región Metropolitana',
+    comuna: usuarioEncontrado.comuna || 'Providencia',
     rol: usuarioEncontrado.rol,
     fechaIngreso: new Date().toISOString()
   };
@@ -121,7 +166,7 @@ export const esAdministrador = () => {
 /**
  * Registra un nuevo usuario cliente en localStorage y activa su sesión
  */
-export const registrarUsuario = ({ nombre, email, password }) => {
+export const registrarUsuario = ({ nombre, email, password, rut = '', telefono = '', direccion = '', region = 'Región Metropolitana', comuna = 'Providencia' }) => {
   const usuarios = obtenerUsuarios();
   const existe = usuarios.find((u) => u.email.toLowerCase().trim() === email.toLowerCase().trim());
   if (existe) {
@@ -131,8 +176,13 @@ export const registrarUsuario = ({ nombre, email, password }) => {
   const nuevoUsuario = {
     idUsuario: `USR-${Date.now().toString().slice(-6)}`,
     nombre: nombre.trim(),
+    rut: rut.trim(),
     email: email.toLowerCase().trim(),
     password,
+    telefono: telefono.trim(),
+    direccion: direccion.trim(),
+    region,
+    comuna,
     rol: 'cliente'
   };
 
@@ -145,7 +195,12 @@ export const registrarUsuario = ({ nombre, email, password }) => {
   const sesion = {
     idUsuario: nuevoUsuario.idUsuario,
     nombre: nuevoUsuario.nombre,
+    rut: nuevoUsuario.rut,
     email: nuevoUsuario.email,
+    telefono: nuevoUsuario.telefono,
+    direccion: nuevoUsuario.direccion,
+    region: nuevoUsuario.region,
+    comuna: nuevoUsuario.comuna,
     rol: nuevoUsuario.rol,
     fechaIngreso: new Date().toISOString()
   };
@@ -156,3 +211,45 @@ export const registrarUsuario = ({ nombre, email, password }) => {
   return { ok: true, usuario: sesion };
 };
 
+/**
+ * Actualiza los datos de perfil y despacho del usuario activo
+ */
+export const actualizarDatosUsuario = (datosActualizados) => {
+  const sesion = obtenerSesionActiva();
+  if (!sesion) {
+    return { ok: false, mensaje: 'No hay sesión activa.' };
+  }
+
+  const usuarios = obtenerUsuarios();
+  const index = usuarios.findIndex((u) => u.idUsuario === sesion.idUsuario || u.email.toLowerCase() === sesion.email.toLowerCase());
+
+  if (index === -1) {
+    return { ok: false, mensaje: 'Usuario no encontrado.' };
+  }
+
+  const usuarioModificado = {
+    ...usuarios[index],
+    ...datosActualizados,
+    nombre: (datosActualizados.nombre || usuarios[index].nombre).trim(),
+    rut: (datosActualizados.rut || usuarios[index].rut || '').trim(),
+    telefono: (datosActualizados.telefono || usuarios[index].telefono || '').trim(),
+    direccion: (datosActualizados.direccion || usuarios[index].direccion || '').trim(),
+    region: datosActualizados.region || usuarios[index].region || 'Región Metropolitana',
+    comuna: datosActualizados.comuna || usuarios[index].comuna || 'Providencia'
+  };
+
+  usuarios[index] = usuarioModificado;
+
+  const sesionActualizada = {
+    ...sesion,
+    ...usuarioModificado
+  };
+
+  if (typeof window !== 'undefined' && window.localStorage) {
+    localStorage.setItem(STORAGE_KEY_USUARIOS, JSON.stringify(usuarios));
+    localStorage.setItem(STORAGE_KEY_SESION, JSON.stringify(sesionActualizada));
+  }
+
+  notificarSesion();
+  return { ok: true, usuario: sesionActualizada };
+};

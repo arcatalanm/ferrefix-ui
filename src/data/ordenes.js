@@ -5,6 +5,25 @@ export const EVENTO_ORDENES_ACTUALIZADAS = 'ferrefix:ordenes_actualizadas';
 
 const ORDENES_INICIALES = [
   {
+    idOrden: 'ORD-20240704',
+    numeroBoleta: 'BOL-2024-0004',
+    fecha: '2024-10-18 11:20',
+    idUsuario: 'USR-003',
+    cliente: {
+      nombre: 'Juan Maestro',
+      rut: '15.432.890-K',
+      email: 'cliente@ferrefix.cl',
+      direccion: 'Av. Providencia 1240, Depto 502, Providencia, Región Metropolitana',
+      telefono: '+56 9 8765 4321'
+    },
+    items: [
+      { idProducto: '5422223214', nombre: 'Taladro Percutor Inalámbrico 20V', cantidad: 1, precioUnitario: 129990 }
+    ],
+    total: 129990,
+    estado: 'Completada',
+    metodoPago: 'WebPay Plus (Débito)'
+  },
+  {
     idOrden: 'ORD-20240701',
     fecha: '2024-10-10 14:32',
     cliente: {

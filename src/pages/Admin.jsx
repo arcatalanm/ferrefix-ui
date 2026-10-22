@@ -1024,13 +1024,6 @@ function Admin() {
               <div className="modal-footer admin-modal-foot border-top py-2 px-3">
                 <button 
                   type="button" 
-                  className="btn btn-outline-dark btn-sm rounded-1"
-                  onClick={() => window.print()}
-                >
-                  Imprimir Boleta
-                </button>
-                <button 
-                  type="button" 
                   className="btn btn-secondary btn-sm rounded-1" 
                   onClick={() => setOrdenSeleccionada(null)}
                 >

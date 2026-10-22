@@ -175,9 +175,12 @@ function Navbar() {
                     <li className="navbar-dropdown-head px-3 py-2 border-bottom rounded-top-3">
                       <div className="navbar-user-fullname">{sesion.nombre}</div>
                       <div className="navbar-user-email">{sesion.email}</div>
-                      <span className={`navbar-user-badge mt-1 ${sesion.rol === 'admin' ? 'navbar-user-badge--admin' : 'navbar-user-badge--cliente'}`}>
-                        {sesion.rol === 'admin' ? 'Administrador' : 'Cliente Registrado'}
-                      </span>
+                    </li>
+                    <li>
+                      <Link className="dropdown-item py-2" to="/cuenta" onClick={closeMenu}>
+                        <i className="bi bi-person-gear me-2 text-warning"></i>
+                        Mi Cuenta
+                      </Link>
                     </li>
                     {sesion.rol === 'admin' && (
                       <li>

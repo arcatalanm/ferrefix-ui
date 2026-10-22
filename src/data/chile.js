@@ -148,9 +148,21 @@ export const REGIONES_CHILE = [
 // Región usada por defecto en los formularios del sitio.
 export const REGION_POR_DEFECTO = 'Región Metropolitana';
 
+// Normaliza nombres de región históricos o con variaciones (ej: "Región Metropolitana de Santiago")
+export const normalizarRegion = (region) => {
+  if (!region) return REGION_POR_DEFECTO;
+  if (region === 'Región Metropolitana de Santiago' || (typeof region === 'string' && region.toLowerCase().includes('metropolitana'))) {
+    return 'Región Metropolitana';
+  }
+  const match = REGIONES_CHILE.find((r) => r.region.toLowerCase() === String(region).toLowerCase());
+  return match ? match.region : region;
+};
+
 // Devuelve el listado de comunas de una región (o [] si no existe).
-export const obtenerComunas = (region) =>
-  REGIONES_CHILE.find((r) => r.region === region)?.comunas || [];
+export const obtenerComunas = (region) => {
+  const regionNorm = normalizarRegion(region);
+  return REGIONES_CHILE.find((r) => r.region === regionNorm)?.comunas || [];
+};
 
 // Comuna usada por defecto para una región (la primera disponible).
 export const obtenerComunaPorDefecto = (region) => obtenerComunas(region)[0] || '';

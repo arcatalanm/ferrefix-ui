@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import EspacioImagen from '../components/EspacioImagen';
+import tallerGarantiaImg from '../assets/info/taller-garantia.webp';
 
 const TIPOS = [
   {
@@ -142,6 +143,8 @@ function Garantias() {
           <div className="row g-4 align-items-center">
             <div className="col-12 col-lg-5">
               <EspacioImagen
+                src={tallerGarantiaImg}
+                alt="Taller de servicio técnico autorizado Ferrefix"
                 proporcion="4x3"
                 icono="bi-tools"
                 etiqueta="Imagen: taller de servicio técnico"

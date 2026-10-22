@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { mostrarToast } from '../components/ToastNotificacion';
 import { 
   obtenerMaquinarias, 
   registrarArriendo, 
-  EVENTO_MAQUINARIAS_ACTUALIZADAS 
+  EVENTO_MAQUINARIAS_ACTUALIZADAS,
+  IMAGENES_MAQUINARIAS
 } from '../data/maquinarias';
+import EspacioImagen from '../components/EspacioImagen';
 import { obtenerSesionActiva } from '../data/auth';
-import { REGIONES_CHILE, REGION_POR_DEFECTO, obtenerComunas, obtenerComunaPorDefecto } from '../data/chile';
+import { REGIONES_CHILE, REGION_POR_DEFECTO, normalizarRegion, obtenerComunas, obtenerComunaPorDefecto } from '../data/chile';
 import {
   validadores,
   validarFormulario,
@@ -31,6 +34,7 @@ const REGLAS_VALIDACION = {
 };
 
 function Arriendos() {
+  const navigate = useNavigate();
   const sesion = obtenerSesionActiva();
   const [maquinarias, setMaquinarias] = useState(obtenerMaquinarias);
   const [maquinaSeleccionada, setMaquinaSeleccionada] = useState(null);
@@ -68,7 +72,34 @@ function Arriendos() {
   };
 
   const abrirModalArriendo = (maq) => {
+    const sesionActiva = obtenerSesionActiva();
+    if (!sesionActiva) {
+      mostrarToast({
+        titulo: 'Inicio de Sesión Requerido',
+        mensaje: 'Debes iniciar sesión con tu cuenta para arrendar maquinaria en faena.',
+        tipo: 'warning'
+      });
+      navigate('/login');
+      return;
+    }
     setMaquinaSeleccionada(maq);
+    const regionUsuario = normalizarRegion(sesionActiva.region || REGION_POR_DEFECTO);
+    const comunasDisponibles = obtenerComunas(regionUsuario);
+    const comunaUsuario = (sesionActiva.comuna && comunasDisponibles.includes(sesionActiva.comuna))
+      ? sesionActiva.comuna
+      : (comunasDisponibles[0] || "");
+
+    setForm((prev) => ({
+      ...prev,
+      rutUsuario: sesionActiva.rut || prev.rutUsuario,
+      nombreUsuario: sesionActiva.nombre || prev.nombreUsuario,
+      email: sesionActiva.email || prev.email,
+      telefono: sesionActiva.telefono || prev.telefono,
+      direccion: sesionActiva.direccion || prev.direccion,
+      region: regionUsuario,
+      comuna: comunaUsuario
+    }));
+    setRegionSeleccionada(regionUsuario);
     setErrorMsg('');
     setErrores({});
     setTouched({});
@@ -97,9 +128,10 @@ function Arriendos() {
     `${base}${errores[campo] ? ' is-invalid' : ''}`;
 
   const handleCambiarRegion = (nuevaRegion) => {
-    setRegionSeleccionada(nuevaRegion);
-    const comuna = obtenerComunaPorDefecto(nuevaRegion);
-    setForm((prev) => ({ ...prev, region: nuevaRegion, comuna }));
+    const regionNorm = normalizarRegion(nuevaRegion);
+    setRegionSeleccionada(regionNorm);
+    const comuna = obtenerComunaPorDefecto(regionNorm);
+    setForm((prev) => ({ ...prev, region: regionNorm, comuna }));
     setErrores((prev) => ({ ...prev, comuna: '' }));
   };
 
@@ -176,10 +208,20 @@ function Arriendos() {
           <div className="row g-4">
             {maquinarias.map((maq) => {
               const estaDisponible = maq.estado === 'Disponible';
+              const imagenMaquina = maq.imagen || IMAGENES_MAQUINARIAS[maq.idMaquina] || IMAGENES_MAQUINARIAS[maq.marca];
 
               return (
                 <div key={maq.idMaquina} className="col-12 col-md-6">
                   <div className={`arriendo-card shadow-sm h-100 d-flex flex-column ${estaDisponible ? 'arriendo-card--disponible' : 'arriendo-card--arrendada'}`}>
+
+                    <EspacioImagen
+                      src={imagenMaquina}
+                      alt={`${maq.nombre} - ${maq.marca}`}
+                      proporcion="16x9"
+                      icono="bi-tools"
+                      etiqueta={`Maquinaria ${maq.marca}`}
+                      className="arriendo-card-imagen"
+                    />
 
                     <div className="p-4 d-flex flex-column justify-content-between flex-grow-1">
                       <div>
@@ -503,9 +545,6 @@ function Arriendos() {
               </div>
 
               <div className="modal-footer arriendo-modal-foot border-top py-2 px-3">
-                <button type="button" className="btn btn-outline-dark btn-sm rounded-1" onClick={() => window.print()}>
-                  Imprimir Contrato
-                </button>
                 <button type="button" className="btn btn-ambar arriendo-btn btn-sm rounded-1" onClick={() => setContratoGenerado(null)}>
                   Aceptar
                 </button>

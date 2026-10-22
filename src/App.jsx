@@ -10,6 +10,7 @@ import Nosotros from './pages/Nosotros';
 import ContactoCotizacion from './pages/ContactoCotizacion';
 import Carrito from './pages/Carrito';
 import Login from './pages/Login';
+import CuentaCliente from './pages/CuentaCliente';
 import Admin from './pages/Admin';
 import Fletes from './pages/Fletes';
 import Garantias from './pages/Garantias';
@@ -42,6 +43,9 @@ function App() {
         <Route path="/contacto" element={<ContactoCotizacion />} />
         <Route path="/cotizaciones" element={<ContactoCotizacion />} />
         <Route path="/carrito" element={<Carrito />} />
+        <Route path="/cuenta" element={<CuentaCliente />} />
+        <Route path="/mi-cuenta" element={<CuentaCliente />} />
+        <Route path="/perfil" element={<CuentaCliente />} />
         <Route path="/login" element={<Login />} />
         <Route path="/registro" element={<Login />} />
         <Route path="/admin" element={<Admin />} />

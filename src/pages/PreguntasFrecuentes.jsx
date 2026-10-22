@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import EspacioImagen from '../components/EspacioImagen';
+import atencionClienteImg from '../assets/info/atencion-cliente.webp';
 
 const PREGUNTAS = [
   {
@@ -121,6 +122,8 @@ function PreguntasFrecuentes() {
           <div className="col-12 col-lg-4">
             <div className="info-card shadow-sm p-4 mb-4">
               <EspacioImagen
+                src={atencionClienteImg}
+                alt="Mesa de ayuda y atención al cliente Ferrefix"
                 proporcion="4x3"
                 icono="bi-question-circle"
                 etiqueta="Imagen: atención al cliente"
