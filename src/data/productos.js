@@ -8,6 +8,24 @@ import llaveMonomando from '../assets/products/llave-monomando.webp';
 import esmalteCeresita from '../assets/products/esmalte-ceresita.webp';
 import arnesSeguridad from '../assets/products/arnes-seguridad.webp';
 import tornillosDrywall from '../assets/products/tornillos-drywall.webp';
+// Fotos reales de los productos de maderas y seguridad.
+import cubiertaMelamina from '../assets/products/cubierta-melamina.webp';
+import osbMultiplac from '../assets/products/osb-multiplac.webp';
+import terciadoRanurado from '../assets/products/terciado-ranurado.webp';
+import terciadoEstructural from '../assets/products/terciado-estructural.webp';
+import guantesNitrilo from '../assets/products/guantes-nitrilo.webp';
+import lentesProteccion from '../assets/products/lentes-proteccion.webp';
+import chalecoReflectante from '../assets/products/chaleco-reflectante.webp';
+import cascoConstruccion from '../assets/products/casco-construccion.webp';
+// Tarjetas diseñadas para las ofertas destacadas del home.
+import ofertaCubiertaMelamina from '../assets/sales/oferta-1-cubierta-melamina-cafe-1.webp';
+import ofertaOsbMultiplac from '../assets/sales/oferta-2-osb-multiplac.webp';
+import ofertaTerciadoRanurado from '../assets/sales/oferta-3-terciado-ranurado.webp';
+import ofertaTerciadoEstructural from '../assets/sales/oferta-4-terciado-estructural.webp';
+import ofertaGuantesNitrilo from '../assets/sales/guantes-de-nitrilo-card.webp';
+import ofertaLentesProteccion from '../assets/sales/lentes-de-protecci-n-card.webp';
+import ofertaChalecoReflectante from '../assets/sales/chaleco-reflectante-card.webp';
+import ofertaCascoConstruccion from '../assets/sales/casco-de-construcci-n-est-ndar-card.webp';
 // Lista base de productos iniciales
 export const PRODUCTOS_INICIALES = [
   {
@@ -197,6 +215,161 @@ export const PRODUCTOS_INICIALES = [
       'Presentación': 'Caja de 1000 unidades',
       'Uso recomendado': 'Tabiquería, cielos falsos y perfiles Metalcon'
     }
+  },
+  {
+    idProducto: '5422223224',
+    nombre: 'Cubierta Melamina Café 15mm 60x120cm',
+    marca: 'Masisa',
+    categoria: 'Maderas',
+    precioVenta: 9990,
+    imagen: cubiertaMelamina,
+    imagenOferta: ofertaCubiertaMelamina,
+    stock: 45,
+    descripcion: 'Cubierta de melamina tono café de 15 mm y 60x120 cm, diseñada para la construcción de muebles, cubiertas de closet, escritorios y superficies de trabajo. Su laminado melamínico resiste la humedad, los rayados y la limpieza diaria, entregando una terminación uniforme sin necesidad de barniz.',
+    especificaciones: {
+      'Espesor': '15 mm',
+      'Medidas': '60 x 120 cm',
+      'Color': 'Café',
+      'Terminación': 'Melamina',
+      'Cara': 'Doble cara melamínica',
+      'Uso recomendado': 'Mueblería, closet y superficies de trabajo',
+      'Presentación': '1 cubierta'
+    }
+  },
+  {
+    idProducto: '5422223225',
+    nombre: 'Tablero OSB Multiplac 8mm 122x244cm',
+    marca: 'Multiplac',
+    categoria: 'Maderas',
+    precioVenta: 10990,
+    imagen: osbMultiplac,
+    imagenOferta: ofertaOsbMultiplac,
+    stock: 60,
+    descripcion: 'Tablero OSB de 8 mm y 122x244 cm, fabricado con virutas de madera encoladas y prensadas en capas cruzadas. Ideal para revestimiento de muros, tabiques, cielos y bases de mobiliario, con buena resistencia mecánica y estabilidad dimensional.',
+    especificaciones: {
+      'Espesor': '8 mm',
+      'Medidas': '122 x 244 cm',
+      'Tipo': 'OSB (Oriented Strand Board)',
+      'Superficie': 'Aspecto natural de viruta',
+      'Certificación': 'Baja emisión de formaldehído (E1)',
+      'Uso recomendado': 'Construcción, revestimiento y mobiliario',
+      'Presentación': '1 tablero'
+    }
+  },
+  {
+    idProducto: '5422223226',
+    nombre: 'Terciado Ranurado 9mm 122x244cm',
+    marca: 'Multiplac',
+    categoria: 'Maderas',
+    precioVenta: 10990,
+    imagen: terciadoRanurado,
+    imagenOferta: ofertaTerciadoRanurado,
+    stock: 38,
+    descripcion: 'Terciado ranurado de 9 mm con listones verticales que imitan madera machihembrada. Su cara ranurada entrega un acabado decorativo inmediato, ideal para revestir muros, cielos, tabiques y fondos de muebles en interiores.',
+    especificaciones: {
+      'Espesor': '9 mm',
+      'Medidas': '122 x 244 cm',
+      'Tipo': 'Terciado ranurado',
+      'Ranurado': 'Vertical decorativo tipo machihembrado',
+      'Terminación': 'Natural, lista para barnizar o pintar',
+      'Uso recomendado': 'Revestimientos decorativos e interiores',
+      'Presentación': '1 tablero'
+    }
+  },
+  {
+    idProducto: '5422223227',
+    nombre: 'Terciado Estructural 9mm 122x244cm',
+    marca: 'Multiplac',
+    categoria: 'Maderas',
+    precioVenta: 15290,
+    imagen: terciadoEstructural,
+    imagenOferta: ofertaTerciadoEstructural,
+    stock: 30,
+    descripcion: 'Terciado estructural de 9 mm y 122x244 cm, conformado por chapas de madera encoladas en capas cruzadas que le entregan alta resistencia mecánica y estabilidad dimensional. Diseñado para soportar cargas y reforzar estructuras de madera en construcción y habilitación de espacios.',
+    especificaciones: {
+      'Espesor': '9 mm',
+      'Medidas': '122 x 244 cm',
+      'Tipo': 'Terciado estructural (plywood)',
+      'Resistencia': 'Alta resistencia a cargas mecánicas',
+      'Encolado': 'Cola estructural resistente a la humedad',
+      'Uso recomendado': 'Estructuras, refuerzos y habilitación de espacios',
+      'Presentación': '1 tablero'
+    }
+  },
+  {
+    idProducto: '5422223228',
+    nombre: 'Guantes de Nitrilo Alta Destreza',
+    marca: 'Steelpro',
+    categoria: 'Seguridad',
+    precioVenta: 2090,
+    imagen: guantesNitrilo,
+    imagenOferta: ofertaGuantesNitrilo,
+    stock: 80,
+    descripcion: 'Guante de alta destreza para trabajos de precisión. Fabricado en poliéster 13 gauge con palma recubierta de espuma de nitrilo, entrega buen agarre en superficies mojadas y resistencia a hidrocarburos.',
+    especificaciones: {
+      'Material': 'Poliéster 13 gauge',
+      'Recubrimiento': 'Espuma de nitrilo en la palma',
+      'Agarre': 'Alto desempeño en seco y mojado',
+      'Resistencia': 'Aceites e hidrocarburos',
+      'Uso recomendado': 'Trabajos de precisión, manipulación y mantenimiento',
+      'Presentación': '1 par'
+    }
+  },
+  {
+    idProducto: '5422223229',
+    nombre: 'Lentes de Protección Envolventes ANSI Z87.1',
+    marca: 'Steelpro',
+    categoria: 'Seguridad',
+    precioVenta: 2880,
+    imagen: lentesProteccion,
+    imagenOferta: ofertaLentesProteccion,
+    stock: 70,
+    descripcion: 'Lentes envolventes con protección lateral y lente resistente a impactos. Cumplen la norma ANSI Z87.1, ideales para obras y trabajos que exigen certificación de seguridad ocular.',
+    especificaciones: {
+      'Tipo': 'Envolvente con protección lateral',
+      'Lente': 'Policarbonato resistente a impactos',
+      'Certificación': 'ANSI Z87.1',
+      'Uso recomendado': 'Construcción, taller e industria',
+      'Presentación': '1 unidad'
+    }
+  },
+  {
+    idProducto: '5422223230',
+    nombre: 'Chaleco Reflectante Alta Visibilidad',
+    marca: 'Steelpro',
+    categoria: 'Seguridad',
+    precioVenta: 19990,
+    imagen: chalecoReflectante,
+    imagenOferta: ofertaChalecoReflectante,
+    stock: 50,
+    descripcion: 'Chaleco de alta visibilidad con franjas reflectantes, esencial para la seguridad en obras de construcción y trabajos nocturnos. Confeccionado en malla liviana y transpirable.',
+    especificaciones: {
+      'Color': 'Amarillo',
+      'Material': 'Malla de poliéster',
+      'Franjas': 'Reflectantes de alta visibilidad',
+      'Tallas': 'M / L / XL',
+      'Uso recomendado': 'Obras, tránsito y trabajos nocturnos',
+      'Presentación': '1 unidad'
+    }
+  },
+  {
+    idProducto: '5422223231',
+    nombre: 'Casco de Construcción Estándar EN397',
+    marca: 'Steelpro',
+    categoria: 'Seguridad',
+    precioVenta: 4761,
+    imagen: cascoConstruccion,
+    imagenOferta: ofertaCascoConstruccion,
+    stock: 65,
+    descripcion: 'Casco de polietileno de alta densidad con arnés interior ajustable de 6 puntos, banda de sudor y ranuras universales para acoplar orejeras o viseras. Cumple norma EN397 / ANSI Z89.1.',
+    especificaciones: {
+      'Material': 'Polietileno de alta densidad',
+      'Arnés': 'Ajustable de 6 puntos',
+      'Norma': 'EN397 / ANSI Z89.1',
+      'Ranuras': 'Universales para orejeras o viseras',
+      'Color': 'Amarillo',
+      'Presentación': '1 unidad'
+    }
   }
 ];
 
@@ -285,6 +458,25 @@ const notificarCambio = () => {
   }
 };
 
+// Rutas de las imágenes temporales que usaban los productos de fábrica antes de
+// contar con fotos reales. Sirven para migrar los datos ya guardados en localStorage.
+const MARCAS_IMAGEN_ANTIGUA = [
+  'assets/sales/',
+  'oferta-1-cubierta-melamina',
+  'oferta-2-osb-multiplac',
+  'oferta-3-terciado-ranurado',
+  'oferta-4-terciado-estructural',
+  'guantes-de-nitrilo-card',
+  'lentes-de-protecci-n-card',
+  'chaleco-reflectante-card',
+  'casco-de-construcci-n-est-ndar-card'
+];
+
+const usaImagenAntigua = (imagen) => {
+  const valor = String(imagen || '').toLowerCase();
+  return MARCAS_IMAGEN_ANTIGUA.some((marca) => valor.includes(marca));
+};
+
 /**
  * Obtiene todos los productos desde localStorage.
  * Si no existen, inicializa con PRODUCTOS_INICIALES.
@@ -301,7 +493,48 @@ export const obtenerProductos = () => {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(PRODUCTOS_INICIALES));
       return PRODUCTOS_INICIALES;
     }
-    return JSON.parse(dataGuardada);
+
+    const productosGuardados = JSON.parse(dataGuardada);
+    const listaBase = Array.isArray(productosGuardados) ? productosGuardados : [];
+
+    // Migra las imágenes temporales de versiones anteriores a las fotos reales.
+    // Solo modifica productos de fábrica que aún apuntan a un asset de oferta,
+    // por lo que respeta las imágenes subidas o editadas desde el admin.
+    let huboCambios = false;
+    const productosMigrados = listaBase.map((producto) => {
+      const base = PRODUCTOS_INICIALES.find(
+        (p) => String(p.idProducto) === String(producto.idProducto)
+      );
+
+      if (!base) return producto;
+
+      let actualizado = producto;
+
+      // Reemplaza la imagen temporal vieja por la foto real del catálogo.
+      if (producto.imagen !== base.imagen && usaImagenAntigua(producto.imagen)) {
+        actualizado = { ...actualizado, imagen: base.imagen };
+        huboCambios = true;
+      }
+
+      // Agrega o sincroniza la tarjeta diseñada que se muestra en las ofertas.
+      if (base.imagenOferta && actualizado.imagenOferta !== base.imagenOferta) {
+        actualizado = { ...actualizado, imagenOferta: base.imagenOferta };
+        huboCambios = true;
+      }
+
+      return actualizado;
+    });
+
+    // Incorpora los productos de fábrica nuevos (por ejemplo, los agregados al
+    // catálogo) sin borrar los creados o editados desde el panel admin.
+    const idsGuardados = new Set(productosMigrados.map((p) => String(p.idProducto)));
+    const faltantes = PRODUCTOS_INICIALES.filter((p) => !idsGuardados.has(String(p.idProducto)));
+
+    if (faltantes.length === 0 && !huboCambios) return productosMigrados;
+
+    const listaCompleta = [...productosMigrados, ...faltantes];
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(listaCompleta));
+    return listaCompleta;
   } catch (error) {
     console.error('Error al leer productos desde localStorage:', error);
     return PRODUCTOS_INICIALES;

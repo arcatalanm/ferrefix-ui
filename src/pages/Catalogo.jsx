@@ -56,6 +56,13 @@ function Catalogo() {
   const productosFiltrados = useMemo(() => {
     let resultado = [...productos];
 
+    // Normaliza el texto para buscar sin distinguir mayúsculas ni tildes.
+    const normalizarTexto = (valor) =>
+      String(valor ?? '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+
     // Filtrar por categoría
     if (categoriaSeleccionada !== 'Todas') {
       resultado = resultado.filter(
@@ -65,11 +72,11 @@ function Catalogo() {
 
     // Filtrar por texto (nombre o marca)
     if (busquedaTexto.trim() !== '') {
-      const termino = busquedaTexto.toLowerCase().trim();
+      const termino = normalizarTexto(busquedaTexto.trim());
       resultado = resultado.filter(
         (p) =>
-          p.nombre.toLowerCase().includes(termino) ||
-          p.marca.toLowerCase().includes(termino)
+          normalizarTexto(p.nombre).includes(termino) ||
+          normalizarTexto(p.marca).includes(termino)
       );
     }
 

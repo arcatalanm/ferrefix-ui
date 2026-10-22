@@ -11,7 +11,7 @@ import {
 import { obtenerSesionActiva } from '../data/auth';
 import { crearOrden } from '../data/ordenes';
 import { obtenerProductoPorId, actualizarProducto } from '../data/productos';
-import { REGIONES_CHILE, REGION_POR_DEFECTO, obtenerComunas, obtenerComunaPorDefecto } from '../data/chile';
+import { REGIONES_CHILE, REGION_POR_DEFECTO, normalizarRegion, obtenerComunas, obtenerComunaPorDefecto } from '../data/chile';
 import {
   validadores,
   validarFormulario,

@@ -4,8 +4,10 @@ import OfertaDestacada from '../components/OfertaDestacada';
 import BannerPromocional from '../components/BannerPromocional';
 import {
   EVENTO_GENERADORES_ACTUALIZADOS,
+  ENLACE_POR_DEFECTO,
   obtenerOfertasGeneradas
 } from '../data/generadores';
+import { obtenerProductoPorId } from '../data/productos';
 
 import dewaltImg from '../assets/banners/dewalt.webp';
 import makitaImg from '../assets/banners/makita.webp';
@@ -23,47 +25,33 @@ import pinturasImg from '../assets/categories/pinturas.webp';
 import ceramicasImg from '../assets/categories/ceramicas.webp';
 import seguridadImg from '../assets/categories/seguridad.webp';
 
-import uno from '../assets/sales/guantes-de-nitrilo-card.webp'
-import dos from '../assets/sales/lentes-de-protecci-n-card.webp'
-import cinco from '../assets/sales/chaleco-reflectante-card.webp'
-import seis from '../assets/sales/casco-de-construcci-n-est-ndar-card.webp'
+// Listas de ofertas destacadas del home.
+// Se construyen desde los productos reales de productos.js: el enlace
+// (`/producto/<id>`) sale del catálogo y la imagen es la tarjeta diseñada
+// (`imagenOferta`); si el producto no tiene tarjeta, se usa su foto.
+const crearOfertasDesdeProductos = (idsProductos) =>
+  idsProductos
+    .map((idProducto) => obtenerProductoPorId(idProducto))
+    .filter(Boolean)
+    .map((producto) => ({
+      img: producto.imagenOferta || producto.imagen,
+      link: `/producto/${producto.idProducto}`,
+      alt: producto.nombre
+    }));
 
-import ofertaCubiertaMelamina from '../assets/sales/oferta-1-cubierta-melamina-cafe-1.webp';
-import ofertaOsbMultiplac from '../assets/sales/oferta-2-osb-multiplac.webp';
-import ofertaTerciadoRanurado from '../assets/sales/oferta-3-terciado-ranurado.webp';
-import ofertaTerciadoEstructural from '../assets/sales/oferta-4-terciado-estructural.webp';
+const OFERTAS_SEGURIDAD_INICIO = crearOfertasDesdeProductos([
+  '5422223228', // Guantes de nitrilo
+  '5422223229', // Lentes de protección
+  '5422223230', // Chaleco reflectante
+  '5422223231'  // Casco de construcción
+]);
 
-// Tarjetas de seguridad que acompañan al banner institucional.
-const OFERTAS_SEGURIDAD_INICIO = [
-  { img: uno, link: '/categoria', alt: 'Guantes de nitrilo' },
-  { img: dos, link: '/categoria', alt: 'Lentes de protección' },
-  { img: cinco, link: '/categoria', alt: 'Chaleco reflectante' },
-  { img: seis, link: '/categoria', alt: 'Casco de construcción' }
-];
-
-// Ofertas destacadas de maderas.
-const OFERTAS_MADERAS_INICIO = [
-  {
-    img: ofertaCubiertaMelamina,
-    link: '/catalogo?categoria=Maderas',
-    alt: 'Oferta cubierta de melamina café'
-  },
-  {
-    img: ofertaOsbMultiplac,
-    link: '/catalogo?categoria=Maderas',
-    alt: 'Oferta OSB Multiplac'
-  },
-  {
-    img: ofertaTerciadoRanurado,
-    link: '/catalogo?categoria=Maderas',
-    alt: 'Oferta terciado ranurado'
-  },
-  {
-    img: ofertaTerciadoEstructural,
-    link: '/catalogo?categoria=Maderas',
-    alt: 'Oferta terciado estructural'
-  }
-];
+const OFERTAS_MADERAS_INICIO = crearOfertasDesdeProductos([
+  '5422223224', // Cubierta Melamina Café
+  '5422223225', // Tablero OSB Multiplac
+  '5422223226', // Terciado Ranurado
+  '5422223227'  // Terciado Estructural
+]);
 
 const IMAGENES_BANNER = [
   {
@@ -124,11 +112,18 @@ function Home() {
   }, []);
 
   // Las ofertas creadas en el panel admin se muestran en la fila de maderas.
-  const ofertasMaderas = OFERTAS_MADERAS_INICIO.map((oferta, indice) => ({
-    img: ofertasGeneradas[indice]?.imagen || oferta.img,
-    link: ofertasGeneradas[indice]?.enlace || oferta.link,
-    alt: ofertasGeneradas[indice]?.alt || oferta.alt
-  }));
+  // Si no tienen un enlace propio, se conserva el enlace al producto real.
+  const ofertasMaderas = OFERTAS_MADERAS_INICIO.map((oferta, indice) => {
+    const generada = ofertasGeneradas[indice];
+    const enlaceGenerado =
+      generada?.enlace && generada.enlace !== ENLACE_POR_DEFECTO ? generada.enlace : null;
+
+    return {
+      img: generada?.imagen || oferta.img,
+      link: enlaceGenerado || oferta.link,
+      alt: generada?.alt || oferta.alt
+    };
+  });
 
   const retrocederSlide = () => {
     setSlideActivo((prev) => (prev - 1 + IMAGENES_BANNER.length) % IMAGENES_BANNER.length);
@@ -251,7 +246,7 @@ function Home() {
         alt="Banner promocional de productos de seguridad"
       />
 
-      {/* Elementos de seguridad: uno, dos, cinco, seis */}
+      {/* Ofertas destacadas de seguridad */}
       <OfertaDestacada ofertas={OFERTAS_SEGURIDAD_INICIO} />
 
       {/* Banner de maderas estructurales */}
