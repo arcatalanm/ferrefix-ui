@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom';
-import EspacioImagen from '../components/EspacioImagen';
 
 const TIPOS = [
   {
@@ -25,7 +24,7 @@ const TIPOS = [
 ];
 
 const PASOS = [
-  { titulo: 'Reúne los antecedentes', texto: 'Boleta o factura, producto y una breve descripción de la falla.' },
+  { titulo: 'Reúne los antecedentes', texto: 'Comprobante de compra o factura, producto y una breve descripción de la falla.' },
   { titulo: 'Contáctanos', texto: 'Escríbenos a contacto@ferrefix.cl o acércate al mesón de servicio técnico.' },
   { titulo: 'Evaluación técnica', texto: 'Revisamos el producto para determinar si corresponde a falla de fábrica o mal uso.' },
   { titulo: 'Solución', texto: 'Reparación, cambio por uno nuevo o devolución, según lo que establezca la evaluación.' }
@@ -133,46 +132,6 @@ function Garantias() {
                   <li key={c}>{c}</li>
                 ))}
               </ul>
-            </div>
-          </div>
-        </div>
-
-        {/* Bloque con imagen: servicio técnico */}
-        <div className="info-card shadow-sm p-4 p-md-5">
-          <div className="row g-4 align-items-center">
-            <div className="col-12 col-lg-5">
-              <EspacioImagen
-                proporcion="4x3"
-                icono="bi-tools"
-                etiqueta="Imagen: taller de servicio técnico"
-              />
-            </div>
-            <div className="col-12 col-lg-7">
-              <h2 className="info-section-title mb-2">Taller de Servicio Técnico Autorizado</h2>
-              <p className="info-text mb-3">
-                Nuestro taller realiza mantenciones preventivas, reparaciones y calibración de equipos
-                eléctricos y a combustión, con repuestos originales y garantía sobre la mano de obra.
-              </p>
-              <div className="row g-3">
-                <div className="col-6">
-                  <div className="info-info-pill">
-                    <i className="bi bi-clock-history me-2"></i>
-                    Plazo de evaluación: 3 a 5 días hábiles
-                  </div>
-                </div>
-                <div className="col-6">
-                  <div className="info-info-pill">
-                    <i className="bi bi-tools me-2"></i>
-                    Presupuesto previo sin costo
-                  </div>
-                </div>
-              </div>
-              <div className="mt-4">
-                <Link to="/contacto" className="btn btn-ambar marca-strong rounded-1 px-4 py-2 shadow-sm">
-                  <i className="bi bi-envelope me-2"></i>
-                  Solicitar revisión técnica
-                </Link>
-              </div>
             </div>
           </div>
         </div>

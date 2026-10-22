@@ -1,37 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-
-export const EVENTO_TOAST = 'ferrefix:mostrar_toast';
-
-/**
- * Función global para disparar una notificación flotante en la esquina inferior derecha
- */
-export const mostrarToast = ({
-  titulo,
-  mensaje,
-  tipo = 'success',
-  imagen = '',
-  link = '',
-  linkTexto = '',
-  duracion = 4500
-}) => {
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(
-      new CustomEvent(EVENTO_TOAST, {
-        detail: {
-          id: Date.now() + Math.random(),
-          titulo,
-          mensaje,
-          tipo,
-          imagen,
-          link,
-          linkTexto,
-          duracion
-        }
-      })
-    );
-  }
-};
+import { EVENTO_TOAST } from '../data/toast';
 
 export default function ToastNotificacion() {
   const [toasts, setToasts] = useState([]);

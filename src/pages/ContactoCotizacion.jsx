@@ -1,4 +1,4 @@
-import { mostrarToast } from "../components/ToastNotificacion";
+import { mostrarToast } from "../data/toast";
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { obtenerSesionActiva } from '../data/auth';
@@ -36,7 +36,6 @@ function ContactoCotizacion() {
   const [form, setForm] = useState(valorInicial);
   const [errores, setErrores] = useState({});
   const [touched, setTouched] = useState({});
-  const [mensajeEnviado, setMensajeEnviado] = useState(null);
 
   // Valida un solo campo (lo usa onChange/onBlur).
   const validarCampo = (campo, valor) => {
@@ -70,7 +69,6 @@ function ContactoCotizacion() {
     );
 
     if (Object.keys(nuevosErrores).length > 0) {
-      setMensajeEnviado(null);
       return;
     }
 
@@ -86,7 +84,6 @@ function ContactoCotizacion() {
       localStorage.setItem('ferrefix_cotizaciones_v1', JSON.stringify([cotizacion, ...previas]));
     }
 
-    setMensajeEnviado(cotizacion.idCotizacion);
     mostrarToast({
       titulo: "¡Cotización Registrada!",
       mensaje: `Solicitud #${cotizacion.idCotizacion} enviada con éxito. Te responderemos a la brevedad.`,
@@ -165,16 +162,6 @@ function ContactoCotizacion() {
                   Ingresa los detalles de los productos o maquinaria que requieres para tu faena.
                 </p>
               </div>
-
-              {mensajeEnviado && (
-                <div className="alert alert-success d-flex align-items-center justify-content-between p-3 rounded-1 mb-4" role="alert">
-                  <div>
-                    <i className="bi bi-check-circle-fill cot-alert-icon me-2"></i>
-                    <strong>¡Solicitud enviada con éxito!</strong> Tu número de cotización es <code>#{mensajeEnviado}</code>. Un asesor se pondrá en contacto a la brevedad.
-                  </div>
-                  <button type="button" className="btn-close" onClick={() => setMensajeEnviado(null)}></button>
-                </div>
-              )}
 
               {Object.values(errores).some(Boolean) && (
                 <div className="alert alert-danger d-flex align-items-center p-3 rounded-1 mb-4" role="alert">

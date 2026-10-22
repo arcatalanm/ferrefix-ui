@@ -8,7 +8,7 @@ import {
   obtenerTotalesCarrito, 
   EVENTO_CARRITO_ACTUALIZADO 
 } from '../data/carrito';
-import { obtenerSesionActiva } from '../data/auth';
+import { obtenerSesionActiva, obtenerPerfilCliente, guardarPerfilCliente } from '../data/auth';
 import { crearOrden } from '../data/ordenes';
 import { obtenerProductoPorId, actualizarProducto } from '../data/productos';
 import { REGIONES_CHILE, REGION_POR_DEFECTO, obtenerComunas, obtenerComunaPorDefecto } from '../data/chile';
@@ -39,16 +39,21 @@ function Carrito() {
   const [ordenCreada, setOrdenCreada] = useState(null);
   const [alertaStock, setAlertaStock] = useState(null);
 
-  // Formulario de despacho (Inicia vacío con placeholders de ejemplo; autocompleta nombre y correo si hay sesión)
-  const [regionSeleccionada, setRegionSeleccionada] = useState(REGION_POR_DEFECTO);
+  // Si el cliente ya completó sus datos, el formulario se autocompleta con su perfil.
+  const perfilGuardado = sesion ? obtenerPerfilCliente(sesion.email) : null;
+  const regionInicial = perfilGuardado?.region || REGION_POR_DEFECTO;
+  const comunaInicial = perfilGuardado?.comuna || obtenerComunaPorDefecto(regionInicial);
+
+  // Formulario de despacho: se completa con el perfil registrado cuando existe.
+  const [regionSeleccionada, setRegionSeleccionada] = useState(regionInicial);
   const [formCliente, setFormCliente] = useState({
-    nombre: sesion ? sesion.nombre : '',
-    rut: '',
-    email: sesion ? sesion.email : '',
-    telefono: '',
-    direccion: '',
-    region: REGION_POR_DEFECTO,
-    comuna: obtenerComunaPorDefecto(REGION_POR_DEFECTO),
+    nombre: perfilGuardado?.nombre || (sesion ? sesion.nombre : ''),
+    rut: perfilGuardado?.rut || '',
+    email: perfilGuardado?.email || (sesion ? sesion.email : ''),
+    telefono: perfilGuardado?.telefono || '',
+    direccion: perfilGuardado?.direccion || '',
+    region: regionInicial,
+    comuna: comunaInicial,
     indicaciones: '',
     metodoEntrega: 'despacho', // 'despacho' | 'retiro'
     metodoPago: 'WebPay Plus (Débito)'
@@ -148,6 +153,7 @@ function Carrito() {
     // 2. Registrar la orden en el módulo de órdenes
     const ordenGenerada = crearOrden({
       idOrden: `ORD-${Date.now().toString().slice(-6)}`,
+      idUsuario: sesion?.idUsuario || null,
       cliente: {
         nombre: formCliente.nombre,
         rut: formCliente.rut,
@@ -166,7 +172,19 @@ function Carrito() {
       estado: 'Completada'
     });
 
-    // 3. Vaciar carrito y mostrar confirmación
+    // 3. Guardar los datos de despacho para las próximas compras del cliente
+    if (sesion?.email) {
+      guardarPerfilCliente(sesion.email, {
+        nombre: formCliente.nombre,
+        rut: formCliente.rut,
+        telefono: formCliente.telefono,
+        direccion: formCliente.direccion,
+        region: regionSeleccionada,
+        comuna: formCliente.comuna
+      });
+    }
+
+    // 4. Vaciar carrito y mostrar confirmación
     vaciarCarrito();
     setOrdenCreada(ordenGenerada);
     setPasoActual('exito');
@@ -266,7 +284,7 @@ function Carrito() {
                                   src={item.imagen} 
                                   alt={item.nombre} 
                                   className="cart-item-img border rounded-1 bg-white object-fit-contain"
-                                  onError={(e) => { e.target.src = '/banner-web.webp'; }}
+                                  onError={(e) => { e.target.src = '/producto-sin-imagen.svg'; }}
                                 />
                               </td>
                               <td>
@@ -415,20 +433,13 @@ function Carrito() {
                   </button>
                 </div>
 
-                {sesion ? (
-                  <div className="alert alert-light border marca-fino mb-4 rounded-1 d-flex align-items-center gap-2">
-                    <i className="bi bi-person-check-fill marca-exito marca-icono"></i>
-                    <div>
-                      Sesión activa: <strong>{sesion.nombre}</strong> ({sesion.email}). Los datos han sido precargados automáticamente.
-                    </div>
-                  </div>
-                ) : (
+                {!sesion && (
                   <div className="alert alert-warning marca-fino mb-4 rounded-1 d-flex align-items-center justify-content-between">
                     <div>
                       <i className="bi bi-info-circle-fill me-1"></i>
                       ¿Ya tienes cuenta? Inicia sesión para autocompletar tus datos.
                     </div>
-                    <Link to="/login" className="btn btn-sm btn-dark rounded-1">
+                    <Link to="/login" state={{ from: '/carrito' }} className="btn btn-sm btn-dark rounded-1">
                       Iniciar Sesión
                     </Link>
                   </div>
@@ -570,7 +581,7 @@ function Carrito() {
                   </div>
 
                   <h3 className="checkout-section-title marca-titulo marca-tam-6 mb-3">
-                    3. Método de Pago Simulado
+                    3. Método de Pago
                   </h3>
 
                   <div className="mb-4">
@@ -653,7 +664,7 @@ function Carrito() {
         )}
 
         {/* ============================================================== */}
-        {/* PASO 3: COMPRA EXITOSA Y BOLETA (Rúbrica Duoc Figura 7)         */}
+        {/* PASO 3: COMPRA EXITOSA                                          */}
         {/* ============================================================== */}
         {pasoActual === 'exito' && ordenCreada && (
           <div className="row justify-content-center">
@@ -661,8 +672,8 @@ function Carrito() {
               <div className="bg-white border rounded-1 shadow-sm p-4 p-md-5">
                 
                 <div className="marca-centro pb-4 border-bottom mb-4">
-                  <div className="d-inline-flex p-3 bg-success-subtle marca-exito rounded-circle mb-3">
-                    <i className="bi bi-check-lg carrito-check-icon"></i>
+                  <div className="carrito-check-circle mb-3">
+                    <i className="bi bi-check-lg" aria-hidden="true"></i>
                   </div>
                   <h1 className="marca-titulo marca-tam-4 mb-1">
                     ¡Se ha realizado la compra con éxito!
@@ -670,9 +681,6 @@ function Carrito() {
                   <div className="d-flex justify-content-center gap-2 mt-2">
                     <span className="marca-chip marca-chip--oscuro marca-mono px-3 py-2">
                       Orden: #{ordenCreada.idOrden}
-                    </span>
-                    <span className="marca-chip marca-chip--gris marca-mono px-3 py-2">
-                      N° Boleta: {ordenCreada.numeroBoleta}
                     </span>
                   </div>
                 </div>
@@ -737,14 +745,10 @@ function Carrito() {
 
                 {/* Acciones */}
                 <div className="d-flex flex-wrap gap-2 justify-content-center">
-                  <button 
-                    type="button" 
-                    className="btn btn-outline-dark btn-sm rounded-1 px-3"
-                    onClick={() => window.print()}
-                  >
-                    <i className="bi bi-printer me-1"></i>
-                    Imprimir Boleta en PDF
-                  </button>
+                  <Link to="/historial-compras" className="btn btn-outline-dark btn-sm rounded-1 px-3">
+                    <i className="bi bi-clock-history me-1"></i>
+                    Ver historial de compras
+                  </Link>
                   <Link to="/catalogo" className="btn btn-ambar btn-sm marca-strong rounded-1 px-4">
                     Volver al Catálogo
                   </Link>

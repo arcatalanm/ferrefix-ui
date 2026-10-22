@@ -11,7 +11,7 @@ const PREGUNTAS = [
   {
     categoria: 'Compras y Pagos',
     pregunta: '¿Emiten factura para empresas?',
-    respuesta: 'Sí. Emitimos boleta y factura electrónica. Al momento del pago o del registro puedes indicar tu RUT y razón social para que la factura se genere correctamente.'
+    respuesta: 'Sí. Emitimos factura electrónica. Al momento del pago o del registro puedes indicar tu RUT y razón social para que la factura se genere correctamente.'
   },
   {
     categoria: 'Despachos',

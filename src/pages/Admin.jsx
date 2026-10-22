@@ -5,12 +5,18 @@ import {
   crearProducto,
   actualizarProducto,
   eliminarProducto,
-  restablecerProductos,
   subirImagenProducto,
   CATEGORIAS_PRODUCTOS,
   EVENTO_PRODUCTOS_ACTUALIZADOS
 } from '../data/productos';
 import { obtenerOrdenes, EVENTO_ORDENES_ACTUALIZADAS } from '../data/ordenes';
+import {
+  obtenerContratosArriendo,
+  calcularEstadoContrato,
+  calcularFechaDevolucion,
+  devolverContrato,
+  EVENTO_MAQUINARIAS_ACTUALIZADAS
+} from '../data/maquinarias';
 import {
   obtenerSesionActiva,
   iniciarSesion,
@@ -18,6 +24,8 @@ import {
   EVENTO_SESION_ACTUALIZADA
 } from '../data/auth';
 import ImagenProductoUploader from '../components/ImagenProductoUploader';
+import GeneradorProductos from '../components/GeneradorProductos';
+import GeneradorBanners from '../components/GeneradorBanners';
 
 const FORM_INICIAL = {
   idProducto: '',
@@ -40,7 +48,9 @@ function Admin() {
   // Datos
   const [productos, setProductos] = useState(obtenerProductos);
   const [ordenes, setOrdenes] = useState(obtenerOrdenes);
-  const [tabActiva, setTabActiva] = useState('dashboard'); // 'dashboard' | 'productos' | 'ordenes'
+  const [contratos, setContratos] = useState(obtenerContratosArriendo);
+  const [tabActiva, setTabActiva] = useState('dashboard'); // 'dashboard' | 'productos' | 'ordenes' | 'arriendos' | 'generadores'
+  const [generadorActivo, setGeneradorActivo] = useState('productos'); // 'productos' | 'banners'
   
   // Filtros de inventario
   const [busqueda, setBusqueda] = useState('');
@@ -54,22 +64,24 @@ function Admin() {
   const [imagenArchivo, setImagenArchivo] = useState(null);
   const [subiendoImagen, setSubiendoImagen] = useState(false);
   const [productoAEliminar, setProductoAEliminar] = useState(null);
-  const [ordenSeleccionada, setOrdenSeleccionada] = useState(null);
   const [mensajeAlerta, setMensajeAlerta] = useState(null);
 
   // Sincronización en tiempo real
   useEffect(() => {
     const handleProductos = () => setProductos(obtenerProductos());
     const handleOrdenes = () => setOrdenes(obtenerOrdenes());
+    const handleArriendos = () => setContratos(obtenerContratosArriendo());
     const handleSesion = () => setSesion(obtenerSesionActiva());
 
     window.addEventListener(EVENTO_PRODUCTOS_ACTUALIZADOS, handleProductos);
     window.addEventListener(EVENTO_ORDENES_ACTUALIZADAS, handleOrdenes);
+    window.addEventListener(EVENTO_MAQUINARIAS_ACTUALIZADAS, handleArriendos);
     window.addEventListener(EVENTO_SESION_ACTUALIZADA, handleSesion);
 
     return () => {
       window.removeEventListener(EVENTO_PRODUCTOS_ACTUALIZADOS, handleProductos);
       window.removeEventListener(EVENTO_ORDENES_ACTUALIZADAS, handleOrdenes);
+      window.removeEventListener(EVENTO_MAQUINARIAS_ACTUALIZADAS, handleArriendos);
       window.removeEventListener(EVENTO_SESION_ACTUALIZADA, handleSesion);
     };
   }, []);
@@ -99,6 +111,11 @@ function Admin() {
       totalOrdenes: ordenes.length
     };
   }, [productos, ordenes]);
+
+  const contratosActivos = useMemo(
+    () => contratos.filter((contrato) => calcularEstadoContrato(contrato) !== 'Devuelto'),
+    [contratos]
+  );
 
   // Filtro de productos
   const productosFiltrados = useMemo(() => {
@@ -193,7 +210,7 @@ function Admin() {
         precioVenta: Number(formData.precioVenta) || 0,
         stock: Number(formData.stock) || 0,
         descripcion: formData.descripcion.trim(),
-        imagen: imagenFinal || '/banner-web.webp'
+        imagen: imagenFinal || '/producto-sin-imagen.svg'
       });
       mostrarMensaje(`Producto "${formData.nombre}" registrado al final del catálogo con éxito.`);
     }
@@ -206,13 +223,6 @@ function Admin() {
       eliminarProducto(productoAEliminar.idProducto);
       mostrarMensaje(`Producto "${productoAEliminar.nombre}" eliminado del catálogo.`);
       setProductoAEliminar(null);
-    }
-  };
-
-  const handleRestablecer = () => {
-    if (window.confirm('¿Restablecer el inventario a los 10 productos base de fábrica?')) {
-      restablecerProductos();
-      mostrarMensaje('Inventario restablecido a valores iniciales de fábrica.');
     }
   };
 
@@ -242,6 +252,21 @@ function Admin() {
   const handleCerrarSesion = () => {
     cerrarSesion();
     setSesion(null);
+  };
+
+  const handleRegistrarDevolucion = (contrato) => {
+    if (!window.confirm(`¿Registrar la devolución de "${contrato.nombreMaquina}"?`)) return;
+    if (devolverContrato(contrato.idContrato)) {
+      setContratos(obtenerContratosArriendo());
+      mostrarMensaje(`Devolución registrada para el contrato #${contrato.idContrato}.`);
+    }
+  };
+
+  const claseEstadoContrato = (estado) => {
+    if (estado === 'Atrasada') return 'admin-badge-danger';
+    if (estado === 'Por vencer') return 'admin-badge-warn';
+    if (estado === 'Devuelto') return 'admin-badge-soft';
+    return 'admin-badge-ok';
   };
 
   // ==============================================================
@@ -331,17 +356,16 @@ function Admin() {
           
           {/* Marca / Identificador */}
           <div className="d-flex align-items-center gap-3">
-            <Link to="/admin" className="admin-brand-link d-flex align-items-center gap-2">
+            <Link to="/" className="admin-brand-link d-flex align-items-center gap-2" title="Volver al inicio de la tienda">
               <img 
                 src="/banner-web.webp" 
-                alt="Ferrefix Admin" 
+                alt="Ferrefix" 
                 className="admin-dashboard-banner"
               />
-              <span className="admin-brand-badge">ADMIN</span>
             </Link>
 
             {/* Pestañas de la barra */}
-            <div className="d-flex align-items-center gap-1 ms-2">
+            <div className="d-flex align-items-center gap-1 ms-2 flex-wrap">
               <button 
                 type="button"
                 className={`admin-nav-btn ${tabActiva === 'dashboard' ? 'active' : ''}`}
@@ -363,6 +387,20 @@ function Admin() {
               >
                 Órdenes ({ordenes.length})
               </button>
+              <button 
+                type="button"
+                className={`admin-nav-btn ${tabActiva === 'arriendos' ? 'active' : ''}`}
+                onClick={() => setTabActiva('arriendos')}
+              >
+                Arriendos ({contratosActivos.length})
+              </button>
+              <button 
+                type="button"
+                className={`admin-nav-btn ${tabActiva === 'generadores' ? 'active' : ''}`}
+                onClick={() => setTabActiva('generadores')}
+              >
+                Generadores
+              </button>
             </div>
           </div>
 
@@ -374,15 +412,6 @@ function Admin() {
               onClick={abrirModalCrear}
             >
               + Agregar Producto
-            </button>
-
-            <button 
-              type="button" 
-              className="btn admin-btn-ghost btn-sm rounded-1 px-2"
-              onClick={handleRestablecer}
-              title="Restablecer base de datos inicial de fábrica"
-            >
-              Restablecer BD
             </button>
 
             <div className="vr admin-vr mx-1 d-none d-md-block"></div>
@@ -642,10 +671,10 @@ function Admin() {
                         <tr key={prod.idProducto}>
                           <td>
                             <img 
-                              src={prod.imagen || '/banner-web.webp'} 
+                              src={prod.imagen || '/producto-sin-imagen.svg'} 
                               alt={prod.nombre} 
                               className="admin-prod-thumb border rounded-1 bg-white object-fit-contain"
-                              onError={(e) => { e.target.src = '/banner-web.webp'; }}
+                              onError={(e) => { e.target.src = '/producto-sin-imagen.svg'; }}
                             />
                           </td>
                           <td className="admin-cell-code">
@@ -705,7 +734,7 @@ function Admin() {
         )}
 
         {/* ============================================================== */}
-        {/* VISTA: ÓRDENES / BOLETAS                                      */}
+        {/* VISTA: ÓRDENES Y VENTAS                                       */}
         {/* ============================================================== */}
         {tabActiva === 'ordenes' && (
           <div className="admin-box p-3">
@@ -730,7 +759,6 @@ function Admin() {
                     <th>Método de Pago</th>
                     <th className="admin-ta-end">Total Pagado</th>
                     <th>Estado</th>
-                    <th className="admin-ta-end">Acción</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -756,21 +784,119 @@ function Admin() {
                           {ord.estado}
                         </span>
                       </td>
-                      <td className="admin-ta-end">
-                        <button 
-                          type="button"
-                          className="btn btn-sm btn-outline-dark rounded-1 py-0 px-2"
-                          onClick={() => setOrdenSeleccionada(ord)}
-                        >
-                          Ver Boleta
-                        </button>
-                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
 
+          </div>
+        )}
+
+        {/* ============================================================== */}
+        {/* VISTA: ARRIENDOS ACTIVOS                                       */}
+        {/* ============================================================== */}
+        {tabActiva === 'arriendos' && (
+          <div className="admin-box p-3">
+            <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3 pb-2 border-bottom">
+              <div>
+                <h2 className="admin-section-title mb-0">Máquinas Actualmente Arrendadas</h2>
+                <span className="admin-muted">
+                  Contratos vigentes, próximos a vencer y atrasados
+                </span>
+              </div>
+              <span className="admin-badge-soft">
+                {contratosActivos.length} arriendos activos
+              </span>
+            </div>
+
+            {contratosActivos.length === 0 ? (
+              <div className="admin-empty admin-ta-center p-4">
+                No hay máquinas arrendadas en este momento.
+              </div>
+            ) : (
+              <div className="table-responsive">
+                <table className="table admin-table align-middle mb-0">
+                  <thead>
+                    <tr>
+                      <th>Máquina</th>
+                      <th>Cliente</th>
+                      <th>Fecha de Inicio</th>
+                      <th>Fecha de Devolución</th>
+                      <th className="admin-ta-center">Días</th>
+                      <th>Estado</th>
+                      <th className="admin-ta-end">Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {contratosActivos.map((contrato) => {
+                      const estado = calcularEstadoContrato(contrato);
+                      const fechaDevolucion = contrato.fechaDevolucion ||
+                        calcularFechaDevolucion(contrato.fechaInicio, contrato.diasArriendo);
+
+                      return (
+                        <tr key={contrato.idContrato}>
+                          <td>
+                            <div className="admin-cell-strong">{contrato.nombreMaquina}</div>
+                            <div className="admin-item-brand">
+                              #{contrato.idMaquina} · {contrato.marcaMaquina}
+                            </div>
+                          </td>
+                          <td>
+                            <div className="admin-cell-strong">{contrato.usuario?.nombre || 'Sin cliente'}</div>
+                            <div className="admin-order-email">{contrato.usuario?.email || '—'}</div>
+                            <div className="admin-muted">{contrato.usuario?.rut || ''}</div>
+                          </td>
+                          <td className="admin-muted">{contrato.fechaInicio}</td>
+                          <td className="admin-muted">{fechaDevolucion}</td>
+                          <td className="admin-ta-center admin-mono">{contrato.diasArriendo}</td>
+                          <td>
+                            <span className={claseEstadoContrato(estado)}>{estado}</span>
+                          </td>
+                          <td className="admin-ta-end">
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-outline-dark rounded-1 py-0 px-2"
+                              onClick={() => handleRegistrarDevolucion(contrato)}
+                            >
+                              Registrar devolución
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ============================================================== */}
+        {/* VISTA: GENERADORES                                             */}
+        {/* ============================================================== */}
+        {tabActiva === 'generadores' && (
+          <div>
+            <div className="d-flex flex-wrap justify-content-end gap-2 mb-3">
+              <div className="d-flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className={`btn btn-sm rounded-1 ${generadorActivo === 'productos' ? 'btn-dark' : 'btn-outline-dark'}`}
+                  onClick={() => setGeneradorActivo('productos')}
+                >
+                  Tarjetas de producto
+                </button>
+                <button
+                  type="button"
+                  className={`btn btn-sm rounded-1 ${generadorActivo === 'banners' ? 'btn-dark' : 'btn-outline-dark'}`}
+                  onClick={() => setGeneradorActivo('banners')}
+                >
+                  Banners promocionales
+                </button>
+              </div>
+            </div>
+
+            {generadorActivo === 'productos' ? <GeneradorProductos /> : <GeneradorBanners />}
           </div>
         )}
 
@@ -961,83 +1087,6 @@ function Admin() {
                   </button>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ============================================================== */}
-      {/* MODAL: VER BOLETA                                              */}
-      {/* ============================================================== */}
-      {ordenSeleccionada && (
-        <div className="modal modal-backdrop-custom fade show d-block" tabIndex="-1">
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content rounded-1 border-0 shadow">
-              <div className="modal-header admin-modal-head border-bottom py-2 px-3">
-                <h5 className="modal-title admin-modal-title mb-0">
-                  Boleta Electrónica #{ordenSeleccionada.idOrden}
-                </h5>
-                <button type="button" className="btn-close btn-close-sm" onClick={() => setOrdenSeleccionada(null)}></button>
-              </div>
-
-              <div className="modal-body p-3">
-                <div className="border-bottom pb-2 mb-3">
-                  <div className="admin-cell-strong">FERREFIX</div>
-                  <small className="admin-muted">RUT: 76.845.120-K | Antonio Varas 666, Providencia</small>
-                </div>
-
-                <div className="admin-muted mb-3">
-                  <div><strong>Fecha:</strong> {ordenSeleccionada.fecha}</div>
-                  <div><strong>Cliente:</strong> {ordenSeleccionada.cliente.nombre}</div>
-                  <div><strong>Email:</strong> {ordenSeleccionada.cliente.email}</div>
-                  <div><strong>Dirección:</strong> {ordenSeleccionada.cliente.direccion}</div>
-                  <div><strong>Método:</strong> {ordenSeleccionada.metodoPago}</div>
-                </div>
-
-                <div className="table-responsive border rounded-1 mb-3">
-                  <table className="table table-sm align-middle mb-0 admin-ticket-table">
-                    <thead className="table-light">
-                      <tr>
-                        <th>Ítem</th>
-                        <th className="admin-ta-center">Cant.</th>
-                        <th className="admin-ta-end">Subtotal</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {ordenSeleccionada.items.map((item, idx) => (
-                        <tr key={idx}>
-                          <td>{item.nombre}</td>
-                          <td className="admin-ta-center">{item.cantidad}</td>
-                          <td className="admin-ta-end admin-mono">{formatearCLP(item.precioUnitario * item.cantidad)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                <div className="d-flex justify-content-between align-items-center pt-2 border-top">
-                  <span className="admin-cell-strong">Total:</span>
-                  <span className="admin-total-value">{formatearCLP(ordenSeleccionada.total)}</span>
-                </div>
-              </div>
-
-              <div className="modal-footer admin-modal-foot border-top py-2 px-3">
-                <button 
-                  type="button" 
-                  className="btn btn-outline-dark btn-sm rounded-1"
-                  onClick={() => window.print()}
-                >
-                  Imprimir Boleta
-                </button>
-                <button 
-                  type="button" 
-                  className="btn btn-secondary btn-sm rounded-1" 
-                  onClick={() => setOrdenSeleccionada(null)}
-                >
-                  Cerrar
-                </button>
-              </div>
-
             </div>
           </div>
         </div>

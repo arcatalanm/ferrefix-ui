@@ -1,5 +1,7 @@
+import { useEffect } from 'react';
 import ToastNotificacion from "./components/ToastNotificacion";
 import { Routes, Route, useLocation } from 'react-router-dom';
+import { obtenerSesionActiva, cerrarSesion } from './data/auth';
 import Topbar from './components/Topbar';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
@@ -11,6 +13,8 @@ import ContactoCotizacion from './pages/ContactoCotizacion';
 import Carrito from './pages/Carrito';
 import Login from './pages/Login';
 import Admin from './pages/Admin';
+import MisArriendos from './pages/MisArriendos';
+import HistorialCompras from './pages/HistorialCompras';
 import Fletes from './pages/Fletes';
 import Garantias from './pages/Garantias';
 import PreguntasFrecuentes from './pages/PreguntasFrecuentes';
@@ -23,6 +27,14 @@ function App() {
   const location = useLocation();
   const esRutaAdmin = location.pathname.startsWith('/admin');
 
+  // La sesión de administrador solo puede permanecer dentro del panel admin.
+  useEffect(() => {
+    if (esRutaAdmin) return;
+
+    const sesion = obtenerSesionActiva();
+    if (sesion?.rol === 'admin') cerrarSesion();
+  }, [esRutaAdmin, location.pathname]);
+
   return (
     <>
       <ToastNotificacion />
@@ -31,6 +43,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/catalogo" element={<Catalogo />} />
+        <Route path="/categoria" element={<Catalogo />} />
         <Route path="/producto/:id" element={<DetalleProducto />} />
         <Route path="/arriendos" element={<Arriendos />} />
         <Route path="/nosotros" element={<Nosotros />} />
@@ -44,6 +57,8 @@ function App() {
         <Route path="/carrito" element={<Carrito />} />
         <Route path="/login" element={<Login />} />
         <Route path="/registro" element={<Login />} />
+        <Route path="/mis-arriendos" element={<MisArriendos />} />
+        <Route path="/historial-compras" element={<HistorialCompras />} />
         <Route path="/admin" element={<Admin />} />
       </Routes>
       {!esRutaAdmin && <Footer />}

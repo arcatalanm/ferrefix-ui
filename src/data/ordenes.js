@@ -1,4 +1,4 @@
-// SISTEMA DE GESTIÓN Y PERSISTENCIA DE ÓRDENES / BOLETAS
+// SISTEMA DE GESTIÓN Y PERSISTENCIA DE ÓRDENES
 
 const STORAGE_KEY_ORDENES = 'ferrefix_ordenes_v1';
 export const EVENTO_ORDENES_ACTUALIZADAS = 'ferrefix:ordenes_actualizadas';
@@ -52,6 +52,24 @@ const ORDENES_INICIALES = [
     total: 49900,
     estado: 'En Preparación',
     metodoPago: 'WebPay Plus (Crédito)'
+  },
+  {
+    idOrden: 'ORD-20240704',
+    idUsuario: 'USR-003',
+    fecha: '2024-10-15 11:20',
+    cliente: {
+      nombre: 'Juan Maestro',
+      rut: '12.345.678-9',
+      email: 'cliente@ferrefix.cl',
+      direccion: 'Av. Providencia 1240, Depto 502, Providencia, Región Metropolitana',
+      telefono: '+56 9 8765 4321'
+    },
+    items: [
+      { idProducto: '5422223214', nombre: 'Taladro Percutor Inalámbrico 20V Max XR', cantidad: 1, precioUnitario: 129990 }
+    ],
+    total: 129990,
+    estado: 'Completada',
+    metodoPago: 'WebPay Plus (Débito)'
   }
 ];
 
@@ -81,12 +99,10 @@ export const obtenerOrdenes = () => {
 export const crearOrden = (datosOrden) => {
   const ordenes = obtenerOrdenes();
   const timestamp = Date.now().toString().slice(-6);
-  const correlativo = String(ordenes.length + 1).padStart(4, '0');
 
   const nuevaOrden = {
     ...datosOrden,
     idOrden: datosOrden.idOrden || `ORD-2024-${timestamp}`,
-    numeroBoleta: datosOrden.numeroBoleta || `BOL-2024-${correlativo}`,
     fecha: new Date().toLocaleString('es-CL', { 
       year: 'numeric', 
       month: '2-digit', 

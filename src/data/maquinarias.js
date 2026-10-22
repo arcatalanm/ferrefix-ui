@@ -1,5 +1,7 @@
 // SISTEMA DE GESTIÓN Y PERSISTENCIA DE ARRIENDO DE MAQUINARIA
 
+import { obtenerSesionActiva } from './auth';
+
 const STORAGE_KEY_MAQUINARIAS = 'ferrefix_maquinarias_v1';
 const STORAGE_KEY_CONTRATOS = 'ferrefix_contratos_arriendo_v1';
 export const EVENTO_MAQUINARIAS_ACTUALIZADAS = 'ferrefix:maquinarias_actualizadas';
@@ -75,6 +77,63 @@ const notificarMaquinarias = () => {
   }
 };
 
+const parseFechaLocal = (valor) => {
+  if (!valor) return null;
+
+  const texto = String(valor).slice(0, 10);
+  const [anio, mes, dia] = texto.split('-').map(Number);
+
+  if (anio && mes && dia) {
+    return new Date(anio, mes - 1, dia);
+  }
+
+  const fecha = new Date(valor);
+  return Number.isNaN(fecha.getTime()) ? null : fecha;
+};
+
+const inicioDelDia = (fecha) => new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate());
+
+const aFechaISO = (fecha) => {
+  const anio = fecha.getFullYear();
+  const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+  const dia = String(fecha.getDate()).padStart(2, '0');
+  return `${anio}-${mes}-${dia}`;
+};
+
+/** Calcula la fecha de devolución a partir del inicio y la cantidad de días. */
+export const calcularFechaDevolucion = (fechaInicio, dias) => {
+  const inicio = parseFechaLocal(fechaInicio) || inicioDelDia(new Date());
+  const fecha = new Date(inicio);
+  fecha.setDate(fecha.getDate() + Math.max(1, Number(dias) || 1));
+  return aFechaISO(fecha);
+};
+
+/**
+ * Estado operativo del contrato:
+ * - Vigente: aún quedan más de 2 días para la devolución.
+ * - Por vencer: vence hoy o dentro de los próximos 2 días.
+ * - Atrasada: la fecha de devolución ya pasó.
+ * - Devuelto: la máquina ya fue devuelta.
+ */
+export const calcularEstadoContrato = (contrato) => {
+  if (!contrato) return 'Vigente';
+  if (contrato.estado === 'Devuelto' || contrato.estado === 'Devuelta') return 'Devuelto';
+
+  const devolucion =
+    parseFechaLocal(contrato.fechaDevolucion) ||
+    parseFechaLocal(calcularFechaDevolucion(contrato.fechaInicio, contrato.diasArriendo));
+
+  if (!devolucion) return 'Vigente';
+
+  const diferenciaDias = Math.round(
+    (inicioDelDia(devolucion).getTime() - inicioDelDia(new Date()).getTime()) / 86400000
+  );
+
+  if (diferenciaDias < 0) return 'Atrasada';
+  if (diferenciaDias <= 2) return 'Por vencer';
+  return 'Vigente';
+};
+
 export const obtenerMaquinarias = () => {
   if (typeof window === 'undefined' || !window.localStorage) {
     return MAQUINARIAS_INICIALES;
@@ -85,7 +144,8 @@ export const obtenerMaquinarias = () => {
       localStorage.setItem(STORAGE_KEY_MAQUINARIAS, JSON.stringify(MAQUINARIAS_INICIALES));
       return MAQUINARIAS_INICIALES;
     }
-    return JSON.parse(data);
+    const guardadas = JSON.parse(data);
+    return Array.isArray(guardadas) ? guardadas : MAQUINARIAS_INICIALES;
   } catch (error) {
     console.error('Error al leer maquinarias:', error);
     return MAQUINARIAS_INICIALES;
@@ -98,17 +158,31 @@ export const obtenerContratosArriendo = () => {
   }
   try {
     const data = localStorage.getItem(STORAGE_KEY_CONTRATOS);
-    return data ? JSON.parse(data) : [];
+    const contratos = data ? JSON.parse(data) : [];
+    if (!Array.isArray(contratos)) return [];
+
+    return contratos.map((contrato) => ({
+      ...contrato,
+      fechaDevolucion:
+        contrato.fechaDevolucion ||
+        calcularFechaDevolucion(contrato.fechaInicio, contrato.diasArriendo)
+    }));
   } catch {
     return [];
   }
 };
 
 /**
- * Registra un contrato de arriendo y cambia el estado de la máquina a 'Arrendada'
+ * Registra un contrato de arriendo y cambia el estado de la máquina a 'Arrendada'.
+ * El arriendo requiere una sesión de cliente activa.
  */
 export const registrarArriendo = (datos) => {
   const { idMaquina, rutUsuario, nombreUsuario, telefono, email, direccion, region, comuna, diasArriendo, fechaInicio } = datos;
+  const sesion = obtenerSesionActiva();
+
+  if (!sesion) {
+    return { ok: false, error: 'Debes iniciar sesión para arrendar una máquina.' };
+  }
 
   const maquinarias = obtenerMaquinarias();
   const index = maquinarias.findIndex((m) => m.idMaquina === idMaquina);
@@ -124,6 +198,7 @@ export const registrarArriendo = (datos) => {
   const maquina = maquinarias[index];
   const diasNum = Math.max(1, Number(diasArriendo) || 1);
   const totalArriendo = maquina.tarifaDia * diasNum;
+  const fechaInicioFinal = fechaInicio || new Date().toISOString().slice(0, 10);
 
   const contrato = {
     idContrato: `ARR-${Date.now().toString().slice(-6)}`,
@@ -133,8 +208,10 @@ export const registrarArriendo = (datos) => {
     marcaMaquina: maquina.marca,
     tarifaDia: maquina.tarifaDia,
     diasArriendo: diasNum,
-    fechaInicio: fechaInicio || new Date().toISOString().slice(0, 10),
+    fechaInicio: fechaInicioFinal,
+    fechaDevolucion: calcularFechaDevolucion(fechaInicioFinal, diasNum),
     totalPagar: totalArriendo,
+    idUsuario: datos.idUsuario || sesion.idUsuario || null,
     usuario: {
       rut: rutUsuario.trim(),
       nombre: nombreUsuario.trim(),
@@ -172,4 +249,33 @@ export const devolverMaquina = (idMaquina) => {
     return true;
   }
   return false;
+};
+
+/**
+ * Registra la devolución de un contrato activo y libera la máquina.
+ */
+export const devolverContrato = (idContrato) => {
+  if (typeof window === 'undefined' || !window.localStorage) return false;
+
+  const contratos = obtenerContratosArriendo();
+  const index = contratos.findIndex((c) => c.idContrato === idContrato);
+  if (index === -1) return false;
+
+  const contrato = contratos[index];
+  contratos[index] = {
+    ...contrato,
+    estado: 'Devuelto',
+    fechaDevolucionReal: new Date().toISOString().slice(0, 10)
+  };
+  localStorage.setItem(STORAGE_KEY_CONTRATOS, JSON.stringify(contratos));
+
+  const maquinarias = obtenerMaquinarias();
+  const indexMaquina = maquinarias.findIndex((m) => m.idMaquina === contrato.idMaquina);
+  if (indexMaquina !== -1) {
+    maquinarias[indexMaquina].estado = 'Disponible';
+    localStorage.setItem(STORAGE_KEY_MAQUINARIAS, JSON.stringify(maquinarias));
+  }
+
+  notificarMaquinarias();
+  return true;
 };

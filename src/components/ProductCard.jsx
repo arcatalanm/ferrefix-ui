@@ -19,13 +19,13 @@ function ProductCard({ producto }) {
         {/* Contenedor de la foto */}
         <div className="product-card-img-wrapper">
           <img 
-            src={imagen || '/banner-web.webp'} 
+            src={imagen || '/producto-sin-imagen.svg'} 
             alt={nombre} 
             className="product-card-img"
             loading="lazy" 
             onError={(e) => {
               e.currentTarget.onerror = null;
-              e.currentTarget.src = '/banner-web.webp';
+              e.currentTarget.src = '/producto-sin-imagen.svg';
             }}
           />
         </div>

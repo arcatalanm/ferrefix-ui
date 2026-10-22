@@ -330,7 +330,7 @@ export const crearProducto = (nuevoProducto) => {
     stock: Number(nuevoProducto.stock) || 0,
     precioVenta: Number(nuevoProducto.precioVenta) || 0,
     categoria: nuevoProducto.categoria || 'Herramientas',
-    imagen: (nuevoProducto.imagen && nuevoProducto.imagen.trim()) || '/banner-web.webp',
+    imagen: (nuevoProducto.imagen && nuevoProducto.imagen.trim()) || '/producto-sin-imagen.svg',
     descripcion: nuevoProducto.descripcion || 'Producto de alta calidad disponible en Ferrefix.',
     especificaciones: nuevoProducto.especificaciones || {
       'Disponibilidad': 'Entrega inmediata en tienda o despacho a domicilio',

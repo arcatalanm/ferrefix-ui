@@ -2,6 +2,11 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import OfertaDestacada from '../components/OfertaDestacada';
 import BannerPromocional from '../components/BannerPromocional';
+import {
+  EVENTO_GENERADORES_ACTUALIZADOS,
+  obtenerBannerGenerado,
+  obtenerOfertasGeneradas
+} from '../data/generadores';
 
 import dewaltImg from '../assets/banners/dewalt.webp';
 import makitaImg from '../assets/banners/makita.webp';
@@ -41,6 +46,13 @@ const IMAGENES_BANNER = [
   }
 ];
 
+const OFERTAS_INICIO = [
+  { img: uno, link: '/categoria' },
+  { img: dos, link: '/categoria' },
+  { img: cinco, link: '/categoria' },
+  { img: seis, link: '/categoria' }
+];
+
 const CATEGORIAS = [
   { id: 'construccion', nombre: 'Construcción', img: construccionImg },
   { id: 'maderas', nombre: 'Maderas', img: maderasImg },
@@ -55,6 +67,8 @@ const CATEGORIAS = [
 
 function Home() {
   const [slideActivo, setSlideActivo] = useState(0);
+  const [ofertasGeneradas, setOfertasGeneradas] = useState(obtenerOfertasGeneradas);
+  const [bannerGenerado, setBannerGenerado] = useState(obtenerBannerGenerado);
 
   // Intervalo automático del carrusel de banners
   useEffect(() => {
@@ -64,6 +78,27 @@ function Home() {
 
     return () => clearInterval(intervalo);
   }, []);
+
+  // Sincroniza las imágenes creadas desde el panel administrativo.
+  useEffect(() => {
+    const sincronizar = () => {
+      setOfertasGeneradas(obtenerOfertasGeneradas());
+      setBannerGenerado(obtenerBannerGenerado());
+    };
+
+    window.addEventListener(EVENTO_GENERADORES_ACTUALIZADOS, sincronizar);
+    window.addEventListener('storage', sincronizar);
+
+    return () => {
+      window.removeEventListener(EVENTO_GENERADORES_ACTUALIZADOS, sincronizar);
+      window.removeEventListener('storage', sincronizar);
+    };
+  }, []);
+
+  const ofertas = OFERTAS_INICIO.map((oferta, indice) => ({
+    img: ofertasGeneradas[indice]?.imagen || oferta.img,
+    link: ofertasGeneradas[indice]?.enlace || oferta.link
+  }));
 
   const retrocederSlide = () => {
     setSlideActivo((prev) => (prev - 1 + IMAGENES_BANNER.length) % IMAGENES_BANNER.length);
@@ -182,15 +217,16 @@ function Home() {
 
       {/* Banner promocional de seguridad */}
       <BannerPromocional
-        imagen={bannerSeguridadImg}
-        alt="Banner promocional de productos de seguridad"
+        imagen={bannerGenerado?.imagen || bannerSeguridadImg}
+        alt={bannerGenerado?.alt || 'Banner promocional de productos de seguridad'}
+        enlace={bannerGenerado?.enlace || ''}
       />
 
       <OfertaDestacada
-        img1={uno} link1="/categoria"
-        img2={dos} link2="/categoria"
-        img3={cinco} link3="/categoria"
-        img4={seis} link4="/categoria"
+        img1={ofertas[0].img} link1={ofertas[0].link}
+        img2={ofertas[1].img} link2={ofertas[1].link}
+        img3={ofertas[2].img} link3={ofertas[2].link}
+        img4={ofertas[3].img} link4={ofertas[3].link}
       />
     </div>
   );

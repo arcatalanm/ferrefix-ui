@@ -82,7 +82,7 @@ export const agregarAlCarrito = (producto, cantidadDeseada = 1) => {
       marca: producto.marca,
       categoria: producto.categoria,
       precioVenta: Number(producto.precioVenta) || 0,
-      imagen: producto.imagen || '/banner-web.webp',
+      imagen: producto.imagen || '/producto-sin-imagen.svg',
       stock: stockMaximo,
       cantidad: nuevaCantidad
     });

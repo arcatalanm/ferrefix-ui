@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { obtenerProductos, EVENTO_PRODUCTOS_ACTUALIZADOS } from '../data/productos';
 import { agregarAlCarrito } from '../data/carrito';
-import { mostrarToast } from '../components/ToastNotificacion';
+import { mostrarToast } from '../data/toast';
 
 function DetalleProducto() {
   const { id } = useParams();
@@ -138,9 +138,13 @@ function DetalleProducto() {
           <div className="col-12 col-lg-6">
             <div className="detalle-img-card rounded-4 p-3 p-md-4 border bg-platino shadow-sm position-relative overflow-hidden">
               <img
-                src={producto.imagen}
+                src={producto.imagen || '/producto-sin-imagen.svg'}
                 alt={producto.nombre}
                 className="img-fluid w-100 object-fit-contain rounded-3 detalle-producto-foto"
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = '/producto-sin-imagen.svg';
+                }}
               />
             </div>
 

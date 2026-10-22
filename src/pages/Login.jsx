@@ -1,7 +1,13 @@
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { iniciarSesion, registrarUsuario } from '../data/auth';
-import { validadores, validarFormulario } from '../data/validaciones';
+import { REGIONES_CHILE, REGION_POR_DEFECTO, obtenerComunas, obtenerComunaPorDefecto } from '../data/chile';
+import {
+  validadores,
+  validarFormulario,
+  formatearRut,
+  formatearTelefono
+} from '../data/validaciones';
 
 function Login() {
   const navigate = useNavigate();
@@ -14,6 +20,11 @@ function Login() {
   const [nombre, setNombre] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rut, setRut] = useState('');
+  const [telefono, setTelefono] = useState('');
+  const [direccion, setDireccion] = useState('');
+  const [region, setRegion] = useState(REGION_POR_DEFECTO);
+  const [comuna, setComuna] = useState(obtenerComunaPorDefecto(REGION_POR_DEFECTO));
   const [errorMsg, setErrorMsg] = useState('');
   const [exitoMsg, setExitoMsg] = useState('');
   const [errores, setErrores] = useState({});
@@ -21,10 +32,18 @@ function Login() {
 
   const reglasActuales = () =>
     modo === 'registro'
-      ? { nombre: validadores.nombre, email: validadores.email, password: validadores.password }
+      ? {
+          nombre: validadores.nombre,
+          email: validadores.email,
+          password: validadores.password,
+          rut: validadores.rut,
+          telefono: validadores.telefono,
+          direccion: validadores.direccion,
+          comuna: validadores.requerido('La comuna')
+        }
       : { email: validadores.email, password: validadores.requerido('La contraseña') };
 
-  const valores = { nombre, email, password };
+  const valores = { nombre, email, password, rut, telefono, direccion, comuna };
 
   const handleChange = (campo, valor, setter) => {
     setter(valor);
@@ -42,6 +61,12 @@ function Login() {
 
   const claseCampo = (campo) =>
     `form-control form-control-sm rounded-1${errores[campo] ? ' is-invalid' : ''}`;
+
+  const handleCambiarRegion = (nuevaRegion) => {
+    setRegion(nuevaRegion);
+    setComuna(obtenerComunaPorDefecto(nuevaRegion));
+    setErrores((prev) => ({ ...prev, comuna: '' }));
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -61,22 +86,29 @@ function Login() {
         return;
       }
       setExitoMsg(`¡Bienvenido/a de vuelta, ${res.usuario.nombre}!`);
+      const destino = location.state?.from || (res.usuario.rol === 'admin' ? '/admin' : '/catalogo');
       setTimeout(() => {
-        if (res.usuario.rol === 'admin') {
-          navigate('/admin');
-        } else {
-          navigate('/catalogo');
-        }
+        navigate(destino);
       }, 1200);
     } else {
-      const res = registrarUsuario({ nombre, email, password });
+      const res = registrarUsuario({
+        nombre,
+        email,
+        password,
+        rut,
+        telefono,
+        direccion,
+        region,
+        comuna
+      });
       if (!res.ok) {
         setErrorMsg(res.mensaje);
         return;
       }
       setExitoMsg(`¡Cuenta creada con éxito! Bienvenido/a a Ferrefix, ${res.usuario.nombre}.`);
+      const destino = location.state?.from || '/catalogo';
       setTimeout(() => {
-        navigate('/catalogo');
+        navigate(destino);
       }, 1400);
     }
   };
@@ -150,6 +182,84 @@ function Login() {
                     />
                     {errores.nombre && <div className="invalid-feedback">{errores.nombre}</div>}
                   </div>
+                )}
+
+                {modo === 'registro' && (
+                  <>
+                    <div className="mb-3">
+                      <label className="form-label auth-label mb-1">RUT *</label>
+                      <input
+                        type="text"
+                        className={claseCampo('rut')}
+                        placeholder="Ej: 12.345.678-9"
+                        value={rut}
+                        onChange={(e) => handleChange('rut', formatearRut(e.target.value), setRut)}
+                        onBlur={() => handleBlur('rut')}
+                        maxLength={12}
+                        required
+                      />
+                      {errores.rut && <div className="invalid-feedback">{errores.rut}</div>}
+                    </div>
+
+                    <div className="mb-3">
+                      <label className="form-label auth-label mb-1">Teléfono *</label>
+                      <input
+                        type="tel"
+                        className={claseCampo('telefono')}
+                        placeholder="+56 9 1234 5678"
+                        value={telefono}
+                        onChange={(e) => handleChange('telefono', formatearTelefono(e.target.value), setTelefono)}
+                        onBlur={() => handleBlur('telefono')}
+                        inputMode="tel"
+                        maxLength={17}
+                        required
+                      />
+                      {errores.telefono && <div className="invalid-feedback">{errores.telefono}</div>}
+                    </div>
+
+                    <div className="mb-3">
+                      <label className="form-label auth-label mb-1">Dirección de Despacho *</label>
+                      <input
+                        type="text"
+                        className={claseCampo('direccion')}
+                        placeholder="Ej: Av. Providencia 1240, Depto 502"
+                        value={direccion}
+                        onChange={(e) => handleChange('direccion', e.target.value, setDireccion)}
+                        onBlur={() => handleBlur('direccion')}
+                        required
+                      />
+                      {errores.direccion && <div className="invalid-feedback">{errores.direccion}</div>}
+                    </div>
+
+                    <div className="mb-3">
+                      <label className="form-label auth-label mb-1">Región *</label>
+                      <select
+                        className="form-select form-select-sm rounded-1"
+                        value={region}
+                        onChange={(e) => handleCambiarRegion(e.target.value)}
+                      >
+                        {REGIONES_CHILE.map((r) => (
+                          <option key={r.region} value={r.region}>{r.region}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="mb-3">
+                      <label className="form-label auth-label mb-1">Comuna *</label>
+                      <select
+                        className={`form-select form-select-sm rounded-1${errores.comuna ? ' is-invalid' : ''}`}
+                        value={comuna}
+                        onChange={(e) => handleChange('comuna', e.target.value, setComuna)}
+                        onBlur={() => handleBlur('comuna')}
+                        required
+                      >
+                        {obtenerComunas(region).map((com) => (
+                          <option key={com} value={com}>{com}</option>
+                        ))}
+                      </select>
+                      {errores.comuna && <div className="invalid-feedback d-block">{errores.comuna}</div>}
+                    </div>
+                  </>
                 )}
 
                 <div className="mb-3">

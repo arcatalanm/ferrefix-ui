@@ -38,7 +38,7 @@ describe('Catálogo — crearProducto', () => {
       imagen: '',
       stock: 'invalido'
     });
-    expect(sinImagen.imagen).toBe('/banner-web.webp');
+    expect(sinImagen.imagen).toBe('/producto-sin-imagen.svg');
     expect(sinImagen.stock).toBe(0);
   });
 });

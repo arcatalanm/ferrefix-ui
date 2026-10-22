@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" role="img" aria-label="Producto sin imagen">
+  <defs>
+    <linearGradient id="placeholder-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#eef2f5"/>
+    </linearGradient>
+    <linearGradient id="placeholder-box" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#F6C63A"/>
+      <stop offset="1" stop-color="#D99500"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="800" fill="url(#placeholder-bg)"/>
+  <circle cx="400" cy="360" r="238" fill="#F2B705" opacity=".10"/>
+  <g transform="translate(205 215)">
+    <path d="M40 190 L200 105 L390 190 L230 278 Z" fill="#f4c430" stroke="#1C2226" stroke-width="10" stroke-linejoin="round"/>
+    <path d="M40 190 L230 278 L230 458 L40 365 Z" fill="url(#placeholder-box)" stroke="#1C2226" stroke-width="10" stroke-linejoin="round"/>
+    <path d="M230 278 L390 190 L390 365 L230 458 Z" fill="#b97500" stroke="#1C2226" stroke-width="10" stroke-linejoin="round"/>
+    <path d="M110 155 L300 247" stroke="#ffffff" stroke-width="14" stroke-linecap="round" opacity=".55"/>
+    <path d="M84 260 L190 313" stroke="#1C2226" stroke-width="12" stroke-linecap="round" opacity=".35"/>
+  </g>
+  <text x="400" y="655" text-anchor="middle" fill="#1C2226" font-family="Oswald, Arial, sans-serif" font-size="44" font-weight="700" letter-spacing="5">SIN IMAGEN</text>
+  <text x="400" y="700" text-anchor="middle" fill="#6b7280" font-family="Arial, sans-serif" font-size="22" letter-spacing="2">Imagen no disponible</text>
+</svg>

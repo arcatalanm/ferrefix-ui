@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   obtenerMaquinarias, 
   registrarArriendo, 
   EVENTO_MAQUINARIAS_ACTUALIZADAS 
 } from '../data/maquinarias';
-import { obtenerSesionActiva } from '../data/auth';
+import { obtenerSesionActiva, obtenerPerfilCliente } from '../data/auth';
 import { REGIONES_CHILE, REGION_POR_DEFECTO, obtenerComunas, obtenerComunaPorDefecto } from '../data/chile';
 import {
   validadores,
@@ -30,25 +30,54 @@ const REGLAS_VALIDACION = {
   }
 };
 
+const PREGUNTAS_ARRIENDO = [
+  {
+    categoria: 'Requisitos',
+    pregunta: '¿Qué necesito para arrendar una máquina?',
+    respuesta: 'Debes tener una cuenta de cliente activa en Ferrefix y completar el formulario con tu RUN, datos de contacto y la dirección de la faena. Al confirmar, el equipo coordina la entrega y la revisión técnica del equipo.'
+  },
+  {
+    categoria: 'Despacho',
+    pregunta: '¿El flete está incluido en la tarifa diaria?',
+    respuesta: 'La tarifa diaria cubre el uso del equipo y su mantención preventiva. El flete se calcula según la comuna y el tamaño de la máquina; lo coordinamos contigo antes de cerrar el arriendo y queda detallado en la cotización.'
+  },
+  {
+    categoria: 'Garantías',
+    pregunta: '¿Qué pasa si la máquina falla durante la faena?',
+    respuesta: 'Todas las máquinas incluyen soporte técnico y mantención. Si detectas una falla, contáctanos de inmediato: coordinamos revisión en obra o el reemplazo del equipo según disponibilidad, sin cobrar el día detenido por falla atribuible al equipo.'
+  },
+  {
+    categoria: 'Devoluciones',
+    pregunta: '¿Cómo extiendo o devuelvo el arriendo?',
+    respuesta: 'Puedes solicitar una extensión antes de la fecha de devolución, sujeto a disponibilidad del equipo. Para devolver, coordina el retiro o entrega en tienda; la máquina debe volver limpia y con sus accesorios para cerrar el contrato.'
+  }
+];
+
 function Arriendos() {
+  const navigate = useNavigate();
   const sesion = obtenerSesionActiva();
+  const perfil = sesion ? obtenerPerfilCliente(sesion.email) : null;
+  const regionInicial = perfil?.region || REGION_POR_DEFECTO;
+  const comunaInicial = perfil?.comuna || obtenerComunaPorDefecto(regionInicial);
+
   const [maquinarias, setMaquinarias] = useState(obtenerMaquinarias);
   const [maquinaSeleccionada, setMaquinaSeleccionada] = useState(null);
   const [contratoGenerado, setContratoGenerado] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
   const [errores, setErrores] = useState({});
   const [touched, setTouched] = useState({});
+  const [faqAbierta, setFaqAbierta] = useState(0);
 
-  // Formulario de arriendo con campos limpios y placeholders de ejemplo
-  const [regionSeleccionada, setRegionSeleccionada] = useState(REGION_POR_DEFECTO);
+  // Formulario de arriendo con datos precargados desde el perfil del cliente.
+  const [regionSeleccionada, setRegionSeleccionada] = useState(regionInicial);
   const [form, setForm] = useState({
-    rutUsuario: '',
-    nombreUsuario: sesion ? sesion.nombre : '',
-    email: sesion ? sesion.email : '',
-    telefono: '',
-    direccion: '',
-    region: REGION_POR_DEFECTO,
-    comuna: obtenerComunaPorDefecto(REGION_POR_DEFECTO),
+    rutUsuario: perfil?.rut || '',
+    nombreUsuario: perfil?.nombre || (sesion ? sesion.nombre : ''),
+    email: perfil?.email || (sesion ? sesion.email : ''),
+    telefono: perfil?.telefono || '',
+    direccion: perfil?.direccion || '',
+    region: regionInicial,
+    comuna: comunaInicial,
     diasArriendo: 3,
     fechaInicio: new Date().toISOString().slice(0, 10)
   });
@@ -68,6 +97,10 @@ function Arriendos() {
   };
 
   const abrirModalArriendo = (maq) => {
+    if (!sesion) {
+      navigate('/login', { state: { from: '/arriendos' } });
+      return;
+    }
     setMaquinaSeleccionada(maq);
     setErrorMsg('');
     setErrores({});
@@ -120,6 +153,7 @@ function Arriendos() {
 
     const res = registrarArriendo({
       idMaquina: maquinaSeleccionada.idMaquina,
+      idUsuario: sesion?.idUsuario || null,
       rutUsuario: form.rutUsuario,
       nombreUsuario: form.nombreUsuario,
       email: form.email,
@@ -163,6 +197,18 @@ function Arriendos() {
             Equipos de alto rendimiento listos para operar en faena sin requerir inversión en compras de capital. Registro y verificación de arriendo por <strong>RUN de cliente</strong> con entrega garantizada y servicio técnico en obra.
           </p>
         </div>
+
+        {!sesion && (
+          <div className="alert alert-warning border rounded-1 d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
+            <div>
+              <i className="bi bi-person-lock me-1"></i>
+              Para arrendar una máquina debes iniciar sesión con tu cuenta de cliente.
+            </div>
+            <Link to="/login" state={{ from: '/arriendos' }} className="btn btn-sm btn-dark rounded-1">
+              Iniciar sesión
+            </Link>
+          </div>
+        )}
 
         {/* Catálogo de Maquinarias para Arriendo */}
         <div id="catalogo-maquinas" className="mb-4">
@@ -229,6 +275,93 @@ function Arriendos() {
             })}
           </div>
         </div>
+
+        {/* Servicios de arriendo: flete, garantías y preguntas frecuentes */}
+        <section id="servicios-arriendo" className="mt-5">
+          <div className="mb-3">
+            <h2 className="arriendos-section-title mb-1">
+              Flete, garantías y soporte para tu faena
+            </h2>
+            <span className="arriendos-section-sub">
+              Todo lo que necesitas saber antes de arrendar con Ferrefix.
+            </span>
+          </div>
+
+          <div className="row g-3">
+            <div className="col-12 col-md-4">
+              <div className="info-mini-card h-100 p-4 shadow-sm d-flex flex-column">
+                <i className="bi bi-truck info-mini-icon mb-3"></i>
+                <h3 className="info-mini-title h6 mb-2">Flete y despacho</h3>
+                <p className="info-mini-text flex-grow-1">
+                  Coordinamos retiro en tienda o entrega de la máquina en la dirección de la faena.
+                  El costo se calcula según comuna y equipo.
+                </p>
+                <Link to="/fletes" className="btn btn-sm btn-outline-dark rounded-1 align-self-start">
+                  Ver cobertura y plazos
+                </Link>
+              </div>
+            </div>
+
+            <div className="col-12 col-md-4">
+              <div className="info-mini-card h-100 p-4 shadow-sm d-flex flex-column">
+                <i className="bi bi-shield-check info-mini-icon mb-3"></i>
+                <h3 className="info-mini-title h6 mb-2">Garantías y mantención</h3>
+                <p className="info-mini-text flex-grow-1">
+                  Cada equipo incluye mantención preventiva, revisión técnica y soporte ante fallas
+                  durante el período de arriendo.
+                </p>
+                <Link to="/garantias" className="btn btn-sm btn-outline-dark rounded-1 align-self-start">
+                  Conocer garantías
+                </Link>
+              </div>
+            </div>
+
+            <div className="col-12 col-md-4">
+              <div className="info-mini-card h-100 p-4 shadow-sm d-flex flex-column">
+                <i className="bi bi-question-circle info-mini-icon mb-3"></i>
+                <h3 className="info-mini-title h6 mb-2">Preguntas frecuentes</h3>
+                <p className="info-mini-text flex-grow-1">
+                  Resolvemos las dudas más comunes sobre requisitos, flete, devoluciones y
+                  extensiones de arriendo.
+                </p>
+                <a href="#preguntas-arriendo" className="btn btn-sm btn-outline-dark rounded-1 align-self-start">
+                  Ver preguntas
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div id="preguntas-arriendo" className="info-card shadow-sm p-4 p-md-5 mt-4">
+            <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+              <h2 className="info-section-title mb-0">Preguntas frecuentes de arriendo</h2>
+              <Link to="/faq" className="btn btn-sm btn-outline-dark rounded-1">
+                Ver todas las preguntas
+              </Link>
+            </div>
+
+            <div>
+              {PREGUNTAS_ARRIENDO.map((item, indice) => (
+                <div className="faq-item" key={item.pregunta}>
+                  <button
+                    type="button"
+                    className="faq-button"
+                    onClick={() => setFaqAbierta(faqAbierta === indice ? -1 : indice)}
+                    aria-expanded={faqAbierta === indice}
+                  >
+                    <span>
+                      <span className="faq-categoria d-block mb-1">{item.categoria}</span>
+                      <span className="faq-pregunta">{item.pregunta}</span>
+                    </span>
+                    <i className={`bi bi-chevron-down faq-chevron ${faqAbierta === indice ? 'faq-chevron--abierta' : ''}`}></i>
+                  </button>
+                  <div className={`faq-body ${faqAbierta === indice ? 'faq-body--abierta' : ''}`}>
+                    <p className="mb-0">{item.respuesta}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
 
       </div>
 
@@ -494,6 +627,7 @@ function Arriendos() {
                   <div><strong>Contacto:</strong> {contratoGenerado.usuario.telefono} | {contratoGenerado.usuario.email}</div>
                   <div><strong>Faena:</strong> {contratoGenerado.usuario.direccion}, {contratoGenerado.usuario.comuna}</div>
                   <div><strong>Vigencia:</strong> {contratoGenerado.diasArriendo} días desde {contratoGenerado.fechaInicio}</div>
+                  <div><strong>Fecha de devolución:</strong> {contratoGenerado.fechaDevolucion}</div>
                 </div>
 
                 <div className="arriendo-summary p-3 d-flex justify-content-between align-items-center">
