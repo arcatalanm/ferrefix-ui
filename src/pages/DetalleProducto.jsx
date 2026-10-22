@@ -138,9 +138,13 @@ function DetalleProducto() {
           <div className="col-12 col-lg-6">
             <div className="detalle-img-card rounded-4 p-3 p-md-4 border bg-platino shadow-sm position-relative overflow-hidden">
               <img
-                src={producto.imagen}
+                src={producto.imagen || '/placeholder-producto.webp'}
                 alt={producto.nombre}
                 className="img-fluid w-100 object-fit-contain rounded-3 detalle-producto-foto"
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = '/placeholder-producto.webp';
+                }}
               />
             </div>
 

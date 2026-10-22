@@ -43,7 +43,7 @@ describe('Componente ProductCard', () => {
 
     renderizar({ idProducto: '999', nombre: 'Producto Básico', precioVenta: 0 });
     const imagenRespaldo = screen.getByRole('img').getAttribute('src');
-    expect(imagenRespaldo).toBe('/banner-web.webp');
+    expect(imagenRespaldo).toBe('/placeholder-producto.webp');
     expect(screen.getByText(/\$0/)).toBeTruthy();
     expect(screen.getByRole('link').getAttribute('href')).toBe('/producto/999');
   });

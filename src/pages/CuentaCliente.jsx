@@ -169,7 +169,6 @@ export default function CuentaCliente() {
         <div className="brand-hero rounded-1 p-4 p-md-5 mb-4 shadow-sm">
           <div className="d-flex flex-wrap justify-content-between align-items-center gap-3">
             <div>
-              <span className="badge bg-warning text-dark px-3 py-1 mb-2 fw-semibold">Área de Cliente</span>
               <h1 className="brand-hero-title mb-1">
                 Bienvenido/a, {sesion.nombre}
               </h1>
@@ -216,9 +215,7 @@ export default function CuentaCliente() {
         {/* TAB 1: MIS DATOS Y DESPACHO                                    */}
         {/* ============================================================== */}
         {tabActiva === "datos" && (
-          <div className="row g-4">
-            <div className="col-12 col-lg-7">
-              <div className="info-card shadow-sm p-4 p-md-5 h-100">
+          <div className="info-card shadow-sm p-4 p-md-5">
                 <div className="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
                   <div>
                     <h2 className="info-section-title mb-1">Ficha de Despacho del Cliente</h2>
@@ -393,35 +390,6 @@ export default function CuentaCliente() {
                     </div>
                   </div>
                 )}
-              </div>
-            </div>
-
-            <div className="col-12 col-lg-5">
-              <div className="info-card info-card--ambar shadow-sm p-4 p-md-5 h-100 d-flex flex-column">
-                <div className="d-flex align-items-center gap-2 mb-3">
-                  <i className="bi bi-lightning-charge-fill text-warning fs-3"></i>
-                  <h3 className="info-subtitle mb-0">Checkout Automatizado</h3>
-                </div>
-                <p className="text-secondary small mb-4">
-                  Al tener tus datos guardados, el carrito de compras reconocerá tu sesión de forma automática y sólo te solicitará escoger tu medio de pago (WebPay, Crédito o Transferencia).
-                </p>
-                <div className="border rounded-1 p-3 bg-white mb-4">
-                  <span className="badge bg-success-subtle text-success border border-success-subtle mb-2">
-                    ● Datos Validados
-                  </span>
-                  <div className="small text-muted mb-1">Estado de cuenta:</div>
-                  <div className="fw-semibold text-dark">Cliente Verificado para Compras y Arriendos</div>
-                </div>
-                <div className="mt-auto">
-                  <Link to="/catalogo" className="btn btn-ambar w-100 py-2 rounded-1 fw-bold shadow-sm mb-2">
-                    <i className="bi bi-cart me-2"></i> Ir al Catálogo de Productos
-                  </Link>
-                  <Link to="/arriendos" className="btn btn-outline-dark w-100 py-2 rounded-1 fw-semibold">
-                    <i className="bi bi-truck me-2"></i> Ver Maquinarias para Arriendo
-                  </Link>
-                </div>
-              </div>
-            </div>
           </div>
         )}
 
@@ -455,9 +423,6 @@ export default function CuentaCliente() {
                   <div key={ord.idOrden} className="border rounded-1 p-3 p-md-4 bg-white shadow-sm">
                     <div className="d-flex flex-wrap justify-content-between align-items-center pb-2 mb-3 border-bottom gap-2">
                       <div>
-                        <span className="badge bg-success-subtle text-success border border-success-subtle me-2">
-                          ● {ord.estado || "Completada"}
-                        </span>
                         <strong className="text-dark me-2">Orden #{ord.idOrden}</strong>
                         {ord.numeroBoleta && (
                           <span className="badge bg-secondary-subtle text-secondary font-monospace">
@@ -537,33 +502,44 @@ export default function CuentaCliente() {
                 </Link>
               </div>
             ) : (
-              <div className="row g-3">
+              <div className="d-flex flex-column gap-3">
                 {arriendos.map((contrato) => (
-                  <div key={contrato.idContrato} className="col-12 col-md-6">
-                    <div className="border rounded-1 p-4 bg-white shadow-sm h-100 d-flex flex-column justify-content-between">
-                      <div>
-                        <div className="d-flex justify-content-between align-items-start mb-2">
-                          <span className={`badge ${contrato.estado === "Vigente" ? "bg-success" : "bg-secondary"}`}>
-                            ● {contrato.estado || "Vigente"}
-                          </span>
-                          <span className="badge bg-light text-dark border font-monospace">
-                            Contrato #{contrato.idContrato}
-                          </span>
-                        </div>
+                  <div key={contrato.idContrato} className="border rounded-1 p-3 p-md-4 bg-white shadow-sm">
+                    <div className="d-flex flex-wrap justify-content-between align-items-center pb-2 mb-3 border-bottom gap-2">
+                      <div className="d-flex align-items-center gap-2">
+                        <strong className="text-dark">Contrato #{contrato.idContrato}</strong>
+                        <span className={`badge ${contrato.estado === "Vigente" ? "bg-success" : "bg-secondary"}`}>
+                          ● {contrato.estado || "Vigente"}
+                        </span>
+                      </div>
+                      <div className="text-muted small">
+                        <i className="bi bi-calendar3 me-1"></i> Solicitado el {contrato.fechaContrato}
+                      </div>
+                    </div>
 
+                    <div className="row g-3 align-items-center mb-3">
+                      <div className="col-12 col-md-5">
                         <h3 className="h5 fw-bold text-dark mb-1">{contrato.nombreMaquina}</h3>
-                        <div className="text-muted small mb-3">Marca: {contrato.marcaMaquina || "Industrial"}</div>
-
-                        <div className="p-3 bg-light rounded-1 border mb-3 small">
-                          <div><strong>Tarifa diaria:</strong> {formatearCLP(contrato.tarifaDia)} / día</div>
-                          <div><strong>Período:</strong> {contrato.diasArriendo} días (Desde {contrato.fechaInicio})</div>
-                          <div><strong>Lugar de Faena:</strong> {contrato.usuario?.direccion || "Obra informada"}, {contrato.usuario?.comuna || ""}</div>
-                          <div><strong>Fecha de Solicitud:</strong> {contrato.fechaContrato}</div>
+                        <div className="text-muted small mb-1">Marca: <strong>{contrato.marcaMaquina || "Industrial"}</strong></div>
+                        <div className="text-muted small">
+                          Tarifa Diaria: <span className="font-monospace fw-semibold text-dark">{formatearCLP(contrato.tarifaDia)} / día</span>
                         </div>
                       </div>
 
-                      <div className="d-flex justify-content-between align-items-center pt-2 border-top">
-                        <span className="text-muted small">Costo Total Arriendo:</span>
+                      <div className="col-12 col-md-7">
+                        <div className="p-3 bg-light rounded-1 border small">
+                          <div><span className="text-muted">Período de Arriendo:</span> <strong>{contrato.diasArriendo} días</strong> (Desde {contrato.fechaInicio})</div>
+                          <div><span className="text-muted">Lugar de Faena:</span> <strong>{contrato.usuario?.direccion || "Obra informada"}{contrato.usuario?.comuna ? `, ${contrato.usuario.comuna}` : ""}</strong></div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="d-flex flex-wrap justify-content-between align-items-center pt-2 border-top gap-2 small">
+                      <div>
+                        <span className="text-muted">RUT Arrendatario:</span> <strong className="font-monospace">{contrato.usuario?.rut || sesion.rut || "Registrado"}</strong>
+                      </div>
+                      <div className="text-end">
+                        <span className="text-muted me-2">Costo Total Arriendo:</span>
                         <strong className="text-dark fs-5 font-monospace">{formatearCLP(contrato.totalPagar)}</strong>
                       </div>
                     </div>

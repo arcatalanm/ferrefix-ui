@@ -193,7 +193,7 @@ function Admin() {
         precioVenta: Number(formData.precioVenta) || 0,
         stock: Number(formData.stock) || 0,
         descripcion: formData.descripcion.trim(),
-        imagen: imagenFinal || '/banner-web.webp'
+        imagen: imagenFinal || '/placeholder-producto.webp'
       });
       mostrarMensaje(`Producto "${formData.nombre}" registrado al final del catálogo con éxito.`);
     }
@@ -642,10 +642,10 @@ function Admin() {
                         <tr key={prod.idProducto}>
                           <td>
                             <img 
-                              src={prod.imagen || '/banner-web.webp'} 
+                              src={prod.imagen || '/placeholder-producto.webp'} 
                               alt={prod.nombre} 
                               className="admin-prod-thumb border rounded-1 bg-white object-fit-contain"
-                              onError={(e) => { e.target.src = '/banner-web.webp'; }}
+                              onError={(e) => { e.target.src = '/placeholder-producto.webp'; }}
                             />
                           </td>
                           <td className="admin-cell-code">

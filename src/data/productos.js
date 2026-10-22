@@ -8,6 +8,9 @@ import llaveMonomando from '../assets/products/llave-monomando.webp';
 import esmalteCeresita from '../assets/products/esmalte-ceresita.webp';
 import arnesSeguridad from '../assets/products/arnes-seguridad.webp';
 import tornillosDrywall from '../assets/products/tornillos-drywall.webp';
+// Imagen de respaldo oficial para productos sin imagen
+export const IMAGEN_PRODUCTO_POR_DEFECTO = '/placeholder-producto.webp';
+
 // Lista base de productos iniciales
 export const PRODUCTOS_INICIALES = [
   {
@@ -330,7 +333,7 @@ export const crearProducto = (nuevoProducto) => {
     stock: Number(nuevoProducto.stock) || 0,
     precioVenta: Number(nuevoProducto.precioVenta) || 0,
     categoria: nuevoProducto.categoria || 'Herramientas',
-    imagen: (nuevoProducto.imagen && nuevoProducto.imagen.trim()) || '/banner-web.webp',
+    imagen: (nuevoProducto.imagen && nuevoProducto.imagen.trim()) || IMAGEN_PRODUCTO_POR_DEFECTO,
     descripcion: nuevoProducto.descripcion || 'Producto de alta calidad disponible en Ferrefix.',
     especificaciones: nuevoProducto.especificaciones || {
       'Disponibilidad': 'Entrega inmediata en tienda o despacho a domicilio',

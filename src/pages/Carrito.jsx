@@ -269,7 +269,7 @@ function Carrito() {
                                   src={item.imagen} 
                                   alt={item.nombre} 
                                   className="cart-item-img border rounded-1 bg-white object-fit-contain"
-                                  onError={(e) => { e.target.src = '/banner-web.webp'; }}
+                                  onError={(e) => { e.target.src = '/placeholder-producto.webp'; }}
                                 />
                               </td>
                               <td>

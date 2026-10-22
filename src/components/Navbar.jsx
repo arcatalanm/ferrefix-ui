@@ -190,12 +190,6 @@ function Navbar() {
                         </Link>
                       </li>
                     )}
-                    <li>
-                      <Link className="dropdown-item py-2" to="/carrito" onClick={closeMenu}>
-                        <i className="bi bi-cart me-2"></i>
-                        Mi Carrito ({totalesCarrito.totalArticulos})
-                      </Link>
-                    </li>
                     <li><hr className="dropdown-divider my-1" /></li>
                     <li>
                       <button className="dropdown-item py-2 navbar-item-danger d-flex align-items-center" onClick={handleLogout}>
