@@ -2,11 +2,16 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import OfertaDestacada from '../components/OfertaDestacada';
 import BannerPromocional from '../components/BannerPromocional';
+import {
+  EVENTO_GENERADORES_ACTUALIZADOS,
+  obtenerOfertasGeneradas
+} from '../data/generadores';
 
 import dewaltImg from '../assets/banners/dewalt.webp';
 import makitaImg from '../assets/banners/makita.webp';
 import boschImg from '../assets/banners/bosch.webp';
 import bannerSeguridadImg from '../assets/banners/banner-seguridad.webp';
+import bannerMaderasImg from '../assets/banners/banner-maderas-estructurales-para-tu-construccion.webp';
 
 import construccionImg from '../assets/categories/construccion.webp';
 import maderasImg from '../assets/categories/maderas.webp';
@@ -22,6 +27,43 @@ import uno from '../assets/sales/guantes-de-nitrilo-card.webp'
 import dos from '../assets/sales/lentes-de-protecci-n-card.webp'
 import cinco from '../assets/sales/chaleco-reflectante-card.webp'
 import seis from '../assets/sales/casco-de-construcci-n-est-ndar-card.webp'
+
+import ofertaCubiertaMelamina from '../assets/sales/oferta-1-cubierta-melamina-cafe-1.webp';
+import ofertaOsbMultiplac from '../assets/sales/oferta-2-osb-multiplac.webp';
+import ofertaTerciadoRanurado from '../assets/sales/oferta-3-terciado-ranurado.webp';
+import ofertaTerciadoEstructural from '../assets/sales/oferta-4-terciado-estructural.webp';
+
+// Tarjetas de seguridad que acompañan al banner institucional.
+const OFERTAS_SEGURIDAD_INICIO = [
+  { img: uno, link: '/categoria', alt: 'Guantes de nitrilo' },
+  { img: dos, link: '/categoria', alt: 'Lentes de protección' },
+  { img: cinco, link: '/categoria', alt: 'Chaleco reflectante' },
+  { img: seis, link: '/categoria', alt: 'Casco de construcción' }
+];
+
+// Ofertas destacadas de maderas.
+const OFERTAS_MADERAS_INICIO = [
+  {
+    img: ofertaCubiertaMelamina,
+    link: '/catalogo?categoria=Maderas',
+    alt: 'Oferta cubierta de melamina café'
+  },
+  {
+    img: ofertaOsbMultiplac,
+    link: '/catalogo?categoria=Maderas',
+    alt: 'Oferta OSB Multiplac'
+  },
+  {
+    img: ofertaTerciadoRanurado,
+    link: '/catalogo?categoria=Maderas',
+    alt: 'Oferta terciado ranurado'
+  },
+  {
+    img: ofertaTerciadoEstructural,
+    link: '/catalogo?categoria=Maderas',
+    alt: 'Oferta terciado estructural'
+  }
+];
 
 const IMAGENES_BANNER = [
   {
@@ -55,6 +97,7 @@ const CATEGORIAS = [
 
 function Home() {
   const [slideActivo, setSlideActivo] = useState(0);
+  const [ofertasGeneradas, setOfertasGeneradas] = useState(obtenerOfertasGeneradas);
 
   // Intervalo automático del carrusel de banners
   useEffect(() => {
@@ -64,6 +107,28 @@ function Home() {
 
     return () => clearInterval(intervalo);
   }, []);
+
+  // Sincroniza las imágenes creadas desde el panel administrativo.
+  useEffect(() => {
+    const sincronizar = () => {
+      setOfertasGeneradas(obtenerOfertasGeneradas());
+    };
+
+    window.addEventListener(EVENTO_GENERADORES_ACTUALIZADOS, sincronizar);
+    window.addEventListener('storage', sincronizar);
+
+    return () => {
+      window.removeEventListener(EVENTO_GENERADORES_ACTUALIZADOS, sincronizar);
+      window.removeEventListener('storage', sincronizar);
+    };
+  }, []);
+
+  // Las ofertas creadas en el panel admin se muestran en la fila de maderas.
+  const ofertasMaderas = OFERTAS_MADERAS_INICIO.map((oferta, indice) => ({
+    img: ofertasGeneradas[indice]?.imagen || oferta.img,
+    link: ofertasGeneradas[indice]?.enlace || oferta.link,
+    alt: ofertasGeneradas[indice]?.alt || oferta.alt
+  }));
 
   const retrocederSlide = () => {
     setSlideActivo((prev) => (prev - 1 + IMAGENES_BANNER.length) % IMAGENES_BANNER.length);
@@ -180,18 +245,24 @@ function Home() {
         </div>
       </section>
 
-      {/* Banner promocional de seguridad */}
+      {/* Banner promocional de seguridad (fijo) */}
       <BannerPromocional
         imagen={bannerSeguridadImg}
         alt="Banner promocional de productos de seguridad"
       />
 
-      <OfertaDestacada
-        img1={uno} link1="/categoria"
-        img2={dos} link2="/categoria"
-        img3={cinco} link3="/categoria"
-        img4={seis} link4="/categoria"
+      {/* Elementos de seguridad: uno, dos, cinco, seis */}
+      <OfertaDestacada ofertas={OFERTAS_SEGURIDAD_INICIO} />
+
+      {/* Banner de maderas estructurales */}
+      <BannerPromocional
+        imagen={bannerMaderasImg}
+        alt="Banner promocional de maderas estructurales para tu construcción"
+        enlace="/catalogo?categoria=Maderas"
       />
+
+      {/* Ofertas destacadas de maderas: oferta 1 a 4 */}
+      <OfertaDestacada ofertas={ofertasMaderas} />
     </div>
   );
 }

@@ -18,6 +18,7 @@ import {
   EVENTO_SESION_ACTUALIZADA
 } from '../data/auth';
 import ImagenProductoUploader from '../components/ImagenProductoUploader';
+import GeneradorProductos from '../components/GeneradorProductos';
 
 const FORM_INICIAL = {
   idProducto: '',
@@ -362,6 +363,13 @@ function Admin() {
                 onClick={() => setTabActiva('ordenes')}
               >
                 Órdenes ({ordenes.length})
+              </button>
+              <button 
+                type="button"
+                className={`admin-nav-btn ${tabActiva === 'generadores' ? 'active' : ''}`}
+                onClick={() => setTabActiva('generadores')}
+              >
+                Generadores
               </button>
             </div>
           </div>
@@ -771,6 +779,15 @@ function Admin() {
               </table>
             </div>
 
+          </div>
+        )}
+
+        {/* ============================================================== */}
+        {/* VISTA: GENERADOR DE TARJETAS DE PRODUCTO                       */}
+        {/* ============================================================== */}
+        {tabActiva === 'generadores' && (
+          <div>
+            <GeneradorProductos />
           </div>
         )}
 

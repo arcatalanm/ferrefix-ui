@@ -1,38 +1,36 @@
 import { Link } from 'react-router-dom';
 
-function OfertaDestacada({
-  img1, link1,
-  img2, link2,
-  img3, link3,
-  img4, link4,
-}) {
+/**
+ * Grilla de ofertas destacadas.
+ *
+ * Acepta cualquier cantidad de ofertas: en escritorio se acomodan de a 4 por
+ * fila (col-md-3) y en móvil de a 2 (col-6), por lo que una quinta oferta o
+ * posteriores bajan automáticamente a la fila siguiente.
+ */
+function OfertaDestacada({ ofertas = [] }) {
+  if (!ofertas.length) return null;
+
   return (
     <section className="oferta-destacada container my-4">
       <div className="row g-3 oferta-fila">
+        {ofertas.map((oferta, indice) => {
+          const posicion = (indice % 4) + 1;
 
-        <div className="col-6 col-md-3 oferta-col oferta-col-1">
-          <Link to={link1} className="oferta-link">
-            <img src={img1} alt="Oferta 1" className="oferta-img oferta-img-1" />
-          </Link>
-        </div>
-
-        <div className="col-6 col-md-3 oferta-col oferta-col-2">
-          <Link to={link2} className="oferta-link">
-            <img src={img2} alt="Oferta 2" className="oferta-img oferta-img-2" />
-          </Link>
-        </div>
-
-        <div className="col-6 col-md-3 oferta-col oferta-col-3">
-          <Link to={link3} className="oferta-link">
-            <img src={img3} alt="Oferta 3" className="oferta-img oferta-img-3" />
-          </Link>
-        </div>
-
-        <div className="col-6 col-md-3 oferta-col oferta-col-4">
-          <Link to={link4} className="oferta-link">
-            <img src={img4} alt="Oferta 4" className="oferta-img oferta-img-4" />
-          </Link>
-        </div>
+          return (
+            <div
+              key={`${oferta.link}-${indice}`}
+              className={`col-6 col-md-3 oferta-col oferta-col-${posicion}`}
+            >
+              <Link to={oferta.link} className="oferta-link">
+                <img
+                  src={oferta.img}
+                  alt={oferta.alt || `Oferta destacada ${indice + 1}`}
+                  className={`oferta-img oferta-img-${posicion}`}
+                />
+              </Link>
+            </div>
+          );
+        })}
       </div>
     </section>
   );
