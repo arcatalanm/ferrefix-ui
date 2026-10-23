@@ -245,9 +245,7 @@ function Admin() {
     setSesion(null);
   };
 
-  // ==============================================================
-  // PANTALLA DE ACCESO RESTRINGIDO (LOGIN ADMIN CUADRADO Y SOBRIO)
-  // ==============================================================
+  // Pantalla Admin
   if (!sesion || sesion.rol !== 'admin') {
     return (
       <div className="admin-wrapper py-5 d-flex align-items-center">
@@ -320,9 +318,7 @@ function Admin() {
     );
   }
 
-  // ==============================================================
-  // PANEL ADMINISTRATIVO PRINCIPAL (CUADRADO, PROFESIONAL, SIN IA)
-  // ==============================================================
+  // PANEL ADMINISTRATIVO PRINCIPAL
   return (
     <div className="admin-wrapper">
 
@@ -332,15 +328,6 @@ function Admin() {
           
           {/* Marca / Identificador */}
           <div className="d-flex align-items-center gap-3">
-            <Link to="/admin" className="admin-brand-link d-flex align-items-center gap-2">
-              <img 
-                src="/banner-web.webp" 
-                alt="Ferrefix Admin" 
-                className="admin-dashboard-banner"
-              />
-              <span className="admin-brand-badge">ADMIN</span>
-            </Link>
-
             {/* Pestañas de la barra */}
             <div className="d-flex align-items-center gap-1 ms-2">
               <button 
@@ -430,12 +417,10 @@ function Admin() {
           </div>
         )}
 
-        {/* ============================================================== */}
-        {/* VISTA: DASHBOARD                                               */}
-        {/* ============================================================== */}
+        {/* Dashboard */}
         {tabActiva === 'dashboard' && (
           <div>
-            {/* 4 Cajas KPI Cuadradas y Sobrias */}
+            {/* 4 Cajas Cuadradas */}
             <div className="row g-3 mb-4">
               <div className="col-12 col-sm-6 col-xl-3">
                 <div className="admin-kpi-box">
@@ -494,7 +479,7 @@ function Admin() {
               </div>
             </div>
 
-            {/* Tabla de Inventario Crítico extendida a ancho completo */}
+            {/* Tabla de Inventario Crítico extendida */}
             <div className="row g-4">
               <div className="col-12">
                 <div className="admin-box p-3">
@@ -570,9 +555,7 @@ function Admin() {
           </div>
         )}
 
-        {/* ============================================================== */}
-        {/* VISTA: INVENTARIO DE PRODUCTOS (CRUD)                          */}
-        {/* ============================================================== */}
+        {/* Inventario Productos (CRUD)*/}
         {tabActiva === 'productos' && (
           <div className="admin-box p-3">
             
@@ -712,9 +695,7 @@ function Admin() {
           </div>
         )}
 
-        {/* ============================================================== */}
-        {/* VISTA: ÓRDENES / BOLETAS                                      */}
-        {/* ============================================================== */}
+        {/* Boletas y Ordenes */}
         {tabActiva === 'ordenes' && (
           <div className="admin-box p-3">
             <div className="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
