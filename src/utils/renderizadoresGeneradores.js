@@ -166,6 +166,31 @@ export const renderizarTarjetaProducto = (canvas, config = {}, escala = 2) => {
 
   const ctx = prepararCanvas(canvas, TARJETA_ANCHO, TARJETA_ALTO, escala);
 
+  // Marco gris + tarjeta blanca interior (mismo tratamiento que las tarjetas
+  // de seguridad). El contenido se dibuja escalado dentro de la tarjeta blanca
+  // para conservar las proporciones del diseño base.
+  const marco = Math.max(8, Math.round(TARJETA_ANCHO * 0.027));
+  const anchoInterior = TARJETA_ANCHO - marco * 2;
+  const altoInterior = TARJETA_ALTO - marco * 2;
+  const radioMarco = 11;
+
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, TARJETA_ANCHO, TARJETA_ALTO);
+
+  rectanguloRedondeado(ctx, 0, 0, TARJETA_ANCHO, TARJETA_ALTO, radioMarco);
+  ctx.fillStyle = '#efefef';
+  ctx.fill();
+
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(marco, marco, anchoInterior, altoInterior);
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(marco, marco, anchoInterior, altoInterior);
+  ctx.clip();
+  ctx.translate(marco, marco);
+  ctx.scale(anchoInterior / TARJETA_ANCHO, altoInterior / TARJETA_ALTO);
+
   const titulo = String(config.titulo ?? '').trim();
   const descripcion = String(config.descripcion ?? '').trim();
   const precioNormal = numero(config.precioNormal);
@@ -385,6 +410,8 @@ export const renderizarTarjetaProducto = (canvas, config = {}, escala = 2) => {
   lineasDescripcion.forEach((linea, indice) => {
     ctx.fillText(linea, textoIzquierda, descripcionY + indice * altoLineaDescripcion);
   });
+
+  ctx.restore();
 
   return canvas;
 };
