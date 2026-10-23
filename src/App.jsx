@@ -1,7 +1,9 @@
 import ToastNotificacion from "./components/ToastNotificacion";
+import { useLayoutEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import Topbar from './components/Topbar';
 import Navbar from './components/Navbar';
+import { cerrarSesion, obtenerSesionActiva } from './data/auth';
 import Home from './pages/Home';
 import Catalogo from './pages/Catalogo';
 import DetalleProducto from './pages/DetalleProducto';
@@ -23,6 +25,18 @@ import './index.css';
 function App() {
   const location = useLocation();
   const esRutaAdmin = location.pathname.startsWith('/admin');
+
+  // La sesión de administrador solo es válida dentro del panel. Al navegar a
+  // cualquier página de la tienda (home, catálogo, carrito, cuenta, etc.) se
+  // cierra automáticamente para no exponer las opciones de administración.
+  useLayoutEffect(() => {
+    if (location.pathname.startsWith('/admin')) return;
+
+    const sesion = obtenerSesionActiva();
+    if (sesion?.rol === 'admin') {
+      cerrarSesion();
+    }
+  }, [location.pathname]);
 
   return (
     <>

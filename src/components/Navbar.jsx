@@ -3,6 +3,13 @@ import { Link } from 'react-router-dom';
 import { obtenerTotalesCarrito, EVENTO_CARRITO_ACTUALIZADO } from '../data/carrito';
 import { obtenerSesionActiva, cerrarSesion, EVENTO_SESION_ACTUALIZADA } from '../data/auth';
 
+// El navbar solo se renderiza en las páginas de la tienda, así que una sesión
+// de administrador nunca debe reflejarse aquí. El panel se usa en /admin.
+const obtenerSesionCliente = () => {
+  const sesion = obtenerSesionActiva();
+  return sesion?.rol === 'admin' ? null : sesion;
+};
+
 function Navbar() {
   // Desplegable móvil (Hamburguesa)
   const [isOpen, setIsOpen] = useState(false);
@@ -14,11 +21,11 @@ function Navbar() {
 
   // Estados reactivos: Carrito y Sesión de Usuario
   const [totalesCarrito, setTotalesCarrito] = useState(obtenerTotalesCarrito);
-  const [sesion, setSesion] = useState(obtenerSesionActiva);
+  const [sesion, setSesion] = useState(obtenerSesionCliente);
 
   useEffect(() => {
     const handleCarrito = () => setTotalesCarrito(obtenerTotalesCarrito());
-    const handleSesion = () => setSesion(obtenerSesionActiva());
+    const handleSesion = () => setSesion(obtenerSesionCliente());
 
     window.addEventListener(EVENTO_CARRITO_ACTUALIZADO, handleCarrito);
     window.addEventListener(EVENTO_SESION_ACTUALIZADA, handleSesion);
@@ -182,14 +189,6 @@ function Navbar() {
                         Mi Cuenta
                       </Link>
                     </li>
-                    {sesion.rol === 'admin' && (
-                      <li>
-                        <Link className="dropdown-item py-2 navbar-item-strong" to="/admin" onClick={closeMenu}>
-                          <i className="bi bi-shield-lock me-2 navbar-icon-warn"></i>
-                          Panel Administrativo
-                        </Link>
-                      </li>
-                    )}
                     <li>
                       <Link className="dropdown-item py-2" to="/carrito" onClick={closeMenu}>
                         <i className="bi bi-cart me-2"></i>

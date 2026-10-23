@@ -226,6 +226,9 @@ function Admin() {
       return;
     }
     if (res.usuario.rol !== 'admin') {
+      // No dejar activa una sesión de cliente creada desde el login del panel.
+      cerrarSesion();
+      setSesion(null);
       setErrorLogin('Acceso denegado: Esta cuenta no tiene permisos de administrador.');
       return;
     }

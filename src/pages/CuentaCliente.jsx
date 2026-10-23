@@ -169,17 +169,12 @@ export default function CuentaCliente() {
         <div className="brand-hero rounded-1 p-4 p-md-5 mb-4 shadow-sm">
           <div className="d-flex flex-wrap justify-content-between align-items-center gap-3">
             <div>
-              <span className="badge bg-warning text-dark px-3 py-1 mb-2 fw-semibold">Área de Cliente</span>
               <h1 className="brand-hero-title mb-1">
                 Bienvenido/a, {sesion.nombre}
               </h1>
               <p className="brand-hero-text mb-0">
                 Gestiona tus datos de despacho automático para checkout rápido, revisa tus pedidos y supervisa tus equipos arrendados.
               </p>
-            </div>
-            <div className="text-end">
-              <span className="text-white-50 d-block small">Cuenta vinculada:</span>
-              <strong className="text-warning font-monospace">{sesion.email}</strong>
             </div>
           </div>
         </div>
@@ -393,33 +388,6 @@ export default function CuentaCliente() {
                     </div>
                   </div>
                 )}
-              </div>
-            </div>
-
-            <div className="col-12 col-lg-5">
-              <div className="info-card info-card--ambar shadow-sm p-4 p-md-5 h-100 d-flex flex-column">
-                <div className="d-flex align-items-center gap-2 mb-3">
-                  <i className="bi bi-lightning-charge-fill text-warning fs-3"></i>
-                  <h3 className="info-subtitle mb-0">Checkout Automatizado</h3>
-                </div>
-                <p className="text-secondary small mb-4">
-                  Al tener tus datos guardados, el carrito de compras reconocerá tu sesión de forma automática y sólo te solicitará escoger tu medio de pago (WebPay, Crédito o Transferencia).
-                </p>
-                <div className="border rounded-1 p-3 bg-white mb-4">
-                  <span className="badge bg-success-subtle text-success border border-success-subtle mb-2">
-                    ● Datos Validados
-                  </span>
-                  <div className="small text-muted mb-1">Estado de cuenta:</div>
-                  <div className="fw-semibold text-dark">Cliente Verificado para Compras y Arriendos</div>
-                </div>
-                <div className="mt-auto">
-                  <Link to="/catalogo" className="btn btn-ambar w-100 py-2 rounded-1 fw-bold shadow-sm mb-2">
-                    <i className="bi bi-cart me-2"></i> Ir al Catálogo de Productos
-                  </Link>
-                  <Link to="/arriendos" className="btn btn-outline-dark w-100 py-2 rounded-1 fw-semibold">
-                    <i className="bi bi-truck me-2"></i> Ver Maquinarias para Arriendo
-                  </Link>
-                </div>
               </div>
             </div>
           </div>

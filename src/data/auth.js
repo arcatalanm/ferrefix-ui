@@ -19,18 +19,6 @@ const USUARIOS_PRECARGADOS = [
     rol: 'admin'
   },
   {
-    idUsuario: 'USR-002',
-    nombre: 'Ariel (Administrador)',
-    rut: '12.345.678-5',
-    email: 'ariel@ferrefix.cl',
-    password: 'admin123',
-    telefono: '+56 9 9123 4567',
-    direccion: 'Av. Providencia 1240, Oficina 401',
-    region: 'Región Metropolitana',
-    comuna: 'Providencia',
-    rol: 'admin'
-  },
-  {
     idUsuario: 'USR-003',
     nombre: 'Juan Maestro',
     rut: '15.432.890-K',

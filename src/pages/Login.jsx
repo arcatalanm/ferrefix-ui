@@ -60,13 +60,17 @@ function Login() {
         setErrorMsg(res.mensaje);
         return;
       }
+
+      // El administrador entra directo al panel: su sesión no debe quedar
+      // visible en las páginas de la tienda.
+      if (res.usuario.rol === 'admin') {
+        navigate('/admin', { replace: true });
+        return;
+      }
+
       setExitoMsg(`¡Bienvenido/a de vuelta, ${res.usuario.nombre}!`);
       setTimeout(() => {
-        if (res.usuario.rol === 'admin') {
-          navigate('/admin');
-        } else {
-          navigate('/catalogo');
-        }
+        navigate('/catalogo');
       }, 1200);
     } else {
       const res = registrarUsuario({ nombre, email, password });

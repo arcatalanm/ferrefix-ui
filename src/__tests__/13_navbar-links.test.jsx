@@ -1,4 +1,4 @@
-// Test: Navbar: muestra los enlaces públicos y de sesión, oculta el panel admin sin sesión y lo habilita cuando el usuario es administrador
+// Test: Navbar: muestra los enlaces públicos y de sesión, nunca expone el panel admin en la tienda y sí muestra a los clientes
 // Función: Navbar()
 
 import { describe, test, expect, beforeEach, afterEach } from 'vitest';
@@ -26,7 +26,7 @@ describe('Componente Navbar', () => {
     cleanup();
   });
 
-  test('Navbar: muestra los enlaces públicos y de sesión, oculta el panel admin sin sesión y lo habilita cuando el usuario es administrador', () => {
+  test('Navbar: muestra los enlaces públicos y de sesión, nunca expone el panel admin en la tienda y sí muestra a los clientes', () => {
     renderizar();
     expect(screen.getByRole('link', { name: 'Catálogo' }).getAttribute('href')).toBe('/catalogo');
     expect(screen.getByRole('link', { name: 'Arriendos' }).getAttribute('href')).toBe('/arriendos');
@@ -39,6 +39,8 @@ describe('Componente Navbar', () => {
     expect(screen.queryByText('Cerrar Sesión')).toBeNull();
     cleanup();
 
+    // Aunque exista una sesión de admin guardada, el navbar de la tienda la
+    // oculta: esa sesión solo es válida dentro de /admin.
     guardarSesion({
       idUsuario: 'USR-001',
       nombre: 'Administrador Ferrefix',
@@ -46,12 +48,21 @@ describe('Componente Navbar', () => {
       rol: 'admin'
     });
     renderizar();
-    expect(
-      screen.getByTitle('Conectado como Administrador Ferrefix')
-    ).toBeTruthy();
-    expect(screen.getByText('A')).toBeTruthy();
-    const panelAdmin = screen.getByRole('link', { name: /Panel Administrativo/i });
-    expect(panelAdmin.getAttribute('href')).toBe('/admin');
+    expect(screen.queryByText('Panel Administrativo')).toBeNull();
+    expect(screen.queryByText('Cerrar Sesión')).toBeNull();
+    expect(screen.getByRole('link', { name: 'Iniciar Sesión' })).toBeTruthy();
+    cleanup();
+
+    // Un cliente sí debe ver su sesión en el navbar.
+    guardarSesion({
+      idUsuario: 'USR-003',
+      nombre: 'Juan Maestro',
+      email: 'cliente@ferrefix.cl',
+      rol: 'cliente'
+    });
+    renderizar();
+    expect(screen.getByTitle('Conectado como Juan Maestro')).toBeTruthy();
     expect(screen.getByText('Cerrar Sesión')).toBeTruthy();
+    expect(screen.queryByText('Panel Administrativo')).toBeNull();
   });
 });
