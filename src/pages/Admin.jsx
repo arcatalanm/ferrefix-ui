@@ -5,7 +5,6 @@ import {
   crearProducto,
   actualizarProducto,
   eliminarProducto,
-  restablecerProductos,
   subirImagenProducto,
   CATEGORIAS_PRODUCTOS,
   EVENTO_PRODUCTOS_ACTUALIZADOS
@@ -210,13 +209,6 @@ function Admin() {
     }
   };
 
-  const handleRestablecer = () => {
-    if (window.confirm('¿Restablecer el inventario a los 10 productos base de fábrica?')) {
-      restablecerProductos();
-      mostrarMensaje('Inventario restablecido a valores iniciales de fábrica.');
-    }
-  };
-
   const formatearCLP = (valor) => {
     return new Intl.NumberFormat('es-CL', {
       style: 'currency',
@@ -369,15 +361,6 @@ function Admin() {
               onClick={abrirModalCrear}
             >
               + Agregar Producto
-            </button>
-
-            <button 
-              type="button" 
-              className="btn admin-btn-ghost btn-sm rounded-1 px-2"
-              onClick={handleRestablecer}
-              title="Restablecer base de datos inicial de fábrica"
-            >
-              Restablecer BD
             </button>
 
             <div className="vr admin-vr mx-1 d-none d-md-block"></div>
