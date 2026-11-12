@@ -1,5 +1,4 @@
-// Test: obtenerTotalesCarrito: aplica despacho gratis sobre $50.000, recupera un carrito corrupto con totales en cero y cobra despacho justo en el límite de $50.000
-// Función: obtenerTotalesCarrito()
+
 
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
 import {

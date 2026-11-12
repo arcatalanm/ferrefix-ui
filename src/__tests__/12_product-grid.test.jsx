@@ -1,5 +1,4 @@
-// Test: ProductGrid: renderiza una tarjeta con enlace por cada producto, muestra el estado vacío sin botón y ejecuta el callback de restablecer filtros cuando existe
-// Función: ProductGrid()
+
 
 import { describe, test, expect, afterEach, vi } from 'vitest';
 import { render, screen, cleanup, fireEvent } from '@testing-library/react';

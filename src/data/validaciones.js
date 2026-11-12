@@ -1,39 +1,29 @@
-// VALIDACIONES DE FORMULARIO
 
-// Nombres: letras (con tildes/ñ), espacios, apóstrofes, guiones y puntos.
-export const REGEX_NOMBRE =
+
+const REGEX_NOMBRE =
   /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ'’.-]+(?:\s+[A-Za-zÁÉÍÓÚÜÑáéíóúüñ'’.-]+)*$/;
 
-export const REGEX_EMAIL = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+const REGEX_EMAIL = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
-// RUT con o sin puntos, con guion opcional: 12.345.678-9 o 12345678-9.
-export const REGEX_RUT = /^\d{1,2}\.?\d{3}\.?\d{3}-?[\dKk]$/;
+const REGEX_RUT = /^\d{1,2}\.?\d{3}\.?\d{3}-?[\dKk]$/;
 
-// Direcciones: letras, números y signos habituales (., #, °, /, -).
-export const REGEX_DIRECCION = /^[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ'’.,#°/ -]+$/;
+const REGEX_DIRECCION = /^[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ'’.,#°/ -]+$/;
 
-// Razón social: puede incluir números y símbolos legales (Ltda., S.A., &).
-export const REGEX_RAZON_SOCIAL = /^[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ'’.,&°/ -]+$/;
-export const CONTIENE_LETRA = /[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]/;
+const REGEX_RAZON_SOCIAL = /^[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ'’.,&°/ -]+$/;
+const CONTIENE_LETRA = /[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]/;
 
-// Teléfonos chilenos ya normalizados (solo dígitos, con +56 opcional).
-export const REGEX_TELEFONO_MOVIL = /^(?:\+?56)?9\d{8}$/;
-export const REGEX_TELEFONO_FIJO = /^(?:\+?56)?[2-7]\d{8}$/;
-
-// ---- Utilidades ------------------------------------------------------------
+const REGEX_TELEFONO_MOVIL = /^(?:\+?56)?9\d{8}$/;
+const REGEX_TELEFONO_FIJO = /^(?:\+?56)?[2-7]\d{8}$/;
 
 const texto = (valor) => String(valor ?? '').trim();
 const estaVacio = (valor) => texto(valor) === '';
 
-// Deja el RUT solo con números y el dígito verificador (K mayúscula).
-export const limpiarRut = (rut) => texto(rut).replace(/[^0-9kK]/g, '').toUpperCase();
+const limpiarRut = (rut) => texto(rut).replace(/[^0-9kK]/g, '').toUpperCase();
 
-// Quita espacios, puntos, guiones y paréntesis de un teléfono.
-export const normalizarTelefono = (telefono) =>
+const normalizarTelefono = (telefono) =>
   texto(telefono).replace(/[\s.\-()]/g, '');
 
-// Calcula el dígito verificador de un cuerpo de RUT (módulo 11).
-export const calcularDigitoVerificador = (cuerpo) => {
+const calcularDigitoVerificador = (cuerpo) => {
   let suma = 0;
   let factor = 2;
   for (let i = cuerpo.length - 1; i >= 0; i -= 1) {
@@ -46,7 +36,6 @@ export const calcularDigitoVerificador = (cuerpo) => {
   return String(resto);
 };
 
-// Valida un RUT chileno completo (cuerpo + dígito verificador).
 export const validarRut = (rut) => {
   const limpio = limpiarRut(rut);
   if (limpio.length < 8 || limpio.length > 9) return false;
@@ -56,7 +45,6 @@ export const validarRut = (rut) => {
   return calcularDigitoVerificador(cuerpo) === dv;
 };
 
-// Da formato 12.345.678-9 a un RUT mientras se escribe.
 export const formatearRut = (rut) => {
   const limpio = limpiarRut(rut);
   if (limpio.length <= 1) return limpio;
@@ -66,7 +54,6 @@ export const formatearRut = (rut) => {
   return `${cuerpo}-${limpio.slice(-1)}`;
 };
 
-// Da formato +56 9 1234 5678 a un teléfono chileno.
 export const formatearTelefono = (telefono) => {
   let digitos = texto(telefono).replace(/\D/g, '');
   if (digitos.startsWith('56') && digitos.length > 2) digitos = digitos.slice(2);
@@ -79,9 +66,18 @@ export const formatearTelefono = (telefono) => {
   return `+56 ${digitos}`;
 };
 
-// ---- Validadores -----------------------------------------------------------
-
 export const validadores = {
+  identificador: (valor) => {
+    if (estaVacio(valor)) return 'El Correo o Rut es obligatorio';
+    return texto(valor).includes('@') ? validadores.email(valor) : validadores.rut(valor);
+  },
+  nombrePersona: (etiqueta, obligatorio = true) => (valor) => {
+    const v = texto(valor);
+    if (!v) return obligatorio ? `${etiqueta} es obligatorio.` : '';
+    if (v.length > 120) return `${etiqueta} no puede superar los 120 caracteres.`;
+    if (!CONTIENE_LETRA.test(v) || !REGEX_NOMBRE.test(v)) return `${etiqueta} solo admite letras, espacios, guiones y apóstrofes.`;
+    return '';
+  },
   nombre: (valor) => {
     const v = texto(valor);
     if (!v) return 'El nombre es obligatorio.';
@@ -154,13 +150,12 @@ export const validadores = {
   password: (valor) => {
     const v = texto(valor);
     if (!v) return 'La contraseña es obligatoria.';
-    if (v.length < 6) return 'La contraseña debe tener al menos 6 caracteres.';
+    if (v.length < 8) return 'La contraseña debe tener al menos 8 caracteres.';
+    if (new TextEncoder().encode(String(valor)).length > 72) return 'La contraseña no puede superar 72 bytes.';
     return '';
   }
 };
 
-// Valida un formulario completo a partir de un mapa de reglas.
-//   validarFormulario({ email: validadores.email }, form) => { email: '...' }
 export const validarFormulario = (reglas, datos) => {
   const errores = {};
   Object.entries(reglas).forEach(([campo, validador]) => {

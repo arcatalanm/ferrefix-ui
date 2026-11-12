@@ -1,5 +1,4 @@
-// Test: crearOrden: genera una boleta nueva con id mockeado, aplica el estado "Completada" ante un estado vacío y construye una orden segura con objeto vacío
-// Función: crearOrden()
+
 
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
 import { crearOrden, obtenerOrdenes } from '../data/ordenes.js';

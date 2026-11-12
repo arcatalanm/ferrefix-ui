@@ -1,17 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  obtenerCarrito, 
-  actualizarCantidad, 
-  eliminarDelCarrito, 
-  vaciarCarrito, 
-  obtenerTotalesCarrito, 
-  EVENTO_CARRITO_ACTUALIZADO 
+import {
+  obtenerCarrito,
+  actualizarCantidad,
+  eliminarDelCarrito,
+  vaciarCarrito,
+  obtenerTotalesCarrito,
+  cargarCarrito,
+  useEstadoCarrito,
+  EVENTO_CARRITO_ACTUALIZADO
 } from '../data/carrito';
-import { obtenerSesionActiva } from '../data/auth';
+import { useSesion, obtenerSesionActiva, EVENTO_SESION_ACTUALIZADA } from '../data/auth';
+import { nombreCompleto } from '../utils/usuario';
 import { crearOrden } from '../data/ordenes';
-import { obtenerProductoPorId, actualizarProducto } from '../data/productos';
-import { REGIONES_CHILE, REGION_POR_DEFECTO, normalizarRegion, obtenerComunas, obtenerComunaPorDefecto } from '../data/chile';
+import { unidadVenta, cantidadPresentaciones } from '../utils/presentacionProducto';
+import { REGIONES_CHILE, normalizarRegion, obtenerComunas } from '../data/chile';
 import {
   validadores,
   validarFormulario,
@@ -19,37 +22,38 @@ import {
   formatearTelefono
 } from '../data/validaciones';
 
-// Reglas de validación del formulario de despacho.
 const REGLAS_VALIDACION = {
   nombre: validadores.nombre,
   rut: validadores.rut,
   email: validadores.email,
   telefono: validadores.telefono,
   direccion: validadores.direccion,
+  region: validadores.requerido('La región'),
   comuna: validadores.requerido('La comuna')
 };
 
 function Carrito() {
   const [items, setItems] = useState(obtenerCarrito);
   const [totales, setTotales] = useState(obtenerTotalesCarrito);
-  const [sesion] = useState(obtenerSesionActiva);
+  const sesion = useSesion();
+  const estadoCarrito = useEstadoCarrito();
+  const [guardando, setGuardando] = useState(false);
+  const idSolicitud = useRef(crypto.randomUUID());
 
-  // Pasos: 'carrito' | 'checkout' | 'exito' | 'error'
   const [pasoActual, setPasoActual] = useState('carrito');
   const [ordenCreada, setOrdenCreada] = useState(null);
   const [alertaStock, setAlertaStock] = useState(null);
 
-  // Formulario de despacho (Inicia vacío con placeholders de ejemplo; autocompleta nombre y correo si hay sesión)
-  const regionInicial = normalizarRegion(sesion?.region || REGION_POR_DEFECTO);
+  const regionInicial = sesion?.region ? normalizarRegion(sesion.region) : '';
   const [regionSeleccionada, setRegionSeleccionada] = useState(regionInicial);
   const [formCliente, setFormCliente] = useState({
-    nombre: sesion ? sesion.nombre : '',
-    rut: sesion ? (sesion.rut || '15.432.890-K') : '',
+    nombre: nombreCompleto(sesion),
+    rut: sesion?.rut || '',
     email: sesion ? sesion.email : '',
-    telefono: sesion ? (sesion.telefono || '+56 9 8765 4321') : '',
-    direccion: sesion ? (sesion.direccion || 'Av. Providencia 1240, Depto 502') : '',
+    telefono: sesion?.telefono || '',
+    direccion: sesion?.direccion || '',
     region: regionInicial,
-    comuna: sesion && sesion.comuna ? sesion.comuna : obtenerComunaPorDefecto(REGION_POR_DEFECTO),
+    comuna: sesion?.comuna || '',
     indicaciones: '',
     metodoEntrega: 'despacho',
     metodoPago: 'WebPay Plus (Débito)'
@@ -57,7 +61,26 @@ function Carrito() {
   const [errores, setErrores] = useState({});
   const [touched, setTouched] = useState({});
 
-  // Sincronizar en tiempo real
+  useEffect(() => {
+    const sincronizarSesion = () => {
+      const usuario = obtenerSesionActiva();
+      idSolicitud.current = crypto.randomUUID();
+      setOrdenCreada(null);
+      setPasoActual('carrito');
+      const region = usuario?.region ? normalizarRegion(usuario.region) : '';
+      setRegionSeleccionada(region);
+      setFormCliente({
+        nombre: nombreCompleto(usuario), rut: usuario?.rut || '', email: usuario?.email || '',
+        telefono: usuario?.telefono || '', direccion: usuario?.direccion || '', region,
+        comuna: usuario?.comuna || '', indicaciones: '', metodoEntrega: 'despacho', metodoPago: 'WebPay Plus (Débito)',
+      });
+      setErrores({});
+      setTouched({});
+    };
+    window.addEventListener(EVENTO_SESION_ACTUALIZADA, sincronizarSesion);
+    return () => window.removeEventListener(EVENTO_SESION_ACTUALIZADA, sincronizarSesion);
+  }, []);
+
   useEffect(() => {
     const handleActualizar = () => {
       setItems(obtenerCarrito());
@@ -67,7 +90,6 @@ function Carrito() {
     return () => window.removeEventListener(EVENTO_CARRITO_ACTUALIZADO, handleActualizar);
   }, []);
 
-  // Formateador CLP
   const formatearCLP = (valor) => {
     return new Intl.NumberFormat('es-CL', {
       style: 'currency',
@@ -76,27 +98,27 @@ function Carrito() {
     }).format(valor || 0);
   };
 
-  // Controles de cantidad con validación estricta de stock
-  const handleModificarCantidad = (idProducto, nuevaCantidad) => {
+  const handleModificarCantidad = async (idProducto, nuevaCantidad) => {
     setAlertaStock(null);
-    const resultado = actualizarCantidad(idProducto, nuevaCantidad);
+    const resultado = await actualizarCantidad(idProducto, nuevaCantidad);
     if (resultado && resultado.error) {
       setAlertaStock(resultado.error);
       setTimeout(() => setAlertaStock(null), 4000);
     }
   };
 
-  const handleEliminarItem = (idProducto) => {
-    eliminarDelCarrito(idProducto);
+  const handleEliminarItem = async (idProducto) => {
+    const resultado = await eliminarDelCarrito(idProducto);
+    if (!resultado.ok) setAlertaStock(resultado.error);
   };
 
-  const handleVaciar = () => {
+  const handleVaciar = async () => {
     if (window.confirm('¿Seguro que deseas vaciar todos los productos del carrito?')) {
-      vaciarCarrito();
+      const resultado = await vaciarCarrito();
+      if (!resultado.ok) setAlertaStock(resultado.error);
     }
   };
 
-  // ---- Validación del formulario de despacho ----
   const validarCampo = (campo, valor) => {
     const validador = REGLAS_VALIDACION[campo];
     if (!validador) return;
@@ -118,18 +140,17 @@ function Carrito() {
     `${base}${errores[campo] ? ' is-invalid' : ''}`;
 
   const handleCambiarRegion = (nuevaRegion) => {
-    const regionNorm = normalizarRegion(nuevaRegion);
+    const regionNorm = nuevaRegion ? normalizarRegion(nuevaRegion) : '';
     setRegionSeleccionada(regionNorm);
-    const comuna = obtenerComunaPorDefecto(nuevaRegion);
+    const comuna = '';
     setFormCliente((prev) => ({ ...prev, region: nuevaRegion, comuna }));
     setErrores((prev) => ({ ...prev, comuna: '' }));
   };
 
-  // Procesar orden / checkout
-  const handleProcesarCompra = (e) => {
+  const handleProcesarCompra = async (e) => {
     e.preventDefault();
 
-    if (items.length === 0) return;
+    if (items.length === 0 || guardando || estadoCarrito.cargando) return;
 
     const nuevosErrores = validarFormulario(REGLAS_VALIDACION, formCliente);
     setErrores(nuevosErrores);
@@ -138,49 +159,38 @@ function Carrito() {
     );
     if (Object.keys(nuevosErrores).length > 0) return;
 
-    // 1. Descontar stock de la base de datos simulada
-    items.forEach((item) => {
-      const prod = obtenerProductoPorId(item.idProducto);
-      if (prod) {
-        const nuevoStock = Math.max(0, Number(prod.stock) - Number(item.cantidad));
-        actualizarProducto(item.idProducto, { stock: nuevoStock });
-      }
+    setAlertaStock(null);
+    setGuardando(true);
+    const sesionActual = obtenerSesionActiva();
+    const { nombre, rut, email, telefono, direccion, region, comuna, metodoEntrega, metodoPago, indicaciones } = formCliente;
+    const resultado = await crearOrden({
+      idSolicitud: idSolicitud.current,
+      cliente: { nombre, rut, email, telefono, direccion, region, comuna },
+      items: items.map(({ idProducto, cantidad }) => ({ idProducto, cantidad })),
+      metodoEntrega, metodoPago, indicaciones,
     });
-
-    // 2. Registrar la orden en el módulo de órdenes
-    const ordenGenerada = crearOrden({
-      idOrden: `ORD-${Date.now().toString().slice(-6)}`,
-      idUsuario: sesion ? sesion.idUsuario : null,
-      cliente: {
-        nombre: formCliente.nombre || (sesion ? sesion.nombre : ''),
-        rut: formCliente.rut || (sesion ? (sesion.rut || '15.432.890-K') : ''),
-        email: formCliente.email || (sesion ? sesion.email : ''),
-        telefono: formCliente.telefono || (sesion ? (sesion.telefono || '+56 9 8765 4321') : ''),
-        direccion: `${formCliente.direccion || (sesion ? sesion.direccion : '')}, ${formCliente.comuna}, ${formCliente.region}`
-      },
-      items: items.map((i) => ({
-        idProducto: i.idProducto,
-        nombre: i.nombre,
-        cantidad: i.cantidad,
-        precioUnitario: i.precioVenta
-      })),
-      total: totales.total,
-      metodoPago: formCliente.metodoPago,
-      estado: 'Completada'
-    });
-
-    // 3. Vaciar carrito y mostrar confirmación
-    vaciarCarrito();
-    setOrdenCreada(ordenGenerada);
+    setGuardando(false);
+    if (sesionActual !== obtenerSesionActiva()) return;
+    if (!resultado.ok) {
+      setAlertaStock(resultado.error);
+      setErrores(Object.fromEntries(Object.entries(resultado.errores || {}).map(([campo, mensaje]) => [campo.replace(/^cliente\./, ''), mensaje])));
+      return;
+    }
+    setOrdenCreada(resultado.orden);
     setPasoActual('exito');
+    idSolicitud.current = crypto.randomUUID();
     window.scrollTo(0, 0);
   };
 
   return (
     <div className="carrito-page py-4 py-lg-5">
       <div className="container">
+        {estadoCarrito.error && <div className="alert alert-danger" role="alert">
+          {estadoCarrito.error}
+          <button type="button" className="btn btn-outline-dark btn-sm ms-2" onClick={cargarCarrito}>Reintentar</button>
+        </div>}
+        {estadoCarrito.cargando && <p role="status">Actualizando carrito…</p>}
 
-        {/* Migas de pan */}
         <nav aria-label="breadcrumb" className="mb-4">
           <ol className="breadcrumb carrito-breadcrumb mb-0">
             <li className="breadcrumb-item"><Link to="/">Inicio</Link></li>
@@ -193,7 +203,6 @@ function Carrito() {
           </ol>
         </nav>
 
-        {/* Alerta de validación de stock */}
         {alertaStock && (
           <div className="alert alert-warning alert-dismissible fade show rounded-2 shadow-sm d-flex align-items-center mb-4" role="alert">
             <i className="bi bi-exclamation-triangle-fill marca-icono me-2"></i>
@@ -202,9 +211,6 @@ function Carrito() {
           </div>
         )}
 
-        {/* ============================================================== */}
-        {/* PASO 1: VISTA DE PRODUCTOS EN EL CARRITO                      */}
-        {/* ============================================================== */}
         {pasoActual === 'carrito' && (
           <div>
             <div className="d-flex justify-content-between align-items-center mb-3">
@@ -218,8 +224,8 @@ function Carrito() {
               </div>
 
               {items.length > 0 && (
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="btn btn-outline-danger btn-sm rounded-1"
                   onClick={handleVaciar}
                 >
@@ -230,7 +236,7 @@ function Carrito() {
             </div>
 
             {items.length === 0 ? (
-              // Carrito Vacío
+
               <div className="bg-white border rounded-1 p-5 marca-centro my-4 shadow-sm">
                 <i className="bi bi-cart-x carrito-vacio-icon mb-3 d-block"></i>
                 <h2 className="marca-titulo marca-tam-4 mb-2">Tu carrito está actualmente vacío</h2>
@@ -243,10 +249,9 @@ function Carrito() {
                 </Link>
               </div>
             ) : (
-              // Tabla de productos y resumen
+
               <div className="row g-4">
-                
-                {/* Columna Izquierda: Listado de Productos */}
+
                 <div className="col-12 col-lg-8">
                   <div className="bg-white border rounded-1 shadow-sm p-3">
                     <div className="table-responsive">
@@ -265,42 +270,44 @@ function Carrito() {
                           {items.map((item) => (
                             <tr key={item.idProducto}>
                               <td>
-                                <img 
-                                  src={item.imagen} 
-                                  alt={item.nombre} 
+                                <img
+                                  src={item.imagen}
+                                  alt={item.nombre}
                                   className="cart-item-img border rounded-1 bg-white object-fit-contain"
                                   onError={(e) => { e.target.src = '/banner-web.webp'; }}
                                 />
                               </td>
                               <td>
-                                <Link 
-                                  to={`/producto/${item.idProducto}`} 
+                                <Link
+                                  to={`/producto/${item.idProducto}`}
                                   className="carrito-item-nombre d-block"
                                 >
                                   {item.nombre}
                                 </Link>
-                                <small className="marca-muted">Marca: {item.marca} | Stock: {item.stock} unids.</small>
+                                <small className="marca-muted">Marca: {item.marca} | Stock: {cantidadPresentaciones(item, item.stock)}</small>
+                                {item.contenidoPresentacion && <small className="d-block marca-muted">Contenido por {unidadVenta(item)}: {item.contenidoPresentacion}</small>}
                               </td>
                               <td className="marca-derecha marca-nota marca-mono">
                                 {formatearCLP(item.precioVenta)}
+                                <small className="d-block marca-muted">por {unidadVenta(item)}</small>
                               </td>
                               <td className="marca-centro">
                                 <div className="input-group input-group-sm">
-                                  <button 
-                                    className="btn btn-outline-secondary" 
+                                  <button
+                                    className="btn btn-outline-secondary"
                                     type="button"
                                     onClick={() => handleModificarCantidad(item.idProducto, item.cantidad - 1)}
                                   >
                                     -
                                   </button>
-                                  <input 
-                                    type="text" 
+                                  <input
+                                    type="text"
                                     className="form-control marca-centro marca-bold bg-white"
-                                    value={item.cantidad} 
-                                    readOnly 
+                                    value={item.cantidad}
+                                    readOnly
                                   />
-                                  <button 
-                                    className="btn btn-outline-secondary" 
+                                  <button
+                                    className="btn btn-outline-secondary"
                                     type="button"
                                     onClick={() => handleModificarCantidad(item.idProducto, item.cantidad + 1)}
                                     disabled={item.cantidad >= item.stock}
@@ -313,8 +320,8 @@ function Carrito() {
                                 {formatearCLP(item.precioVenta * item.cantidad)}
                               </td>
                               <td className="marca-derecha">
-                                <button 
-                                  type="button" 
+                                <button
+                                  type="button"
                                   className="btn btn-sm btn-outline-danger border-0 p-1"
                                   onClick={() => handleEliminarItem(item.idProducto)}
                                   title="Quitar producto"
@@ -339,7 +346,6 @@ function Carrito() {
                   </div>
                 </div>
 
-                {/* Columna Derecha: Tarjeta de Resumen */}
                 <div className="col-12 col-lg-4">
                   <div className="bg-white border rounded-1 shadow-sm p-4">
                     <h2 className="marca-titulo marca-tam-5 mb-3 border-bottom pb-2">
@@ -372,8 +378,8 @@ function Carrito() {
                       </span>
                     </div>
 
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       className="btn btn-ambar w-100 marca-bold py-3 rounded-1 shadow-sm mb-2"
                       onClick={() => setPasoActual('checkout')}
                     >
@@ -392,14 +398,11 @@ function Carrito() {
           </div>
         )}
 
-        {/* ============================================================== */}
-        {/* PASO 2: CHECKOUT (DATOS DE DESPACHO Y PAGO)                    */}
-        {/* ============================================================== */}
         {pasoActual === 'checkout' && (
           <div className="row justify-content-center">
             <div className="col-12 col-lg-8">
               <div className="bg-white border rounded-1 shadow-sm p-4 p-md-5">
-                
+
                 <div className="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
                   <div>
                     <h2 className="marca-titulo marca-tam-4 mb-1">
@@ -409,20 +412,13 @@ function Carrito() {
                       Completa los datos de envío y selecciona tu método de pago.
                     </p>
                   </div>
-                  <button 
-                    type="button" 
-                    className="btn btn-outline-secondary btn-sm rounded-1"
-                    onClick={() => setPasoActual('carrito')}
-                  >
-                    ← Volver al Carrito
-                  </button>
                 </div>
 
                 {!sesion && (
                   <div className="alert alert-warning marca-fino mb-4 rounded-1 d-flex align-items-center justify-content-between">
                     <div>
                       <i className="bi bi-info-circle-fill me-1"></i>
-                      ¿Ya tienes cuenta? Inicia sesión para autocompletar tus datos.
+                      ¿Ya tienes cuenta? Inicia sesión
                     </div>
                     <Link to="/login" className="btn btn-sm btn-dark rounded-1">
                       Iniciar Sesión
@@ -430,153 +426,6 @@ function Carrito() {
                   </div>
                 )}
 
-                {Object.values(errores).some(Boolean) && (
-                  <div className="alert alert-danger marca-fino mb-4 rounded-1 d-flex align-items-center" role="alert">
-                    <i className="bi bi-exclamation-triangle-fill me-2"></i>
-                    <div>Revisa los campos marcados en rojo antes de confirmar tu compra.</div>
-                  </div>
-                )}
-
-                {sesion ? (
-                  // USUARIO REGISTRADO: DATOS AUTOMÁTICOS, SOLO PEDIR MÉTODO DE PAGO
-                  <form onSubmit={handleProcesarCompra} noValidate>
-                    <div className="border rounded-1 p-4 mb-4 bg-white shadow-sm">
-                      <div className="d-flex flex-wrap justify-content-between align-items-center pb-3 mb-3 border-bottom gap-2">
-                        <div className="d-flex align-items-center gap-2">
-                          <i className="bi bi-person-check-fill text-success fs-4"></i>
-                          <div>
-                            <h3 className="marca-titulo marca-tam-6 mb-0">Datos de Despacho del Cliente Registrado</h3>
-                            <span className="text-muted small">Tus datos de entrega fueron cargados automáticamente</span>
-                          </div>
-                        </div>
-                        <Link to="/cuenta" className="btn btn-outline-dark btn-sm rounded-1 px-3">
-                          <i className="bi bi-pencil me-1"></i> Modificar datos en mi cuenta
-                        </Link>
-                      </div>
-
-                      <div className="row g-3 small">
-                        <div className="col-12 col-md-6">
-                          <div className="p-2 bg-light rounded-1 border">
-                            <span className="text-muted d-block small">Destinatario:</span>
-                            <strong className="text-dark">{formCliente.nombre || sesion.nombre}</strong>
-                          </div>
-                        </div>
-                        <div className="col-12 col-md-6">
-                          <div className="p-2 bg-light rounded-1 border">
-                            <span className="text-muted d-block small">RUN / RUT:</span>
-                            <strong className="text-dark font-monospace">{formCliente.rut || sesion.rut || "15.432.890-K"}</strong>
-                          </div>
-                        </div>
-                        <div className="col-12 col-md-6">
-                          <div className="p-2 bg-light rounded-1 border">
-                            <span className="text-muted d-block small">Correo de Contacto:</span>
-                            <strong className="text-dark font-monospace">{formCliente.email || sesion.email}</strong>
-                          </div>
-                        </div>
-                        <div className="col-12 col-md-6">
-                          <div className="p-2 bg-light rounded-1 border">
-                            <span className="text-muted d-block small">Teléfono de Entrega:</span>
-                            <strong className="text-dark">{formCliente.telefono || sesion.telefono || "+56 9 8765 4321"}</strong>
-                          </div>
-                        </div>
-                        <div className="col-12">
-                          <div className="p-2 bg-light rounded-1 border">
-                            <span className="text-muted d-block small">Dirección de Despacho:</span>
-                            <strong className="text-dark">
-                              {formCliente.direccion || sesion.direccion || "Av. Providencia 1240, Depto 502"}, {formCliente.comuna || sesion.comuna || "Providencia"}, {formCliente.region || sesion.region || "Región Metropolitana"}
-                            </strong>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <h3 className="checkout-section-title marca-titulo marca-tam-6 mb-3">
-                      Selecciona tu Método de Pago
-                    </h3>
-
-                    <div className="mb-4">
-                      <div className="form-check p-2 border rounded-1 mb-2 bg-light d-flex align-items-center">
-                        <input 
-                          className="form-check-input ms-1 me-3" 
-                          type="radio" 
-                          name="metodoPagoReg" 
-                          id="webpayReg" 
-                          value="WebPay Plus (Débito)"
-                          checked={formCliente.metodoPago === "WebPay Plus (Débito)"}
-                          onChange={(e) => setFormCliente({ ...formCliente, metodoPago: e.target.value })}
-                        />
-                        <label className="form-check-label marca-strong marca-fino flex-grow-1" htmlFor="webpayReg">
-                          WebPay Plus / RedCompra (Débito)
-                        </label>
-                      </div>
-
-                      <div className="form-check p-2 border rounded-1 mb-2 bg-light d-flex align-items-center">
-                        <input 
-                          className="form-check-input ms-1 me-3" 
-                          type="radio" 
-                          name="metodoPagoReg" 
-                          id="creditoReg" 
-                          value="Tarjeta de Crédito"
-                          checked={formCliente.metodoPago === "Tarjeta de Crédito"}
-                          onChange={(e) => setFormCliente({ ...formCliente, metodoPago: e.target.value })}
-                        />
-                        <label className="form-check-label marca-strong marca-fino flex-grow-1" htmlFor="creditoReg">
-                          Tarjeta de Crédito (3 cuotas sin interés)
-                        </label>
-                      </div>
-
-                      <div className="form-check p-2 border rounded-1 bg-light d-flex align-items-center">
-                        <input 
-                          className="form-check-input ms-1 me-3" 
-                          type="radio" 
-                          name="metodoPagoReg" 
-                          id="transferenciaReg" 
-                          value="Transferencia Bancaria"
-                          checked={formCliente.metodoPago === "Transferencia Bancaria"}
-                          onChange={(e) => setFormCliente({ ...formCliente, metodoPago: e.target.value })}
-                        />
-                        <label className="form-check-label marca-strong marca-fino flex-grow-1" htmlFor="transferenciaReg">
-                          Transferencia Bancaria Electrónica Directa
-                        </label>
-                      </div>
-                    </div>
-
-                    {/* Resumen del cobro final */}
-                    <div className="p-3 bg-platino border rounded-1 mb-4">
-                      <div className="d-flex justify-content-between mb-1 marca-fino">
-                        <span>Total de productos:</span>
-                        <span className="marca-mono">{formatearCLP(totales.subtotal)}</span>
-                      </div>
-                      <div className="d-flex justify-content-between mb-2 marca-fino">
-                        <span>Costo de envío:</span>
-                        <span className="marca-mono marca-exito">
-                          {totales.despacho === 0 ? "Gratis" : formatearCLP(totales.despacho)}
-                        </span>
-                      </div>
-                      <div className="d-flex justify-content-between align-items-center pt-2 border-top">
-                        <span className="marca-bold marca-tam-5">Total a Pagar:</span>
-                        <span className="marca-total marca-exito">{formatearCLP(totales.total)}</span>
-                      </div>
-                    </div>
-
-                    <div className="d-flex justify-content-between">
-                      <button 
-                        type="button" 
-                        className="btn btn-outline-secondary btn-sm rounded-1"
-                        onClick={() => setPasoActual("carrito")}
-                      >
-                        ← Volver al Carrito
-                      </button>
-                      <button 
-                        type="submit" 
-                        className="btn btn-ambar btn-sm marca-strong rounded-1 px-4 py-2 shadow-sm"
-                      >
-                        Confirmar y Pagar {formatearCLP(totales.total)}
-                      </button>
-                    </div>
-                  </form>
-                ) : (
-                  // USUARIO SIN SESIÓN (INVITADO): FORMULARIO COMPLETO
                   <form onSubmit={handleProcesarCompra} noValidate>
                   <h3 className="checkout-section-title marca-titulo marca-tam-6 mb-3">
                     1. Información del Cliente
@@ -585,8 +434,8 @@ function Carrito() {
                   <div className="row g-3 mb-4">
                     <div className="col-12 col-md-6">
                       <label className="form-label marca-label">Nombre y Apellido *</label>
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         className={claseCampo('nombre')}
                         placeholder="Ej: Pedro González"
                         value={formCliente.nombre}
@@ -598,8 +447,8 @@ function Carrito() {
                     </div>
                     <div className="col-12 col-md-6">
                       <label className="form-label marca-label">RUT *</label>
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         className={claseCampo('rut')}
                         placeholder="Ej: 12.345.678-9"
                         value={formCliente.rut}
@@ -612,8 +461,8 @@ function Carrito() {
                     </div>
                     <div className="col-12 col-md-6">
                       <label className="form-label marca-label">Correo Electrónico *</label>
-                      <input 
-                        type="email" 
+                      <input
+                        type="email"
                         className={claseCampo('email')}
                         placeholder="ejemplo@correo.cl"
                         value={formCliente.email}
@@ -625,8 +474,8 @@ function Carrito() {
                     </div>
                     <div className="col-12 col-md-6">
                       <label className="form-label marca-label">Teléfono de Contacto *</label>
-                      <input 
-                        type="tel" 
+                      <input
+                        type="tel"
                         className={claseCampo('telefono')}
                         placeholder="+56 9 1234 5678"
                         value={formCliente.telefono}
@@ -647,15 +496,19 @@ function Carrito() {
                   <div className="row g-3 mb-4">
                     <div className="col-12 col-md-5">
                       <label className="form-label marca-label">Región *</label>
-                      <select 
-                        className="form-select form-select-sm rounded-1"
+                      <select
+                        className={claseCampo('region', 'form-select form-select-sm rounded-1')}
                         value={regionSeleccionada}
                         onChange={(e) => handleCambiarRegion(e.target.value)}
+                        onBlur={() => handleBlur('region')}
+                        required
                       >
+                        <option value="">Selecciona una región</option>
                         {REGIONES_CHILE.map((r) => (
                           <option key={r.region} value={r.region}>{r.region}</option>
                         ))}
                       </select>
+                      {errores.region && <div className="invalid-feedback">{errores.region}</div>}
                     </div>
 
                     <div className="col-12 col-md-7">
@@ -664,14 +517,16 @@ function Carrito() {
                       </label>
                       <div className="input-group input-group-sm">
                         <span className="input-group-text bg-light"><i className="bi bi-search marca-muted"></i></span>
-                        <select 
+                        <select
                           className={`form-select form-select-sm rounded-end-1${errores.comuna ? ' is-invalid' : ''}`}
                           value={formCliente.comuna}
                           onChange={(e) => handleChange('comuna', e.target.value)}
                           onBlur={() => handleBlur('comuna')}
                           required
+                          disabled={!regionSeleccionada}
                         >
-                          {obtenerComunas(regionSeleccionada).map((com) => (
+                          <option value="">Selecciona una comuna</option>
+                          {(regionSeleccionada ? obtenerComunas(regionSeleccionada) : []).map((com) => (
                             <option key={com} value={com}>{com}</option>
                           ))}
                         </select>
@@ -681,8 +536,8 @@ function Carrito() {
 
                     <div className="col-12 col-md-8">
                       <label className="form-label marca-label">Calle, Número y Depto *</label>
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         className={claseCampo('direccion')}
                         placeholder="Ej: Av. Providencia 1240, Depto 502"
                         value={formCliente.direccion}
@@ -695,8 +550,8 @@ function Carrito() {
 
                     <div className="col-12 col-md-4">
                       <label className="form-label marca-label">Indicaciones de Entrega (Opcional)</label>
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         className="form-control form-control-sm rounded-1"
                         placeholder="Ej: Dejar con conserje"
                         value={formCliente.indicaciones}
@@ -706,16 +561,16 @@ function Carrito() {
                   </div>
 
                   <h3 className="checkout-section-title marca-titulo marca-tam-6 mb-3">
-                    3. Método de Pago Simulado
+                    3. Método de Pago
                   </h3>
 
                   <div className="mb-4">
                     <div className="form-check p-2 border rounded-1 mb-2 bg-light">
-                      <input 
-                        className="form-check-input ms-1 me-2" 
-                        type="radio" 
-                        name="metodoPago" 
-                        id="webpay" 
+                      <input
+                        className="form-check-input ms-1 me-2"
+                        type="radio"
+                        name="metodoPago"
+                        id="webpay"
                         value="WebPay Plus (Débito)"
                         checked={formCliente.metodoPago === 'WebPay Plus (Débito)'}
                         onChange={(e) => setFormCliente({ ...formCliente, metodoPago: e.target.value })}
@@ -726,11 +581,11 @@ function Carrito() {
                     </div>
 
                     <div className="form-check p-2 border rounded-1 mb-2 bg-light">
-                      <input 
-                        className="form-check-input ms-1 me-2" 
-                        type="radio" 
-                        name="metodoPago" 
-                        id="credito" 
+                      <input
+                        className="form-check-input ms-1 me-2"
+                        type="radio"
+                        name="metodoPago"
+                        id="credito"
                         value="Tarjeta de Crédito"
                         checked={formCliente.metodoPago === 'Tarjeta de Crédito'}
                         onChange={(e) => setFormCliente({ ...formCliente, metodoPago: e.target.value })}
@@ -741,11 +596,11 @@ function Carrito() {
                     </div>
 
                     <div className="form-check p-2 border rounded-1 bg-light">
-                      <input 
-                        className="form-check-input ms-1 me-2" 
-                        type="radio" 
-                        name="metodoPago" 
-                        id="transferencia" 
+                      <input
+                        className="form-check-input ms-1 me-2"
+                        type="radio"
+                        name="metodoPago"
+                        id="transferencia"
                         value="Transferencia Bancaria"
                         checked={formCliente.metodoPago === 'Transferencia Bancaria'}
                         onChange={(e) => setFormCliente({ ...formCliente, metodoPago: e.target.value })}
@@ -756,7 +611,6 @@ function Carrito() {
                     </div>
                   </div>
 
-                  {/* Resumen del cobro final */}
                   <div className="p-3 bg-platino border rounded-1 mb-4">
                     <div className="d-flex justify-content-between mb-1 marca-fino">
                       <span>Total de productos:</span>
@@ -774,47 +628,44 @@ function Carrito() {
                     </div>
                   </div>
 
-                  <button 
-                    type="submit" 
+                  <p className="marca-nota">El pedido quedará pendiente de pago. Registrarlo no realiza un cobro.</p>
+                  <button
+                    type="submit"
                     className="btn btn-ambar w-100 marca-bold py-3 rounded-1 shadow-sm marca-tam-5"
+                    disabled={guardando || estadoCarrito.cargando || Boolean(estadoCarrito.error)}
                   >
-                    Confirmar y Pagar {formatearCLP(totales.total)}
+                    {guardando ? 'Guardando pedido…' : `Registrar pedido por ${formatearCLP(totales.total)}`}
                   </button>
 
                 </form>
-                )}
 
               </div>
             </div>
           </div>
         )}
 
-        {/* ============================================================== */}
-        {/* PASO 3: COMPRA EXITOSA Y BOLETA (Rúbrica Duoc Figura 7)         */}
-        {/* ============================================================== */}
         {pasoActual === 'exito' && ordenCreada && (
           <div className="row justify-content-center">
             <div className="col-12 col-md-8 col-lg-7">
               <div className="bg-white border rounded-1 shadow-sm p-4 p-md-5">
-                
+
                 <div className="marca-centro pb-4 border-bottom mb-4">
                   <div className="d-inline-flex p-3 bg-success-subtle marca-exito rounded-circle mb-3">
                     <i className="bi bi-check-lg carrito-check-icon"></i>
                   </div>
                   <h1 className="marca-titulo marca-tam-4 mb-1">
-                    ¡Se ha realizado la compra con éxito!
+                    Pedido registrado, pendiente de pago
                   </h1>
                   <div className="d-flex justify-content-center gap-2 mt-2">
                     <span className="marca-chip marca-chip--oscuro marca-mono px-3 py-2">
                       Orden: #{ordenCreada.idOrden}
                     </span>
                     <span className="marca-chip marca-chip--gris marca-mono px-3 py-2">
-                      N° Boleta: {ordenCreada.numeroBoleta}
+                      {ordenCreada.estado}
                     </span>
                   </div>
                 </div>
 
-                {/* Datos del Cliente y Despacho */}
                 <div className="mb-4 marca-fino">
                   <div className="row g-2">
                     <div className="col-sm-6">
@@ -834,7 +685,7 @@ function Carrito() {
                       <span className="marca-oscuro">{ordenCreada.cliente.direccion}</span>
                     </div>
                     <div className="col-sm-6 mt-2">
-                      <strong className="d-block marca-muted">Fecha de Pago:</strong>
+                      <strong className="d-block marca-muted">Fecha del pedido:</strong>
                       <span className="marca-oscuro">{ordenCreada.fecha}</span>
                     </div>
                     <div className="col-sm-6 mt-2">
@@ -844,7 +695,6 @@ function Carrito() {
                   </div>
                 </div>
 
-                {/* Tabla de ítems adquiridos */}
                 <div className="table-responsive border rounded-1 mb-4">
                   <table className="table table-sm align-middle mb-0 marca-fino">
                     <thead className="table-light">
@@ -866,13 +716,11 @@ function Carrito() {
                   </table>
                 </div>
 
-                {/* Total */}
                 <div className="d-flex justify-content-between align-items-center p-3 bg-platino border rounded-1 mb-4">
-                  <span className="marca-bold marca-tam-5">Total Pagado:</span>
+                  <span className="marca-bold marca-tam-5">Total del pedido:</span>
                   <span className="marca-total marca-exito">{formatearCLP(ordenCreada.total)}</span>
                 </div>
 
-                {/* Acciones */}
                 <div className="d-flex flex-wrap gap-2 justify-content-center">
                   <Link to="/catalogo" className="btn btn-ambar btn-sm marca-strong rounded-1 px-4">
                     Volver al Catálogo

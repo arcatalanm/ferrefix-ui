@@ -5,7 +5,7 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  globalIgnores(['dist', 'coverage']),
   {
     files: ['**/*.{js,jsx}'],
     extends: [
@@ -19,10 +19,14 @@ export default defineConfig([
     },
   },
   {
-    // Archivos de configuración y plugins que se ejecutan en Node (Vite)
-    files: ['vite.config.js', 'vite-plugin-*.js'],
+
+    files: ['vite.config.js'],
     languageOptions: {
       globals: globals.node,
     },
+  },
+  {
+    files: ['src/components/ToastNotificacion.jsx'],
+    rules: { 'react-refresh/only-export-components': 'off' },
   },
 ])

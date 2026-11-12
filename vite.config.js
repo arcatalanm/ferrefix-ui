@@ -1,10 +1,14 @@
 import react from "@vitejs/plugin-react"
 import { defineConfig } from "vite"
-import productosUpload from "./vite-plugin-productos-upload.js"
 
-// https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), productosUpload()],
+  plugins: [react()],
+  server: {
+    proxy: { '/media': 'http://localhost:8080', '/api': 'http://localhost:8080' },
+  },
+  preview: {
+    proxy: { '/media': 'http://localhost:8080', '/api': 'http://localhost:8080' },
+  },
   test: {
     environment: "jsdom",
     globals: true,

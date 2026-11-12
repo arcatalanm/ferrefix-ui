@@ -1,16 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import ImagenProductoUploader from './ImagenProductoUploader';
-import OfertaDestacada from './OfertaDestacada';
+import { UNIDADES_VENTA } from '../utils/presentacionProducto';
 import {
-  DESTINO_OFERTAS,
   convertirCanvasAWebp,
   formatearBytes,
-  guardarWebpEnAssets,
-  nombreArchivoSeguro
 } from '../utils/imagenWebp';
 import {
-  TARJETA_ALTO,
-  TARJETA_ANCHO,
   renderizarTarjetaProducto
 } from '../utils/renderizadoresGeneradores';
 import {
@@ -18,30 +13,29 @@ import {
   EVENTO_GENERADORES_ACTUALIZADOS,
   TOTAL_SLOTS_OFERTA,
   eliminarOfertaGenerada,
-  guardarEnlaceOferta,
   guardarOfertaGenerada,
   obtenerEnlacesOferta,
-  obtenerOfertasGeneradas
+  obtenerOfertasGeneradas,
+  cargarOfertas,
+  useEstadoGeneradores
 } from '../data/generadores';
-
-import ofertaUno from '../assets/sales/guantes-de-nitrilo-card.webp';
-import ofertaDos from '../assets/sales/lentes-de-protecci-n-card.webp';
-import ofertaTres from '../assets/sales/chaleco-reflectante-card.webp';
-import ofertaCuatro from '../assets/sales/casco-de-construcci-n-est-ndar-card.webp';
-
-const OFERTAS_BASE = [ofertaUno, ofertaDos, ofertaTres, ofertaCuatro];
+import { clienteApi } from '../services/api';
+import { obtenerMensajeApi } from '../services/crearClienteApi';
 
 const FORM_INICIAL = {
   modo: 'descuento',
-  precioNormal: '29990',
-  descuento: '33',
-  precioOferta: '20093',
+  precioVenta: '',
+  descuento: '0',
+  precioOferta: '',
   redondear: true,
-  titulo: '',
-  descripcion: '',
+  idProducto: '',
+  nombre: '',
+  marca: '',
+  descripcionCorta: '',
+  unidadVenta: 'unidad',
   tamanoTitulo: 28,
   tamanoDescripcion: 15,
-  escalaImagen: 85,
+  escalaImagen: 100,
   offsetY: 0,
   margenInferior: 16,
   margenLateral: 16,
@@ -53,14 +47,11 @@ const redondearPrecioComercial = (valor) => {
   if (valor <= 0) return 0;
   if (valor < 1000) return Math.max(0, Math.floor(valor / 10) * 10);
 
-  // Baja al precio comercial terminado en 90 inmediatamente inferior. Antes se
-  // redondeaba en saltos de $1.000, por lo que descuentos como 4%, 5% y 6%
-  // terminaban mostrando exactamente el mismo precio de oferta.
   return Math.max(0, Math.floor((valor - 90) / 100) * 100 + 90);
 };
 
-const calcularPrecios = ({ modo, precioNormal, descuento, precioOferta, redondear }) => {
-  const normal = Math.max(0, Number(precioNormal) || 0);
+const calcularPrecios = ({ modo, precioVenta, descuento, precioOferta, redondear }) => {
+  const normal = Math.max(0, Number(precioVenta) || 0);
   const descuentoIngresado = Math.min(100, Math.max(0, Number(descuento) || 0));
   const ofertaIngresada = Math.max(0, Number(precioOferta) || 0);
 
@@ -116,8 +107,10 @@ const calcularPrecios = ({ modo, precioNormal, descuento, precioOferta, redondea
   };
 };
 
-function GeneradorProductos() {
+function GeneradorProductos({ productos = [] }) {
+  const estadoGeneradores = useEstadoGeneradores();
   const canvasRef = useRef(null);
+  const lectorRef = useRef(null);
   const [form, setForm] = useState(FORM_INICIAL);
   const [imagenArchivo, setImagenArchivo] = useState(null);
   const [imagenSrc, setImagenSrc] = useState('');
@@ -139,15 +132,17 @@ function GeneradorProductos() {
   const [guardando, setGuardando] = useState(false);
   const [mensaje, setMensaje] = useState(null);
 
-  const enlaceActivo = enlaces[slotActivo] ?? ENLACE_POR_DEFECTO;
+  useEffect(() => () => lectorRef.current?.abort(), []);
 
   const precios = useMemo(() => calcularPrecios(form), [form]);
 
   const configuracion = useMemo(
     () => ({
       imagen: imagenCargada,
-      titulo: form.titulo,
-      descripcion: form.descripcion,
+      nombre: form.nombre,
+      marca: form.marca,
+      descripcionCorta: form.descripcionCorta,
+      unidadVenta: form.unidadVenta,
       precioNormal: precios.normal,
       precioOferta: precios.oferta,
       descuento: precios.descuento,
@@ -163,20 +158,19 @@ function GeneradorProductos() {
     [form, imagenCargada, precios]
   );
 
-  // Mantiene la lista de ofertas sincronizada con el generador de banners y la tienda.
   useEffect(() => {
-    const sincronizar = () => setOfertas(obtenerOfertasGeneradas());
+    const sincronizar = () => {
+      setOfertas(obtenerOfertasGeneradas());
+      setEnlaces(obtenerEnlacesOferta().map(enlace => enlace || ENLACE_POR_DEFECTO));
+    };
 
     window.addEventListener(EVENTO_GENERADORES_ACTUALIZADOS, sincronizar);
-    window.addEventListener('storage', sincronizar);
 
     return () => {
       window.removeEventListener(EVENTO_GENERADORES_ACTUALIZADOS, sincronizar);
-      window.removeEventListener('storage', sincronizar);
     };
   }, []);
 
-  // Espera a que las tipografías estén disponibles para dibujar textos nítidos.
   useEffect(() => {
     let activo = true;
 
@@ -184,13 +178,14 @@ function GeneradorProductos() {
       if (typeof document !== 'undefined' && document.fonts) {
         try {
           await Promise.all([
-            document.fonts.load('700 28px Montserrat'),
-            document.fonts.load('500 15px Montserrat'),
-            document.fonts.load('900 38px Montserrat')
+            document.fonts.load('700 28px Oswald'),
+            document.fonts.load('500 15px Oswald'),
+            document.fonts.load('900 38px Oswald')
           ]);
           await document.fonts.ready;
         } catch {
-          // Si una fuente no está disponible se usa la tipografía de respaldo.
+          if (activo) setFuentesListas(true);
+          return;
         }
       }
 
@@ -204,7 +199,6 @@ function GeneradorProductos() {
     };
   }, []);
 
-  // Carga la imagen seleccionada como HTMLImageElement para poder dibujarla.
   useEffect(() => {
     if (!imagenSrc) return undefined;
 
@@ -230,9 +224,8 @@ function GeneradorProductos() {
     return () => {
       activo = false;
     };
-  }, [imagenSrc]);
+  }, [imagenSrc, form.idProducto]);
 
-  // Redibuja la vista previa cada vez que cambia cualquier propiedad.
   useEffect(() => {
     if (!canvasRef.current) return;
     renderizarTarjetaProducto(canvasRef.current, configuracion, 2);
@@ -240,6 +233,27 @@ function GeneradorProductos() {
 
   const actualizarCampo = (campo, valor) => {
     setForm((actual) => ({ ...actual, [campo]: valor }));
+  };
+
+  const seleccionarProducto = (id) => {
+    lectorRef.current?.abort();
+    const producto = productos.find((item) => String(item.idProducto) === id);
+    setForm((actual) => ({
+      ...actual,
+      idProducto: producto?.idProducto || '',
+      nombre: producto?.nombre || '',
+      marca: producto?.marca || '',
+      descripcionCorta: producto?.descripcionCorta || '',
+      precioVenta: producto ? String(producto.precioVenta) : '',
+      unidadVenta: producto?.unidadVenta || 'unidad',
+      modo: 'descuento', descuento: '0', precioOferta: '',
+    }));
+    setImagenArchivo(null);
+    setImagenCargada(null);
+    setCargandoImagen(Boolean(producto?.imagen));
+    setImagenSrc(producto?.imagen || '');
+    setMensaje(null);
+    actualizarEnlace(producto ? `/producto/${producto.idProducto}` : ENLACE_POR_DEFECTO);
   };
 
   const cambiarModo = (nuevoModo) => {
@@ -261,18 +275,20 @@ function GeneradorProductos() {
   };
 
   const seleccionarImagen = (archivo) => {
+    lectorRef.current?.abort();
     setImagenArchivo(archivo);
+    setImagenSrc('');
+    setImagenCargada(null);
     setMensaje(null);
 
     if (!archivo) {
-      setImagenSrc('');
-      setImagenCargada(null);
       setCargandoImagen(false);
       return;
     }
 
     setCargandoImagen(true);
     const lector = new FileReader();
+    lectorRef.current = lector;
     lector.onload = () => setImagenSrc(String(lector.result || ''));
     lector.onerror = () => {
       setCargandoImagen(false);
@@ -284,6 +300,9 @@ function GeneradorProductos() {
   const seleccionarSlot = (indice) => {
     setSlotActivo(indice);
     setMensaje(null);
+    if (form.idProducto) {
+      setEnlaces((actual) => actual.map((enlace, posicion) => posicion === indice ? `/producto/${form.idProducto}` : enlace));
+    }
   };
 
   const actualizarEnlace = (valor) => {
@@ -292,7 +311,6 @@ function GeneradorProductos() {
       siguiente[slotActivo] = valor;
       return siguiente;
     });
-    guardarEnlaceOferta(slotActivo, valor);
   };
 
   const generarBlob = async () => {
@@ -306,21 +324,23 @@ function GeneradorProductos() {
     setMensaje(null);
 
     try {
-      if (imagenArchivo && !imagenCargada) {
-        throw new Error('La imagen aún se está cargando. Espera un momento e inténtalo de nuevo.');
+      if (!productos.some((producto) => producto.idProducto === form.idProducto)) {
+        throw new Error('Selecciona un producto disponible en el catálogo.');
+      }
+      if (!imagenCargada || cargandoImagen) {
+        throw new Error('Espera a que la imagen termine de cargar antes de guardar.');
       }
 
       const blob = await generarBlob();
-      const nombre = `oferta-${slotActivo + 1}-${nombreArchivoSeguro(
-        form.titulo || 'tarjeta-producto'
-      )}`;
       const enlaceFinal = String(enlaces[slotActivo] ?? '').trim() || ENLACE_POR_DEFECTO;
-      const resultado = await guardarWebpEnAssets(blob, nombre, DESTINO_OFERTAS);
+      const archivo = new FormData();
+      archivo.append('archivo', blob, 'oferta.webp');
+      const { data: resultado } = await clienteApi.http.post('/catalogo/imagenes', archivo);
 
-      const guardado = guardarOfertaGenerada(slotActivo, {
+      const guardado = await guardarOfertaGenerada(slotActivo, {
         imagen: resultado.url,
         enlace: enlaceFinal,
-        alt: form.titulo || `Oferta destacada ${slotActivo + 1}`
+        alt: form.nombre || `Oferta destacada ${slotActivo + 1}`
       });
 
       if (!guardado) {
@@ -335,41 +355,37 @@ function GeneradorProductos() {
 
       setMensaje({
         tipo: 'ok',
-        texto: `Imagen WebP (${formatearBytes(blob.size)}) guardada en src/assets/sales e inyectada en OfertaDestacada.`
+        texto: `Imagen WebP (${formatearBytes(blob.size)}) guardada en las ofertas de este navegador.`
       });
     } catch (error) {
       setMensaje({
         tipo: 'error',
         texto:
-          error.message ||
-          'No se pudo guardar en assets. Verifica que el servidor de desarrollo esté activo.'
+          (error.response ? obtenerMensajeApi(error) : error.message) ||
+          'No se pudo guardar la oferta. Inténtalo nuevamente.'
       });
     } finally {
       setGuardando(false);
     }
   };
 
-  const handleQuitarOferta = () => {
-    if (eliminarOfertaGenerada(slotActivo)) {
+  const handleQuitarOferta = async () => {
+    try { if (await eliminarOfertaGenerada(slotActivo)) {
       setOfertas(obtenerOfertasGeneradas());
       setMensaje({
         tipo: 'ok',
         texto: `Se restauró la oferta base de la posición ${slotActivo + 1}.`
       });
     }
+    } catch (error) { setMensaje({ tipo: 'error', texto: error.message }); }
   };
-
-  const ofertasVista = useMemo(
-    () =>
-      OFERTAS_BASE.map((imagenBase, indice) => ({
-        imagen: ofertas[indice]?.imagen || imagenBase,
-        enlace: enlaces[indice] || ENLACE_POR_DEFECTO
-      })),
-    [ofertas, enlaces]
-  );
 
   return (
     <section className="admin-box generador-panel">
+        {estadoGeneradores.error && <div className="alert alert-danger" role="alert">
+          {estadoGeneradores.error}
+          <button type="button" className="btn btn-outline-dark btn-sm ms-2" onClick={cargarOfertas}>Reintentar</button>
+        </div>}
       <div className="generador-head">
         <div>
           <h2 className="admin-section-title mb-0">Generador de tarjetas de producto</h2>
@@ -385,7 +401,16 @@ function GeneradorProductos() {
               handleGuardar();
             }}
           >
-            {/* 1. Precios */}
+            <div>
+              <label className="form-label admin-label" htmlFor="generador-producto">Producto del catálogo</label>
+              <select id="generador-producto" className="form-select form-select-sm" value={form.idProducto} required
+                onChange={(event) => seleccionarProducto(event.target.value)}>
+                <option value="" disabled>{productos.length ? 'Selecciona un producto' : 'No hay productos disponibles'}</option>
+                {productos.map((producto) => <option key={producto.idProducto} value={producto.idProducto}>{producto.nombre}</option>)}
+              </select>
+              <p className="generador-hint mt-1 mb-0">Carga sus datos e imagen para preparar la tarjeta. Los ajustes de esta tarjeta no cambian el producto del catálogo.</p>
+            </div>
+
             <div className="generador-group">
               <div className="generador-group-head">
                 <span className="generador-num">1</span>
@@ -396,32 +421,35 @@ function GeneradorProductos() {
                   <button
                     type="button"
                     className={form.modo === 'descuento' ? 'active' : ''}
+                    aria-pressed={form.modo === 'descuento'}
                     onClick={() => cambiarModo('descuento')}
                   >
-                    Precio normal + %
+                    Precio de venta + %
                   </button>
                   <button
                     type="button"
                     className={form.modo === 'oferta' ? 'active' : ''}
+                    aria-pressed={form.modo === 'oferta'}
                     onClick={() => cambiarModo('oferta')}
                   >
-                    Precio normal + oferta
+                    Precio de venta + oferta
                   </button>
                 </div>
 
                 <div className="row g-2">
                   <div className="col-12 col-sm-4">
                     <label className="form-label admin-label mb-1" htmlFor="generador-precio-normal">
-                      Precio normal
+                      Precio de venta
                     </label>
                     <input
                       id="generador-precio-normal"
                       type="number"
                       min="0"
-                      step="10"
+                      step="1"
+                      required
                       className="form-control form-control-sm rounded-1 admin-mono"
-                      value={form.precioNormal}
-                      onChange={(event) => actualizarCampo('precioNormal', event.target.value)}
+                      value={form.precioVenta}
+                      onChange={(event) => actualizarCampo('precioVenta', event.target.value)}
                     />
                   </div>
 
@@ -486,7 +514,6 @@ function GeneradorProductos() {
               </div>
             </div>
 
-            {/* 2. Imagen */}
             <div className="generador-group">
               <div className="generador-group-head">
                 <span className="generador-num">2</span>
@@ -494,6 +521,7 @@ function GeneradorProductos() {
               </div>
               <div className="generador-group-body">
                 <ImagenProductoUploader
+                  key={form.idProducto}
                   archivo={imagenArchivo}
                   onSeleccionar={seleccionarImagen}
                   onQuitar={() => seleccionarImagen(null)}
@@ -509,7 +537,7 @@ function GeneradorProductos() {
                       id="generador-escala"
                       type="range"
                       className="form-range"
-                      min="40"
+                      min="100"
                       max="150"
                       value={form.escalaImagen}
                       onChange={(event) => actualizarCampo('escalaImagen', Number(event.target.value))}
@@ -534,7 +562,6 @@ function GeneradorProductos() {
               </div>
             </div>
 
-            {/* 3. Textos */}
             <div className="generador-group">
               <div className="generador-group-head">
                 <span className="generador-num">3</span>
@@ -543,15 +570,17 @@ function GeneradorProductos() {
               <div className="generador-group-body">
                 <div>
                   <label className="form-label admin-label mb-1" htmlFor="generador-titulo">
-                    Título del producto
+                    Nombre del producto
                   </label>
                   <input
                     id="generador-titulo"
                     type="text"
                     className="form-control form-control-sm rounded-1"
                     placeholder="Ej: Taladro Percutor 20V Max XR"
-                    value={form.titulo}
-                    onChange={(event) => actualizarCampo('titulo', event.target.value)}
+                    maxLength={160}
+                    required
+                    value={form.nombre}
+                    onChange={(event) => actualizarCampo('nombre', event.target.value)}
                   />
                 </div>
 
@@ -564,9 +593,25 @@ function GeneradorProductos() {
                     rows="2"
                     className="form-control form-control-sm rounded-1"
                     placeholder="Ej: Motor brushless, 2 baterías y maletín incluido"
-                    value={form.descripcion}
-                    onChange={(event) => actualizarCampo('descripcion', event.target.value)}
+                    maxLength={300}
+                    value={form.descripcionCorta}
+                    onChange={(event) => actualizarCampo('descripcionCorta', event.target.value)}
                   />
+                </div>
+
+                <div className="row g-3">
+                  <div className="col-sm-6">
+                    <label className="form-label admin-label" htmlFor="generador-marca">Marca</label>
+                    <input id="generador-marca" className="form-control form-control-sm" maxLength={100} required
+                      value={form.marca} onChange={(event) => actualizarCampo('marca', event.target.value)} />
+                  </div>
+                  <div className="col-sm-6">
+                    <label className="form-label admin-label" htmlFor="generador-unidad">Unidad de venta</label>
+                    <select id="generador-unidad" className="form-select form-select-sm" value={form.unidadVenta}
+                      onChange={(event) => actualizarCampo('unidadVenta', event.target.value)}>
+                      {UNIDADES_VENTA.map((unidad) => <option key={unidad} value={unidad}>{unidad}</option>)}
+                    </select>
+                  </div>
                 </div>
 
                 <div className="row g-3">
@@ -579,7 +624,7 @@ function GeneradorProductos() {
                       type="range"
                       className="form-range"
                       min="18"
-                      max="40"
+                      max="32"
                       value={form.tamanoTitulo}
                       onChange={(event) => actualizarCampo('tamanoTitulo', Number(event.target.value))}
                     />
@@ -595,7 +640,7 @@ function GeneradorProductos() {
                       type="range"
                       className="form-range"
                       min="11"
-                      max="22"
+                      max="20"
                       value={form.tamanoDescripcion}
                       onChange={(event) =>
                         actualizarCampo('tamanoDescripcion', Number(event.target.value))
@@ -606,7 +651,6 @@ function GeneradorProductos() {
               </div>
             </div>
 
-            {/* 4. Estilos */}
             <div className="generador-group">
               <div className="generador-group-head">
                 <span className="generador-num">4</span>
@@ -686,7 +730,6 @@ function GeneradorProductos() {
               </div>
             </div>
 
-            {/* 5. Destino */}
             <div className="generador-group">
               <div className="generador-group-head">
                 <span className="generador-num">5</span>
@@ -706,7 +749,7 @@ function GeneradorProductos() {
                     onChange={(event) => actualizarEnlace(event.target.value)}
                   />
                   <div className="generador-hint mt-1">
-                    Este enlace se guarda automáticamente por cada oferta. Si se deja vacío se
+                    El enlace se guarda con la oferta. Si se deja vacío se
                     utiliza <code>{ENLACE_POR_DEFECTO}</code>.
                   </div>
                 </div>
@@ -758,10 +801,10 @@ function GeneradorProductos() {
               <button
                 type="submit"
                 className="btn btn-ambar admin-btn-strong rounded-1"
-                disabled={guardando || cargandoImagen}
+                disabled={guardando || cargandoImagen || !imagenCargada || !fuentesListas || !form.idProducto}
               >
                 <i className="bi bi-magic me-2"></i>
-                {guardando ? 'Generando y guardando...' : 'Generar y guardar en assets'}
+                {guardando ? 'Guardando…' : 'Guardar oferta'}
               </button>
             </div>
           </form>
@@ -773,9 +816,6 @@ function GeneradorProductos() {
               <div className="generador-preview-head">
                 <div>
                   <h3 className="generador-preview-title">Vista previa de la tarjeta</h3>
-                  <span className="admin-muted">
-                    {TARJETA_ANCHO} × {TARJETA_ALTO} px · salida WebP
-                  </span>
                 </div>
               </div>
 
@@ -788,26 +828,6 @@ function GeneradorProductos() {
               </div>
             </div>
 
-            <div className="generador-preview-card mt-3">
-              <div className="generador-preview-head">
-                <div>
-                  <h3 className="generador-preview-title">Así se verá en OfertaDestacada</h3>
-                  <span className="admin-muted">
-                    Las posiciones guardadas se inyectan automáticamente en la página de inicio.
-                  </span>
-                </div>
-                <span className="admin-badge-soft">{enlaceActivo || ENLACE_POR_DEFECTO}</span>
-              </div>
-
-              <div className="generador-oferta-preview">
-                <OfertaDestacada
-                  ofertas={ofertasVista.map(({ imagen, enlace }) => ({
-                    img: imagen,
-                    link: enlace
-                  }))}
-                />
-              </div>
-            </div>
           </div>
         </div>
       </div>

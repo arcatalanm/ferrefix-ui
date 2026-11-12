@@ -1,5 +1,4 @@
-// Test: validarRut: acepta un RUT válido, rechaza un dígito verificador incorrecto y normaliza la K minúscula
-// Función: validarRut()
+
 
 import { describe, test, expect } from 'vitest';
 import { validarRut } from '../data/validaciones.js';

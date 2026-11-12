@@ -22,11 +22,11 @@ const SECCIONES = [
     titulo: '3. Precios y Pagos',
     parrafos: [
       'Todos los precios publicados se expresan en pesos chilenos (CLP) e incluyen el Impuesto al Valor Agregado (IVA).',
-      'Los medios de pago habilitados son WebPay Plus (débito y crédito), RedCompra y transferencia bancaria electrónica. La compra se entiende perfeccionada una vez confirmado el pago.'
+      'El sitio registra pedidos pendientes de confirmación, con existencias reservadas durante 24 horas. El pago se coordina con atención comercial. No se realizan cobros en línea ni se emiten documentos tributarios desde esta página.'
     ],
     lista: [
       'Los precios pueden ser modificados sin aviso previo; se respeta el valor confirmado al momento de la compra.',
-      'Para compras por volumen, licitaciones u órdenes de compra se emitirá factura electrónica.'
+      'La emisión del documento tributario correspondiente se coordina con atención comercial después de confirmar la operación.'
     ]
   },
   {
@@ -42,7 +42,7 @@ const SECCIONES = [
     titulo: '5. Arriendo de Maquinaria',
     parrafos: [
       'El arriendo de equipos requiere la validación del RUN del arrendatario y la aceptación del contrato generado al confirmar la solicitud.',
-      'El maquinaria se entrega en condiciones operativas y debe devolverse en el plazo pactado y en iguales condiciones, salvo el desgaste normal por uso.'
+      'La maquinaria se entrega en condiciones operativas y debe devolverse en el plazo pactado y en iguales condiciones, salvo el desgaste normal por uso.'
     ],
     lista: [
       'El total del arriendo corresponde a la tarifa diaria del equipo por la cantidad de días contratados.',
@@ -96,7 +96,6 @@ function TerminosCondiciones() {
     <div className="info-page py-4 py-lg-5">
       <div className="container">
 
-        {/* Breadcrumb */}
         <nav aria-label="breadcrumb" className="mb-4">
           <ol className="breadcrumb info-breadcrumb mb-0">
             <li className="breadcrumb-item"><Link to="/">Inicio</Link></li>
@@ -104,7 +103,6 @@ function TerminosCondiciones() {
           </ol>
         </nav>
 
-        {/* Hero */}
         <div className="brand-hero rounded-1 p-4 p-md-5 mb-4">
           <h1 className="brand-hero-title mb-3">
             Términos y Condiciones
@@ -118,11 +116,10 @@ function TerminosCondiciones() {
 
         <div className="row g-4">
 
-          {/* Contenido legal */}
           <div className="col-12 col-lg-8">
             <div className="info-card shadow-sm p-4 p-md-5">
               <span className="marca-chip marca-chip--gris mb-3 d-inline-block">
-                Última actualización: enero de 2026
+                Última actualización: noviembre de 2026
               </span>
 
               {SECCIONES.map((s) => (
@@ -143,7 +140,6 @@ function TerminosCondiciones() {
             </div>
           </div>
 
-          {/* Barra lateral */}
           <div className="col-12 col-lg-4">
             <div className="info-sidebar">
               <div className="info-card shadow-sm p-4">

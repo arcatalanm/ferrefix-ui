@@ -26,9 +26,9 @@ const MODALIDADES = [
 
 const ZONAS = [
   { zona: 'Retiro en tienda (Providencia)', plazo: '2 horas hábiles', costo: 'Sin costo' },
-  { zona: 'Región Metropolitana', plazo: '24 a 48 horas hábiles', costo: 'Gratis sobre $50.000' },
-  { zona: 'Regiones (capitales provinciales)', plazo: '3 a 5 días hábiles', costo: 'Desde $4.990' },
-  { zona: 'Regiones (zonas extremas)', plazo: '5 a 7 días hábiles', costo: 'Desde $7.990' },
+  { zona: 'Región Metropolitana', plazo: '24 a 48 horas hábiles', costo: '$3.990; gratis sobre $50.000' },
+  { zona: 'Otras regiones', plazo: '3 a 5 días hábiles', costo: '$4.990' },
+  { zona: 'Arica, Tarapacá, Aysén y Magallanes', plazo: '5 a 7 días hábiles', costo: '$7.990' },
   { zona: 'Despacho directo a obra / faena', plazo: 'Según programación', costo: 'Cotización personalizada' }
 ];
 
@@ -44,7 +44,6 @@ function Fletes() {
     <div className="info-page py-4 py-lg-5">
       <div className="container">
 
-        {/* Breadcrumb */}
         <nav aria-label="breadcrumb" className="mb-4">
           <ol className="breadcrumb info-breadcrumb mb-0">
             <li className="breadcrumb-item"><Link to="/">Inicio</Link></li>
@@ -53,7 +52,6 @@ function Fletes() {
           </ol>
         </nav>
 
-        {/* Hero */}
         <div className="brand-hero rounded-1 p-4 p-md-5 mb-4">
           <h1 className="brand-hero-title mb-3">
             Fletes y Despacho a Todo Chile
@@ -65,7 +63,6 @@ function Fletes() {
           </p>
         </div>
 
-        {/* Modalidades de entrega */}
         <div className="mb-4">
           <h2 className="info-section-title mb-1">Modalidades de Entrega</h2>
           <p className="info-text mb-4">
@@ -87,7 +84,6 @@ function Fletes() {
           </div>
         </div>
 
-        {/* Bloque con imagen: flota de despacho */}
         <div className="info-card shadow-sm p-4 p-md-5 mb-4">
           <div className="row g-4 align-items-center">
             <div className="col-12 col-lg-6">
@@ -115,7 +111,6 @@ function Fletes() {
           </div>
         </div>
 
-        {/* Tabla de cobertura */}
         <div className="info-card shadow-sm p-4 p-md-5 mb-4">
           <h2 className="info-section-title mb-1">Cobertura, Plazos y Costos</h2>
           <p className="info-text mb-3">
@@ -144,7 +139,6 @@ function Fletes() {
           </div>
         </div>
 
-        {/* Bloque con imagen: flete a faena */}
         <div className="info-card shadow-sm p-4 p-md-5 mb-4">
           <div className="row g-4 align-items-center flex-lg-row-reverse">
             <div className="col-12 col-lg-6">
@@ -176,7 +170,6 @@ function Fletes() {
           </div>
         </div>
 
-        {/* Requisitos */}
         <div className="row g-4">
           <div className="col-12 col-lg-7">
             <div className="info-card shadow-sm p-4 p-md-5 h-100">

@@ -51,7 +51,6 @@ function Garantias() {
     <div className="info-page py-4 py-lg-5">
       <div className="container">
 
-        {/* Breadcrumb */}
         <nav aria-label="breadcrumb" className="mb-4">
           <ol className="breadcrumb info-breadcrumb mb-0">
             <li className="breadcrumb-item"><Link to="/">Inicio</Link></li>
@@ -59,7 +58,6 @@ function Garantias() {
           </ol>
         </nav>
 
-        {/* Hero */}
         <div className="brand-hero rounded-1 p-4 p-md-5 mb-4">
           <h1 className="brand-hero-title mb-3">
             Garantías y Servicio Técnico
@@ -71,7 +69,6 @@ function Garantias() {
           </p>
         </div>
 
-        {/* Tipos de garantía */}
         <div className="mb-4">
           <h2 className="info-section-title mb-1">Qué Garantías Te Ofrecemos</h2>
           <p className="info-text mb-4">
@@ -92,7 +89,6 @@ function Garantias() {
           </div>
         </div>
 
-        {/* Pasos */}
         <div className="info-card shadow-sm p-4 p-md-5 mb-4">
           <h2 className="info-section-title mb-4">Cómo Solicitar una Garantía</h2>
           <div className="row g-4">
@@ -110,7 +106,6 @@ function Garantias() {
           </div>
         </div>
 
-        {/* Cubre / No cubre + imagen */}
         <div className="info-card shadow-sm p-4 p-md-5 mb-4">
           <div className="row g-4 align-items-center">
             <div className="col-12 col-lg-6">
@@ -138,7 +133,6 @@ function Garantias() {
           </div>
         </div>
 
-        {/* Bloque con imagen: servicio técnico */}
         <div className="info-card shadow-sm p-4 p-md-5">
           <div className="row g-4 align-items-center">
             <div className="col-12 col-lg-5">

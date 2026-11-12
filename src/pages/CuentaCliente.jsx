@@ -1,31 +1,36 @@
 import { useState, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { obtenerSesionActiva, actualizarDatosUsuario, EVENTO_SESION_ACTUALIZADA } from "../data/auth";
-import { obtenerOrdenes, EVENTO_ORDENES_ACTUALIZADAS } from "../data/ordenes";
-import { obtenerContratosArriendo, EVENTO_MAQUINARIAS_ACTUALIZADAS } from "../data/maquinarias";
+import { obtenerSesionActiva, actualizarDatosUsuario, refrescarPerfil, EVENTO_SESION_ACTUALIZADA } from "../data/auth";
+import { obtenerOrdenes, EVENTO_ORDENES_ACTUALIZADAS, cargarOrdenes, useEstadoOrdenes } from "../data/ordenes";
+import { obtenerContratosArriendo, EVENTO_MAQUINARIAS_ACTUALIZADAS, useEstadoArriendos, cargarContratosArriendo } from "../data/maquinarias";
 import { REGIONES_CHILE, normalizarRegion, obtenerComunas } from "../data/chile";
 import { validadores, formatearRut, formatearTelefono } from "../data/validaciones";
 import { mostrarToast } from "../components/ToastNotificacion";
+import { nombreCompleto } from "../utils/usuario";
 
 export default function CuentaCliente() {
+  const estadoOrdenes = useEstadoOrdenes();
+  const estadoArriendos = useEstadoArriendos();
   const [searchParams, setSearchParams] = useSearchParams();
-  const tabInicial = searchParams.get("tab") || "datos";
-  const [tabActiva, setTabActiva] = useState(tabInicial);
+  const tabActiva = ["datos", "compras", "arriendos"].includes(searchParams.get("tab")) ? searchParams.get("tab") : "datos";
 
   const [sesion, setSesion] = useState(obtenerSesionActiva);
   const [ordenes, setOrdenes] = useState([]);
   const [arriendos, setArriendos] = useState([]);
 
-  // Formulario de edición de datos
   const [editando, setEditando] = useState(false);
+  const [guardando, setGuardando] = useState(false);
   const [formDatos, setFormDatos] = useState({
     nombre: "",
+    segNombre: "",
+    apellidoPaterno: "",
+    apellidoMaterno: "",
     rut: "",
     email: "",
     telefono: "",
     direccion: "",
-    region: "Región Metropolitana",
-    comuna: "Providencia"
+    region: "",
+    comuna: ""
   });
   const [errores, setErrores] = useState({});
 
@@ -36,18 +41,26 @@ export default function CuentaCliente() {
       if (s) {
         setFormDatos({
           nombre: s.nombre || "",
+          segNombre: s.segNombre || "",
+          apellidoPaterno: s.apellidoPaterno || "",
+          apellidoMaterno: s.apellidoMaterno || "",
           rut: s.rut || "",
           email: s.email || "",
           telefono: s.telefono || "",
           direccion: s.direccion || "",
-          region: normalizarRegion(s.region || "Región Metropolitana"),
-          comuna: s.comuna || "Providencia"
+          region: s.region ? normalizarRegion(s.region) : "",
+          comuna: s.comuna || ""
         });
       }
     };
 
     handleSesion();
     window.addEventListener(EVENTO_SESION_ACTUALIZADA, handleSesion);
+    if (obtenerSesionActiva()) {
+      refrescarPerfil().then((res) => {
+        if (!res.ok) mostrarToast({ titulo: 'No se pudo consultar el perfil', mensaje: res.mensaje, tipo: 'danger' });
+      });
+    }
     return () => window.removeEventListener(EVENTO_SESION_ACTUALIZADA, handleSesion);
   }, []);
 
@@ -58,7 +71,6 @@ export default function CuentaCliente() {
       const todas = obtenerOrdenes();
       const mias = todas.filter(
         (o) =>
-          (o.cliente && o.cliente.email && o.cliente.email.toLowerCase() === sesion.email.toLowerCase()) ||
           o.idUsuario === sesion.idUsuario
       );
       setOrdenes(mias);
@@ -68,9 +80,7 @@ export default function CuentaCliente() {
       const todos = obtenerContratosArriendo();
       const mios = todos.filter(
         (c) =>
-          (c.usuario && c.usuario.email && c.usuario.email.toLowerCase() === sesion.email.toLowerCase()) ||
-          (c.usuario && c.usuario.idUsuario === sesion.idUsuario) ||
-          (sesion.rut && c.usuario && c.usuario.rut === sesion.rut)
+          c.usuario?.idUsuario === sesion.idUsuario
       );
       setArriendos(mios);
     };
@@ -88,7 +98,6 @@ export default function CuentaCliente() {
   }, [sesion]);
 
   const cambiarTab = (nuevaTab) => {
-    setTabActiva(nuevaTab);
     setSearchParams({ tab: nuevaTab });
   };
 
@@ -100,21 +109,32 @@ export default function CuentaCliente() {
     }).format(valor || 0);
   };
 
-  const handleGuardarDatos = (e) => {
+  const handleGuardarDatos = async (e) => {
     e.preventDefault();
+    if (guardando) return;
     const errs = {};
 
-    if (!formDatos.nombre.trim()) errs.nombre = "El nombre es requerido.";
+    for (const [campo, etiqueta, obligatorio] of [
+      ['nombre', 'El primer nombre', true], ['segNombre', 'El segundo nombre', false],
+      ['apellidoPaterno', 'El apellido paterno', true], ['apellidoMaterno', 'El apellido materno', false],
+    ]) {
+      const error = validadores.nombrePersona(etiqueta, obligatorio)(formDatos[campo]);
+      if (error) errs[campo] = error;
+    }
     const errRut = validadores.rut(formDatos.rut);
     if (errRut) errs.rut = errRut;
-    const errTel = validadores.telefono(formDatos.telefono);
+    const errTel = validadores.telefonoOpcional(formDatos.telefono);
     if (errTel) errs.telefono = errTel;
-    if (!formDatos.direccion.trim()) errs.direccion = "La dirección de entrega es obligatoria.";
+    if (formDatos.direccion.trim() && !formDatos.region) errs.region = 'Selecciona una región.';
+    if (formDatos.direccion.trim() && !formDatos.comuna) errs.comuna = 'Selecciona una comuna.';
 
     setErrores(errs);
     if (Object.keys(errs).length > 0) return;
 
-    const res = actualizarDatosUsuario(formDatos);
+    setGuardando(true);
+    const res = await actualizarDatosUsuario(formDatos);
+    setGuardando(false);
+    if (!res.ok) { setErrores(res.errores || {}); mostrarToast({ titulo: "No se guardaron los datos", mensaje: res.mensaje, tipo: "danger" }); return; }
     if (res.ok) {
       setEditando(false);
       mostrarToast({
@@ -133,12 +153,12 @@ export default function CuentaCliente() {
             <div className="col-12 col-md-8 col-lg-6 text-center">
               <div className="auth-card p-5 shadow-sm rounded-1 bg-white border">
                 <i className="bi bi-shield-lock text-warning display-4 mb-3 d-block"></i>
-                <h2 className="marca-titulo mb-2">Acceso a Mi Cuenta Ferrefix</h2>
+                <h1 className="marca-titulo h3 mb-2">Acceso a Mi Cuenta Ferrefix</h1>
                 <p className="text-secondary mb-4">
                   Inicia sesión con tu cuenta de cliente para revisar tu historial de compras, contratos de maquinaria y gestionar tus datos de despacho automático.
                 </p>
                 <div className="d-flex gap-2 justify-content-center">
-                  <Link to="/login" className="btn btn-ambar px-4 py-2 rounded-1 fw-bold">
+                  <Link to="/login?volver=/cuenta" className="btn btn-ambar px-4 py-2 rounded-1 fw-bold">
                     Iniciar Sesión
                   </Link>
                   <Link to="/registro" className="btn btn-outline-dark px-4 py-2 rounded-1">
@@ -157,7 +177,6 @@ export default function CuentaCliente() {
     <div className="cuenta-cliente-page py-4 py-lg-5">
       <div className="container">
 
-        {/* Breadcrumb */}
         <nav aria-label="breadcrumb" className="mb-4">
           <ol className="breadcrumb mb-0 small">
             <li className="breadcrumb-item"><Link to="/" className="text-decoration-none text-muted">Inicio</Link></li>
@@ -165,7 +184,6 @@ export default function CuentaCliente() {
           </ol>
         </nav>
 
-        {/* Hero Cabecera */}
         <div className="brand-hero rounded-1 p-4 p-md-5 mb-4 shadow-sm">
           <div className="d-flex flex-wrap justify-content-between align-items-center gap-3">
             <div>
@@ -179,7 +197,6 @@ export default function CuentaCliente() {
           </div>
         </div>
 
-        {/* Navegación por pestañas */}
         <div className="cuenta-tabs-bar mb-4 border-bottom d-flex flex-wrap gap-2">
           <button
             type="button"
@@ -207,9 +224,6 @@ export default function CuentaCliente() {
           </button>
         </div>
 
-        {/* ============================================================== */}
-        {/* TAB 1: MIS DATOS Y DESPACHO                                    */}
-        {/* ============================================================== */}
         {tabActiva === "datos" && (
           <div className="row g-4">
             <div className="col-12 col-lg-7">
@@ -233,21 +247,22 @@ export default function CuentaCliente() {
                 {editando ? (
                   <form onSubmit={handleGuardarDatos} noValidate>
                     <div className="row g-3">
-                      <div className="col-12 col-md-6">
-                        <label className="form-label small fw-semibold">Nombre Completo *</label>
-                        <input
-                          type="text"
-                          className={`form-control form-control-sm rounded-1 ${errores.nombre ? "is-invalid" : ""}`}
-                          value={formDatos.nombre}
-                          onChange={(e) => setFormDatos({ ...formDatos, nombre: e.target.value })}
-                          required
-                        />
-                        {errores.nombre && <div className="invalid-feedback">{errores.nombre}</div>}
-                      </div>
+                      {[
+                        ['nombre', 'Primer nombre', true], ['segNombre', 'Segundo nombre', false],
+                        ['apellidoPaterno', 'Apellido paterno', true], ['apellidoMaterno', 'Apellido materno', false],
+                      ].map(([campo, etiqueta, obligatorio]) => (
+                        <div className="col-12 col-md-6" key={campo}>
+                          <label htmlFor={`cuenta-${campo}`} className="form-label small fw-semibold">{etiqueta}{obligatorio ? ' *' : ' (opcional)'}</label>
+                          <input id={`cuenta-${campo}`} className={`form-control form-control-sm rounded-1 ${errores[campo] ? 'is-invalid' : ''}`}
+                            value={formDatos[campo]} maxLength={120} required={obligatorio}
+                            onChange={(e) => setFormDatos({ ...formDatos, [campo]: e.target.value })} />
+                          {errores[campo] && <div className="invalid-feedback">{errores[campo]}</div>}
+                        </div>
+                      ))}
 
                       <div className="col-12 col-md-6">
-                        <label className="form-label small fw-semibold">RUN / RUT *</label>
-                        <input
+                        <label htmlFor="cuentacliente-campo-2" className="form-label small fw-semibold">RUN / RUT *</label>
+                        <input id="cuentacliente-campo-2"
                           type="text"
                           className={`form-control form-control-sm rounded-1 font-monospace ${errores.rut ? "is-invalid" : ""}`}
                           value={formDatos.rut}
@@ -260,8 +275,8 @@ export default function CuentaCliente() {
                       </div>
 
                       <div className="col-12 col-md-6">
-                        <label className="form-label small fw-semibold">Correo Electrónico</label>
-                        <input
+                        <label htmlFor="cuentacliente-campo-3" className="form-label small fw-semibold">Correo Electrónico</label>
+                        <input id="cuentacliente-campo-3"
                           type="email"
                           className="form-control form-control-sm rounded-1 bg-light"
                           value={formDatos.email}
@@ -271,62 +286,64 @@ export default function CuentaCliente() {
                       </div>
 
                       <div className="col-12 col-md-6">
-                        <label className="form-label small fw-semibold">Teléfono de Contacto *</label>
-                        <input
+                        <label htmlFor="cuentacliente-campo-4" className="form-label small fw-semibold">Teléfono de contacto (opcional)</label>
+                        <input id="cuentacliente-campo-4"
                           type="tel"
                           className={`form-control form-control-sm rounded-1 ${errores.telefono ? "is-invalid" : ""}`}
                           value={formDatos.telefono}
                           onChange={(e) => setFormDatos({ ...formDatos, telefono: formatearTelefono(e.target.value) })}
                           placeholder="+56 9 8765 4321"
                           maxLength={17}
-                          required
                         />
                         {errores.telefono && <div className="invalid-feedback">{errores.telefono}</div>}
                       </div>
 
                       <div className="col-12 col-md-6">
-                        <label className="form-label small fw-semibold">Región *</label>
-                        <select
-                          className="form-select form-select-sm rounded-1"
+                        <label htmlFor="cuentacliente-campo-5" className="form-label small fw-semibold">Región de despacho</label>
+                        <select id="cuentacliente-campo-5"
+                          className={`form-select form-select-sm rounded-1 ${errores.region ? 'is-invalid' : ''}`}
                           value={formDatos.region}
                           onChange={(e) => {
                             const nuevaRegion = e.target.value;
-                            const comunas = obtenerComunas(nuevaRegion);
                             setFormDatos({
                               ...formDatos,
                               region: nuevaRegion,
-                              comuna: comunas[0] || ""
+                              comuna: ""
                             });
                           }}
                         >
+                          <option value="">Selecciona una región</option>
                           {REGIONES_CHILE.map((r) => (
                             <option key={r.region} value={r.region}>{r.region}</option>
                           ))}
                         </select>
+                        {errores.region && <div className="invalid-feedback">{errores.region}</div>}
                       </div>
 
                       <div className="col-12 col-md-6">
-                        <label className="form-label small fw-semibold">Comuna *</label>
-                        <select
-                          className="form-select form-select-sm rounded-1"
+                        <label htmlFor="cuentacliente-campo-6" className="form-label small fw-semibold">Comuna de despacho</label>
+                        <select id="cuentacliente-campo-6"
+                          className={`form-select form-select-sm rounded-1 ${errores.comuna ? 'is-invalid' : ''}`}
                           value={formDatos.comuna}
+                          disabled={!formDatos.region}
                           onChange={(e) => setFormDatos({ ...formDatos, comuna: e.target.value })}
                         >
-                          {obtenerComunas(formDatos.region).map((c) => (
+                          <option value="">Selecciona una comuna</option>
+                          {(formDatos.region ? obtenerComunas(formDatos.region) : []).map((c) => (
                             <option key={c} value={c}>{c}</option>
                           ))}
                         </select>
+                        {errores.comuna && <div className="invalid-feedback">{errores.comuna}</div>}
                       </div>
 
                       <div className="col-12">
-                        <label className="form-label small fw-semibold">Dirección de Entrega (Calle, Número, Depto) *</label>
-                        <input
+                        <label htmlFor="cuentacliente-campo-7" className="form-label small fw-semibold">Dirección de entrega (opcional)</label>
+                        <input id="cuentacliente-campo-7"
                           type="text"
                           className={`form-control form-control-sm rounded-1 ${errores.direccion ? "is-invalid" : ""}`}
                           value={formDatos.direccion}
                           onChange={(e) => setFormDatos({ ...formDatos, direccion: e.target.value })}
                           placeholder="Ej: Av. Providencia 1240, Depto 502"
-                          required
                         />
                         {errores.direccion && <div className="invalid-feedback">{errores.direccion}</div>}
                       </div>
@@ -336,14 +353,16 @@ export default function CuentaCliente() {
                           type="button"
                           className="btn btn-outline-secondary btn-sm rounded-1 px-3"
                           onClick={() => setEditando(false)}
+                          disabled={guardando}
                         >
                           Cancelar
                         </button>
                         <button
                           type="submit"
+                          disabled={guardando}
                           className="btn btn-ambar btn-sm rounded-1 px-4 fw-bold shadow-sm"
                         >
-                          Guardar Datos de Despacho
+                          {guardando ? 'Guardando…' : 'Guardar Datos de Despacho'}
                         </button>
                       </div>
                     </div>
@@ -353,7 +372,7 @@ export default function CuentaCliente() {
                     <div className="col-12 col-md-6">
                       <div className="p-3 bg-light rounded-1 border">
                         <span className="text-muted d-block small mb-1">Nombre Completo:</span>
-                        <strong className="text-dark">{sesion.nombre || "No informado"}</strong>
+                        <strong className="text-dark">{nombreCompleto(sesion) || "No informado"}</strong>
                       </div>
                     </div>
 
@@ -393,20 +412,22 @@ export default function CuentaCliente() {
           </div>
         )}
 
-        {/* ============================================================== */}
-        {/* TAB 2: HISTORIAL DE COMPRAS                                    */}
-        {/* ============================================================== */}
         {tabActiva === "compras" && (
           <div className="info-card shadow-sm p-4 p-md-5">
             <div className="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom flex-wrap gap-2">
               <div>
                 <h2 className="info-section-title mb-1">Historial de Compras Realizadas</h2>
-                <span className="text-muted small">Registro oficial de tus pedidos procesados con boleta y despacho</span>
+                <span className="text-muted small">Consulta el estado, los productos y la entrega de tus pedidos</span>
               </div>
               <span className="badge bg-dark px-3 py-2 font-monospace">Total Compras: {ordenes.length}</span>
             </div>
 
-            {ordenes.length === 0 ? (
+            {estadoOrdenes.error && <div className="alert alert-danger" role="alert">
+              {estadoOrdenes.error}
+              <button type="button" className="btn btn-outline-dark btn-sm ms-2" onClick={cargarOrdenes}>Reintentar</button>
+            </div>}
+            {estadoOrdenes.cargando && <p role="status">Actualizando pedidos…</p>}
+            {ordenes.length === 0 ? (!estadoOrdenes.cargando && !estadoOrdenes.error &&
               <div className="text-center py-5">
                 <i className="bi bi-cart-x text-muted display-4 mb-3 d-block"></i>
                 <h3 className="h5 text-dark mb-2">Aún no registras compras con tu cuenta</h3>
@@ -424,12 +445,12 @@ export default function CuentaCliente() {
                     <div className="d-flex flex-wrap justify-content-between align-items-center pb-2 mb-3 border-bottom gap-2">
                       <div>
                         <span className="badge bg-success-subtle text-success border border-success-subtle me-2">
-                          ● {ord.estado || "Completada"}
+                          ● {ord.estado || "Pendiente de confirmación"}
                         </span>
                         <strong className="text-dark me-2">Orden #{ord.idOrden}</strong>
                         {ord.numeroBoleta && (
                           <span className="badge bg-secondary-subtle text-secondary font-monospace">
-                            Boleta: {ord.numeroBoleta}
+                            Boleta: {(ord.numeroBoleta || "Sin documento emitido")}
                           </span>
                         )}
                       </div>
@@ -463,11 +484,11 @@ export default function CuentaCliente() {
 
                     <div className="d-flex flex-wrap justify-content-between align-items-center pt-2 border-top bg-light p-2 rounded-1">
                       <div className="small text-muted">
-                        <div><strong>Medio de Pago:</strong> {ord.metodoPago || "WebPay Plus"}</div>
+                        <div><strong>Medio de Pago:</strong> {ord.metodoPago || "Por coordinar"}</div>
                         <div><strong>Dirección de Entrega:</strong> {ord.cliente?.direccion || "Despacho registrado"}</div>
                       </div>
                       <div className="text-end">
-                        <span className="text-muted small d-block">Monto Total Pagado:</span>
+                        <span className="text-muted small d-block">Importe del pedido:</span>
                         <strong className="text-success fs-5 font-monospace">{formatearCLP(ord.total)}</strong>
                       </div>
                     </div>
@@ -478,9 +499,6 @@ export default function CuentaCliente() {
           </div>
         )}
 
-        {/* ============================================================== */}
-        {/* TAB 3: MIS ARRIENDOS DE MAQUINARIA                             */}
-        {/* ============================================================== */}
         {tabActiva === "arriendos" && (
           <div className="info-card shadow-sm p-4 p-md-5">
             <div className="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom flex-wrap gap-2">
@@ -493,7 +511,12 @@ export default function CuentaCliente() {
               </Link>
             </div>
 
-            {arriendos.length === 0 ? (
+            {estadoArriendos.errorContratos && <div className="alert alert-danger" role="alert">
+              {estadoArriendos.errorContratos}
+              <button type="button" className="btn btn-outline-dark btn-sm ms-2" onClick={cargarContratosArriendo}>Reintentar</button>
+            </div>}
+            {estadoArriendos.cargandoContratos && <p role="status">Actualizando arriendos…</p>}
+            {arriendos.length === 0 ? (!estadoArriendos.cargandoContratos && !estadoArriendos.errorContratos &&
               <div className="text-center py-5">
                 <i className="bi bi-truck text-muted display-4 mb-3 d-block"></i>
                 <h3 className="h5 text-dark mb-2">No tienes maquinarias arrendadas actualmente</h3>
@@ -512,7 +535,7 @@ export default function CuentaCliente() {
                       <div>
                         <div className="d-flex justify-content-between align-items-start mb-2">
                           <span className={`badge ${contrato.estado === "Vigente" ? "bg-success" : "bg-secondary"}`}>
-                            ● {contrato.estado || "Vigente"}
+                            ● {contrato.estado || "Reservado"}
                           </span>
                           <span className="badge bg-light text-dark border font-monospace">
                             Contrato #{contrato.idContrato}
@@ -524,7 +547,7 @@ export default function CuentaCliente() {
 
                         <div className="p-3 bg-light rounded-1 border mb-3 small">
                           <div><strong>Tarifa diaria:</strong> {formatearCLP(contrato.tarifaDia)} / día</div>
-                          <div><strong>Período:</strong> {contrato.diasArriendo} días (Desde {contrato.fechaInicio})</div>
+                          <div><strong>Período:</strong> {contrato.fechaInicio} al {contrato.fechaTermino} ({contrato.diasArriendo} días)</div>
                           <div><strong>Lugar de Faena:</strong> {contrato.usuario?.direccion || "Obra informada"}, {contrato.usuario?.comuna || ""}</div>
                           <div><strong>Fecha de Solicitud:</strong> {contrato.fechaContrato}</div>
                         </div>

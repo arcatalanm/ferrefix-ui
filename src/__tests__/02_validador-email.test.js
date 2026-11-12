@@ -1,5 +1,4 @@
-// Test: validadores.email: acepta un correo con formato válido, rechaza un correo sin arroba y exige el campo cuando solo hay espacios
-// Función: validadores.email()
+
 
 import { describe, test, expect } from 'vitest';
 import { validadores } from '../data/validaciones.js';

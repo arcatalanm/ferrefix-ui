@@ -1,5 +1,4 @@
-// Test: ProductCard: renderiza nombre, marca, precio y enlace de detalle, no falla con producto null y usa la imagen de respaldo cuando falta la imagen
-// Función: ProductCard()
+
 
 import { describe, test, expect, afterEach } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';

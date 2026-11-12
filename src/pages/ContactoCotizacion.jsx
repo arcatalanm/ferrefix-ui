@@ -1,7 +1,10 @@
 import { mostrarToast } from "../components/ToastNotificacion";
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { obtenerSesionActiva } from '../data/auth';
+import { useSesion } from '../data/auth';
+import { nombreCompleto } from '../utils/usuario';
+import { clienteApi } from '../services/api';
+import { obtenerMensajeApi } from '../services/crearClienteApi';
 import { REGIONES_CHILE, REGION_POR_DEFECTO } from '../data/chile';
 import {
   validadores,
@@ -10,7 +13,6 @@ import {
   formatearTelefono
 } from '../data/validaciones';
 
-// Reglas de validación de los campos del formulario.
 const REGLAS_VALIDACION = {
   nombre: validadores.razonSocial,
   rut: validadores.rut,
@@ -20,10 +22,10 @@ const REGLAS_VALIDACION = {
 };
 
 function ContactoCotizacion() {
-  const sesion = obtenerSesionActiva();
+  const sesion = useSesion();
 
   const valorInicial = {
-    nombre: sesion ? sesion.nombre : '',
+    nombre: nombreCompleto(sesion),
     rut: '',
     email: sesion ? sesion.email : '',
     telefono: '',
@@ -36,8 +38,8 @@ function ContactoCotizacion() {
   const [form, setForm] = useState(valorInicial);
   const [errores, setErrores] = useState({});
   const [touched, setTouched] = useState({});
+  const [enviando, setEnviando] = useState(false);
 
-  // Valida un solo campo (lo usa onChange/onBlur).
   const validarCampo = (campo, valor) => {
     const validador = REGLAS_VALIDACION[campo];
     if (!validador) return;
@@ -55,12 +57,12 @@ function ContactoCotizacion() {
     validarCampo(campo, form[campo]);
   };
 
-  // Clase de Bootstrap según si el campo tiene error y fue tocado.
   const claseCampo = (campo, base = 'form-control form-control-sm rounded-1') =>
     `${base}${errores[campo] ? ' is-invalid' : ''}`;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    if (enviando) return;
 
     const nuevosErrores = validarFormulario(REGLAS_VALIDACION, form);
     setErrores(nuevosErrores);
@@ -72,34 +74,27 @@ function ContactoCotizacion() {
       return;
     }
 
-    const cotizacion = {
-      idCotizacion: `COT-${Date.now().toString().slice(-6)}`,
-      fecha: new Date().toLocaleString('es-CL'),
-      ...form
-    };
-
-    // Guardar en localStorage
-    if (typeof window !== 'undefined' && window.localStorage) {
-      const previas = JSON.parse(localStorage.getItem('ferrefix_cotizaciones_v1') || '[]');
-      localStorage.setItem('ferrefix_cotizaciones_v1', JSON.stringify([cotizacion, ...previas]));
-    }
-
-    mostrarToast({
+    setEnviando(true);
+    try {
+      const { data: cotizacion } = await clienteApi.http.post('/ordenes/cotizaciones', form);
+      mostrarToast({
       titulo: "¡Cotización Enviada!",
-      mensaje: `Tu número de cotización es #${cotizacion.idCotizacion}. Un asesor se pondrá en contacto a la brevedad.`,
+      mensaje: `Tu solicitud quedó registrada con el número #${cotizacion.idCotizacion}.`,
       tipo: "success",
       duracion: 6000
     });
     setForm({ ...valorInicial, nombre: '', email: '' });
     setErrores({});
     setTouched({});
+    } catch (error) {
+      mostrarToast({ titulo: 'No se pudo guardar la cotización', mensaje: obtenerMensajeApi(error), tipo: 'danger' });
+    } finally { setEnviando(false); }
   };
 
   return (
     <div className="contacto-cotizacion-page py-4 py-lg-5">
       <div className="container">
 
-        {/* Breadcrumb */}
         <nav aria-label="breadcrumb" className="mb-4">
           <ol className="breadcrumb cot-breadcrumb mb-0">
             <li className="breadcrumb-item"><Link to="/">Inicio</Link></li>
@@ -107,7 +102,6 @@ function ContactoCotizacion() {
           </ol>
         </nav>
 
-        {/* Encabezado */}
         <div className="brand-hero rounded-1 p-4 p-md-5 mb-4">
           <h1 className="brand-hero-title mb-2">
             Cotizaciones por Volumen y Contacto Comercial
@@ -117,7 +111,6 @@ function ContactoCotizacion() {
           </p>
         </div>
 
-        {/* Canales Directos */}
         <div className="row g-3 mb-4">
           <div className="col-12 col-md-4">
             <div className="cot-channel-card rounded-1 p-4 shadow-sm h-100">
@@ -150,7 +143,6 @@ function ContactoCotizacion() {
           </div>
         </div>
 
-        {/* Formulario */}
         <div className="row justify-content-center">
           <div className="col-12">
             <div className="cot-form-card rounded-1 shadow-sm p-4 p-md-5">
@@ -178,8 +170,8 @@ function ContactoCotizacion() {
                     <label className="form-label cot-label mb-1">
                       Nombre o Razón Social *
                     </label>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       className={claseCampo('nombre')}
                       placeholder="Ej: Constructora Andina o Juan Pérez"
                       value={form.nombre}
@@ -194,8 +186,8 @@ function ContactoCotizacion() {
                     <label className="form-label cot-label mb-1">
                       RUT Persona o Empresa *
                     </label>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       className={claseCampo('rut')}
                       placeholder="Ej: 76.123.456-7"
                       value={form.rut}
@@ -212,8 +204,8 @@ function ContactoCotizacion() {
                     <label className="form-label cot-label mb-1">
                       Correo Electrónico de Contacto *
                     </label>
-                    <input 
-                      type="email" 
+                    <input
+                      type="email"
                       className={claseCampo('email')}
                       placeholder="adquisiciones@empresa.cl"
                       value={form.email}
@@ -228,8 +220,8 @@ function ContactoCotizacion() {
                     <label className="form-label cot-label mb-1">
                       Teléfono Móvil o Faena *
                     </label>
-                    <input 
-                      type="tel" 
+                    <input
+                      type="tel"
                       className={claseCampo('telefono')}
                       placeholder="+56 9 9876 5432"
                       value={form.telefono}
@@ -246,7 +238,7 @@ function ContactoCotizacion() {
                     <label className="form-label cot-label mb-1">
                       Tipo de Requerimiento *
                     </label>
-                    <select 
+                    <select
                       className="form-select form-select-sm rounded-1"
                       value={form.tipoProyecto}
                       onChange={(e) => setForm({ ...form, tipoProyecto: e.target.value })}
@@ -264,7 +256,7 @@ function ContactoCotizacion() {
                     <label className="form-label cot-label mb-1">
                       Región de Entrega / Faena *
                     </label>
-                    <select 
+                    <select
                       className="form-select form-select-sm rounded-1"
                       value={form.region}
                       onChange={(e) => handleChange('region', e.target.value)}
@@ -279,7 +271,7 @@ function ContactoCotizacion() {
                     <label className="form-label cot-label mb-1">
                       Detalle de Productos, Cantidades o Especificaciones *
                     </label>
-                    <textarea 
+                    <textarea
                       className={claseCampo('detalle')}
                       rows="4"
                       placeholder="Detalla qué artículos, cantidades aproximadas o fechas de faena necesitas cotizar..."
@@ -293,9 +285,9 @@ function ContactoCotizacion() {
 
                   <div className="col-12">
                     <div className="form-check">
-                      <input 
-                        className="form-check-input" 
-                        type="checkbox" 
+                      <input
+                        className="form-check-input"
+                        type="checkbox"
                         id="despachoCheck"
                         checked={form.despachoObra}
                         onChange={(e) => setForm({ ...form, despachoObra: e.target.checked })}
@@ -307,11 +299,12 @@ function ContactoCotizacion() {
                   </div>
 
                   <div className="col-12 pt-2">
-                    <button 
-                      type="submit" 
+                    <button
+                      type="submit"
                       className="btn btn-ambar cot-submit-btn px-4 py-2 rounded-1 shadow-sm"
+                      disabled={enviando}
                     >
-                      Enviar Solicitud de Cotización
+                      {enviando ? 'Guardando solicitud…' : 'Enviar Solicitud de Cotización'}
                     </button>
                   </div>
 

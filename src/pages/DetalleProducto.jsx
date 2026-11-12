@@ -1,23 +1,22 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { obtenerProductos, EVENTO_PRODUCTOS_ACTUALIZADOS } from '../data/productos';
+import { obtenerProductos, EVENTO_PRODUCTOS_ACTUALIZADOS, useEstadoCatalogo } from '../data/productos';
 import { agregarAlCarrito } from '../data/carrito';
 import { mostrarToast } from '../components/ToastNotificacion';
+import { unidadVenta, cantidadPresentaciones } from '../utils/presentacionProducto';
 
 function DetalleProducto() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { cargando, error } = useEstadoCatalogo();
 
   const [cantidad, setCantidad] = useState(1);
   const [botonAnimado, setBotonAnimado] = useState(false);
 
-  // Catálogo reactivo leído desde localStorage
   const [productos, setProductos] = useState(obtenerProductos);
 
-  // Producto derivado del catálogo según el id de la ruta
   const producto = productos.find((p) => String(p.idProducto) === String(id)) || null;
 
-  // Escuchar si el producto fue modificado (ej. stock actualizado o precio)
   useEffect(() => {
     const handleActualizacion = () => {
       setProductos(obtenerProductos());
@@ -29,12 +28,11 @@ function DetalleProducto() {
     };
   }, []);
 
-  // Scroll automático hacia arriba al cargar la página
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Si no se encuentra el producto
+  if (!producto && (cargando || error)) return null;
   if (!producto) {
     return (
       <div className="container py-5 marca-centro my-5">
@@ -53,14 +51,12 @@ function DetalleProducto() {
     );
   }
 
-  // Formatear precio a CLP
   const precioFormateado = new Intl.NumberFormat('es-CL', {
     style: 'currency',
     currency: 'CLP',
     maximumFractionDigits: 0
   }).format(producto.precioVenta);
 
-  // Manejo del selector de cantidad
   const handleRestar = () => {
     if (cantidad > 1) setCantidad((prev) => prev - 1);
   };
@@ -69,8 +65,8 @@ function DetalleProducto() {
     if (cantidad < producto.stock) setCantidad((prev) => prev + 1);
   };
 
-  const handleAgregarCarrito = () => {
-    const res = agregarAlCarrito(producto, cantidad);
+  const handleAgregarCarrito = async () => {
+    const res = await agregarAlCarrito(producto, cantidad);
     if (!res.ok) {
       mostrarToast({
         titulo: "Stock Insuficiente",
@@ -83,7 +79,7 @@ function DetalleProducto() {
 
       mostrarToast({
         titulo: "¡Añadido al Carrito!",
-        mensaje: `${producto.nombre} (${cantidad} ${cantidad === 1 ? "unidad" : "unidades"})`,
+        mensaje: `${producto.nombre} (${cantidadPresentaciones(producto, cantidad)})`,
         tipo: "success",
         imagen: producto.imagen,
         link: "/carrito",
@@ -92,13 +88,10 @@ function DetalleProducto() {
     }
   };
 
-
-
   return (
     <div className="detalle-producto-page py-4 py-lg-5 bg-white">
       <div className="container">
 
-        {/* Migas de pan y botón volver */}
         <div className="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
           <nav aria-label="breadcrumb">
             <ol className="breadcrumb detalle-breadcrumb mb-0">
@@ -109,8 +102,8 @@ function DetalleProducto() {
                 <Link to="/catalogo">Catálogo</Link>
               </li>
               <li className="breadcrumb-item">
-                <Link 
-                  to={`/catalogo?categoria=${encodeURIComponent(producto.categoria)}`} 
+                <Link
+                  to={`/catalogo?categoria=${encodeURIComponent(producto.categoria)}`}
                 >
                   {producto.categoria}
                 </Link>
@@ -121,9 +114,9 @@ function DetalleProducto() {
             </ol>
           </nav>
 
-          <button 
-            type="button" 
-            onClick={() => navigate('/catalogo')} 
+          <button
+            type="button"
+            onClick={() => window.history.state?.idx > 0 ? navigate(-1) : navigate('/catalogo')}
             className="btn btn-sm btn-outline-secondary rounded-pill px-3 d-inline-flex align-items-center gap-1 shadow-none"
           >
             <i className="bi bi-arrow-left"></i>
@@ -131,10 +124,8 @@ function DetalleProducto() {
           </button>
         </div>
 
-        {/* Sección Principal del Producto */}
         <div className="row g-4 g-lg-5 mb-5 align-items-start">
 
-          {/* Columna Izquierda: Imagen destacada */}
           <div className="col-12 col-lg-6">
             <div className="detalle-img-card rounded-4 p-3 p-md-4 border bg-platino shadow-sm position-relative overflow-hidden">
               <img
@@ -144,7 +135,6 @@ function DetalleProducto() {
               />
             </div>
 
-            {/* Garantías y Confianza */}
             <div className="row g-2 mt-3 marca-centro marca-nota">
               <div className="col-4">
                 <div className="p-2 border rounded-3 bg-light">
@@ -167,11 +157,9 @@ function DetalleProducto() {
             </div>
           </div>
 
-          {/* Columna Derecha: Información, Precio y Compra */}
           <div className="col-12 col-lg-6">
             <div className="detalle-info-panel">
-              
-              {/* Marca */}
+
               <div className="d-flex align-items-center gap-2 mb-2">
                 <span className="marca-chip marca-chip--ambar">
                   {producto.marca}
@@ -179,47 +167,34 @@ function DetalleProducto() {
                 <span className="marca-nota">Código Ref: #{producto.idProducto}</span>
               </div>
 
-              {/* Título */}
               <h1 className="detalle-producto-titulo mb-3">
                 {producto.nombre}
               </h1>
 
-              {/* Calificación estética */}
-              <div className="d-flex align-items-center gap-2 mb-3">
-                <div className="detalle-estrellas">
-                  <i className="bi bi-star-fill"></i>
-                  <i className="bi bi-star-fill ms-1"></i>
-                  <i className="bi bi-star-fill ms-1"></i>
-                  <i className="bi bi-star-fill ms-1"></i>
-                  <i className="bi bi-star-fill ms-1"></i>
-                </div>
-                <span className="detalle-valoracion">
-                  5.0 (Valoraciones de clientes)
-                </span>
-              </div>
-
-              {/* Precio */}
               <div className="detalle-precio-box p-3 bg-light rounded-4 mb-4 border border-light-subtle">
-                <div className="marca-nota mb-1">Precio con IVA incluido:</div>
+                <div className="marca-nota mb-1">Precio por {unidadVenta(producto)} con IVA incluido:</div>
                 <div className="detalle-precio-valor">
                   {precioFormateado}
                 </div>
+                {producto.contenidoPresentacion && (
+                  <div className="marca-nota mt-2">Contenido por {unidadVenta(producto)}: {producto.contenidoPresentacion}</div>
+                )}
               </div>
 
-              {/* Breve extracto */}
-              <p className="marca-parrafo mb-4">
-                {producto.descripcion}
-              </p>
+              {producto.descripcionCorta && (
+                <p className="marca-parrafo mb-4" style={{ whiteSpace: 'pre-line' }}>
+                  {producto.descripcionCorta}
+                </p>
+              )}
 
-              {/* Controles de Compra */}
               <div className="mb-4">
-                <label className="form-label marca-etiqueta mb-2">
-                  Cantidad:
+                <label htmlFor="producto-cantidad" className="form-label marca-etiqueta mb-2">
+                  Cantidad de {unidadVenta(producto) === 'unidad' ? 'unidades' : unidadVenta(producto) + 's'}:
                 </label>
                 <div className="d-flex align-items-center gap-3">
                   <div className="input-group detalle-cantidad-group">
-                    <button 
-                      className="btn btn-outline-secondary px-3" 
+                    <button
+                      className="btn btn-outline-secondary px-3"
                       type="button"
                       onClick={handleRestar}
                       disabled={cantidad <= 1}
@@ -227,14 +202,14 @@ function DetalleProducto() {
                     >
                       <i className="bi bi-dash"></i>
                     </button>
-                    <input 
-                      type="text" 
-                      className="form-control marca-centro marca-bold bg-white" 
-                      value={cantidad} 
-                      readOnly 
+                    <input
+                      type="text"
+                      className="form-control marca-centro marca-bold bg-white"
+                      id="producto-cantidad" value={cantidad}
+                      readOnly
                     />
-                    <button 
-                      className="btn btn-outline-secondary px-3" 
+                    <button
+                      className="btn btn-outline-secondary px-3"
                       type="button"
                       onClick={handleSumar}
                       disabled={cantidad >= producto.stock}
@@ -244,12 +219,11 @@ function DetalleProducto() {
                     </button>
                   </div>
                   <span className="marca-nota">
-                    Máximo: {producto.stock} unidades
+                    Máximo: {cantidadPresentaciones(producto, producto.stock)}
                   </span>
                 </div>
               </div>
 
-              {/* Botón de Acción */}
               <div className="d-grid gap-2 mb-4">
                 <button
                   type="button"
@@ -261,10 +235,10 @@ function DetalleProducto() {
                   style={{ transition: "all 0.25s ease" }}
                 >
                   <i className={`bi ${botonAnimado ? "bi-check2-circle" : "bi-cart-plus-fill"} marca-icono`}></i>
-                  {producto.stock <= 0 
-                    ? "Agotado Temporalmente" 
-                    : botonAnimado 
-                    ? "¡Añadido con éxito! ✓" 
+                  {producto.stock <= 0
+                    ? "Agotado Temporalmente"
+                    : botonAnimado
+                    ? "¡Añadido con éxito! ✓"
                     : "Agregar al Carrito"}
                 </button>
               </div>
@@ -274,17 +248,16 @@ function DetalleProducto() {
 
         </div>
 
-        {/* Especificaciones y Ficha Técnica Completa */}
         <div className="detalle-ficha-seccion border-top pt-5">
           <div className="row g-4">
-            
+
             <div className="col-12 col-lg-6">
               <h3 className="mb-3 d-flex align-items-center gap-2">
                 <i className="bi bi-info-circle marca-icono-ambar"></i>
                 Descripción Detallada
               </h3>
-              <p className="marca-parrafo mb-4">
-                {producto.descripcion}
+              <p className="marca-parrafo mb-4" style={{ whiteSpace: 'pre-line' }}>
+                {producto.descripcionLarga}
               </p>
               <div className="p-3 bg-light rounded-3 border">
                 <h6 className="marca-titulo marca-tam-6 mb-2">
@@ -302,7 +275,7 @@ function DetalleProducto() {
                 <i className="bi bi-tools marca-icono-ambar"></i>
                 Ficha Técnica
               </h3>
-              
+
               {producto.especificaciones ? (
                 <div className="table-responsive rounded-3 border overflow-hidden">
                   <table className="table table-striped table-hover mb-0 align-middle">

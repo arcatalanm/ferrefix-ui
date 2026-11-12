@@ -1,5 +1,4 @@
-// Test: Formulario Registro: acepta nombre, correo y contraseña válidos, rechaza una contraseña de 5 caracteres y acepta los límites mínimos de 3 y 6 caracteres
-// Función: validarFormulario()
+
 
 import { describe, test, expect } from 'vitest';
 import { validarFormulario, validadores } from '../data/validaciones.js';

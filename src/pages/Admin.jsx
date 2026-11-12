@@ -9,7 +9,7 @@ import {
   CATEGORIAS_PRODUCTOS,
   EVENTO_PRODUCTOS_ACTUALIZADOS
 } from '../data/productos';
-import { obtenerOrdenes, EVENTO_ORDENES_ACTUALIZADAS } from '../data/ordenes';
+import { obtenerOrdenes, EVENTO_ORDENES_ACTUALIZADAS, cargarOrdenes, useEstadoOrdenes } from '../data/ordenes';
 import {
   obtenerSesionActiva,
   iniciarSesion,
@@ -18,6 +18,10 @@ import {
 } from '../data/auth';
 import ImagenProductoUploader from '../components/ImagenProductoUploader';
 import GeneradorProductos from '../components/GeneradorProductos';
+import { validadores } from '../data/validaciones';
+import { obtenerContratosArriendo, EVENTO_MAQUINARIAS_ACTUALIZADAS, useEstadoArriendos, cargarContratosArriendo } from '../data/maquinarias';
+import { obtenerMensajeApi } from '../services/crearClienteApi';
+import { UNIDADES_VENTA, unidadVenta, cantidadPresentaciones } from '../utils/presentacionProducto';
 
 const FORM_INICIAL = {
   idProducto: '',
@@ -26,50 +30,57 @@ const FORM_INICIAL = {
   categoria: 'Herramientas',
   precioVenta: '',
   stock: '',
-  descripcion: '',
+  unidadVenta: 'unidad',
+  contenidoPresentacion: '1 unidad',
+  descripcionCorta: '',
+  descripcionLarga: '',
   imagen: ''
 };
 
 function Admin() {
-  // Autenticación
+  const estadoOrdenes = useEstadoOrdenes();
+  const estadoArriendos = useEstadoArriendos();
+
   const [sesion, setSesion] = useState(obtenerSesionActiva);
-  const [loginEmail, setLoginEmail] = useState('');
+  const [loginIdentificador, setLoginIdentificador] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [errorLogin, setErrorLogin] = useState('');
+  const [iniciandoSesion, setIniciandoSesion] = useState(false);
 
-  // Datos
   const [productos, setProductos] = useState(obtenerProductos);
   const [ordenes, setOrdenes] = useState(obtenerOrdenes);
-  const [tabActiva, setTabActiva] = useState('dashboard'); // 'dashboard' | 'productos' | 'ordenes'
-  
-  // Filtros de inventario
+  const [arriendos, setArriendos] = useState(obtenerContratosArriendo);
+  const [tabActiva, setTabActiva] = useState('dashboard');
+
   const [busqueda, setBusqueda] = useState('');
   const [filtroCategoria, setFiltroCategoria] = useState('Todas');
   const [filtroStockCritico, setFiltroStockCritico] = useState(false);
 
-  // Modales
   const [modalAbierto, setModalAbierto] = useState(false);
   const [modoEdicion, setModoEdicion] = useState(false);
   const [formData, setFormData] = useState(FORM_INICIAL);
   const [imagenArchivo, setImagenArchivo] = useState(null);
   const [subiendoImagen, setSubiendoImagen] = useState(false);
+  const [errorProducto, setErrorProducto] = useState('');
   const [productoAEliminar, setProductoAEliminar] = useState(null);
   const [ordenSeleccionada, setOrdenSeleccionada] = useState(null);
   const [mensajeAlerta, setMensajeAlerta] = useState(null);
 
-  // Sincronización en tiempo real
   useEffect(() => {
     const handleProductos = () => setProductos(obtenerProductos());
     const handleOrdenes = () => setOrdenes(obtenerOrdenes());
+    const handleArriendos = () => setArriendos(obtenerContratosArriendo());
     const handleSesion = () => setSesion(obtenerSesionActiva());
 
     window.addEventListener(EVENTO_PRODUCTOS_ACTUALIZADOS, handleProductos);
     window.addEventListener(EVENTO_ORDENES_ACTUALIZADAS, handleOrdenes);
+    window.addEventListener(EVENTO_MAQUINARIAS_ACTUALIZADAS, handleArriendos);
     window.addEventListener(EVENTO_SESION_ACTUALIZADA, handleSesion);
 
     return () => {
       window.removeEventListener(EVENTO_PRODUCTOS_ACTUALIZADOS, handleProductos);
       window.removeEventListener(EVENTO_ORDENES_ACTUALIZADAS, handleOrdenes);
+      window.removeEventListener(EVENTO_MAQUINARIAS_ACTUALIZADAS, handleArriendos);
       window.removeEventListener(EVENTO_SESION_ACTUALIZADA, handleSesion);
     };
   }, []);
@@ -81,7 +92,6 @@ function Admin() {
     }, 3500);
   };
 
-  // Métricas
   const metricas = useMemo(() => {
     const totalProductos = productos.length;
     const stockCriticoCount = productos.filter((p) => Number(p.stock) <= 5).length;
@@ -89,7 +99,7 @@ function Admin() {
       (acc, p) => acc + (Number(p.precioVenta) || 0) * (Number(p.stock) || 0),
       0
     );
-    const totalVentas = ordenes.reduce((acc, o) => acc + (Number(o.total) || 0), 0);
+    const totalVentas = ordenes.filter(o => o.estado === 'Completada').reduce((acc, o) => acc + (Number(o.total) || 0), 0);
 
     return {
       totalProductos,
@@ -100,16 +110,15 @@ function Admin() {
     };
   }, [productos, ordenes]);
 
-  // Filtro de productos
   const productosFiltrados = useMemo(() => {
     return productos.filter((p) => {
-      const coincideTexto = 
+      const coincideTexto =
         p.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
         p.marca.toLowerCase().includes(busqueda.toLowerCase()) ||
         String(p.idProducto).includes(busqueda);
-      
-      const coincideCat = 
-        filtroCategoria === 'Todas' || 
+
+      const coincideCat =
+        filtroCategoria === 'Todas' ||
         p.categoria.toLowerCase() === filtroCategoria.toLowerCase();
 
       const coincideStock = !filtroStockCritico || Number(p.stock) <= 5;
@@ -118,28 +127,30 @@ function Admin() {
     });
   }, [productos, busqueda, filtroCategoria, filtroStockCritico]);
 
-  // Manejo de Modal Crear / Editar
   const abrirModalCrear = () => {
+    setErrorProducto('');
     setModoEdicion(false);
     setImagenArchivo(null);
-    setFormData({
-      ...FORM_INICIAL,
-      idProducto: String(Date.now()).slice(-8)
-    });
+    setFormData({ ...FORM_INICIAL });
     setModalAbierto(true);
   };
 
   const abrirModalEditar = (prod) => {
+    setErrorProducto('');
     setModoEdicion(true);
     setImagenArchivo(null);
     setFormData({
       idProducto: prod.idProducto,
+      especificaciones: prod.especificaciones,
       nombre: prod.nombre,
       marca: prod.marca,
       categoria: prod.categoria,
       precioVenta: prod.precioVenta,
       stock: prod.stock,
-      descripcion: prod.descripcion || '',
+      unidadVenta: unidadVenta(prod),
+      contenidoPresentacion: prod.contenidoPresentacion ?? '1 unidad',
+      descripcionCorta: prod.descripcionCorta || '',
+      descripcionLarga: prod.descripcionLarga || '',
       imagen: prod.imagen || ''
     });
     setModalAbierto(true);
@@ -153,59 +164,41 @@ function Admin() {
 
   const handleSubmitForm = async (e) => {
     e.preventDefault();
-
-    if (!formData.nombre.trim() || !formData.marca.trim()) {
-      mostrarMensaje('Nombre y marca son requeridos.', 'danger');
-      return;
-    }
-
-    // Si se eligió una imagen, se guarda en src/assets/products y se obtiene su URL.
-    let imagenFinal = formData.imagen.trim();
-    if (imagenArchivo) {
-      setSubiendoImagen(true);
-      try {
-        imagenFinal = await subirImagenProducto(imagenArchivo);
-      } catch (error) {
-        mostrarMensaje(error.message || 'No se pudo guardar la imagen.', 'danger');
-        setSubiendoImagen(false);
-        return;
+    if (subiendoImagen) return;
+    setErrorProducto('');
+    setSubiendoImagen(true);
+    try {
+      let imagen = formData.imagen.trim();
+      if (imagenArchivo) {
+        imagen = await subirImagenProducto(imagenArchivo);
+        setFormData(prev => ({ ...prev, imagen }));
+        setImagenArchivo(null);
       }
+      if (!imagen) throw new Error('Selecciona una imagen para el producto.');
+      const datos = { ...formData, imagen };
+      if (modoEdicion) await actualizarProducto(formData.idProducto, datos);
+      else await crearProducto(datos);
+      mostrarMensaje(modoEdicion ? 'Producto actualizado.' : 'Producto creado.');
+      cerrarModal();
+    } catch (error) {
+      setErrorProducto(error.response ? obtenerMensajeApi(error) : error.message);
+    } finally {
       setSubiendoImagen(false);
     }
-
-    if (modoEdicion) {
-      actualizarProducto(formData.idProducto, {
-        nombre: formData.nombre.trim(),
-        marca: formData.marca.trim(),
-        categoria: formData.categoria,
-        precioVenta: Number(formData.precioVenta) || 0,
-        stock: Number(formData.stock) || 0,
-        descripcion: formData.descripcion.trim(),
-        imagen: imagenFinal || undefined
-      });
-      mostrarMensaje(`Producto "${formData.nombre}" actualizado.`);
-    } else {
-      crearProducto({
-        idProducto: formData.idProducto,
-        nombre: formData.nombre.trim(),
-        marca: formData.marca.trim(),
-        categoria: formData.categoria,
-        precioVenta: Number(formData.precioVenta) || 0,
-        stock: Number(formData.stock) || 0,
-        descripcion: formData.descripcion.trim(),
-        imagen: imagenFinal || '/banner-web.webp'
-      });
-      mostrarMensaje(`Producto "${formData.nombre}" registrado al final del catálogo con éxito.`);
-    }
-
-    cerrarModal();
   };
 
-  const ejecutarEliminacion = () => {
-    if (productoAEliminar) {
-      eliminarProducto(productoAEliminar.idProducto);
-      mostrarMensaje(`Producto "${productoAEliminar.nombre}" eliminado del catálogo.`);
+  const ejecutarEliminacion = async () => {
+    if (!productoAEliminar || subiendoImagen) return;
+    setSubiendoImagen(true);
+    try {
+      await eliminarProducto(productoAEliminar.idProducto);
+      mostrarMensaje('Producto desactivado.');
       setProductoAEliminar(null);
+    } catch (error) {
+      mostrarMensaje(obtenerMensajeApi(error), 'danger');
+      setProductoAEliminar(null);
+    } finally {
+      setSubiendoImagen(false);
     }
   };
 
@@ -217,16 +210,24 @@ function Admin() {
     }).format(valor);
   };
 
-  const handleLoginSubmit = (e) => {
+  const handleLoginSubmit = async (e) => {
     e.preventDefault();
+    if (iniciandoSesion) return;
+    const error = validadores.identificador(loginIdentificador) || validadores.requerido('La contraseña')(loginPassword);
+    if (error) {
+      setErrorLogin(error);
+      return;
+    }
     setErrorLogin('');
-    const res = iniciarSesion(loginEmail, loginPassword);
+    setIniciandoSesion(true);
+    const res = await iniciarSesion(loginIdentificador, loginPassword);
+    setIniciandoSesion(false);
     if (!res.ok) {
       setErrorLogin(res.mensaje);
       return;
     }
     if (res.usuario.rol !== 'admin') {
-      // No dejar activa una sesión de cliente creada desde el login del panel.
+
       cerrarSesion();
       setSesion(null);
       setErrorLogin('Acceso denegado: Esta cuenta no tiene permisos de administrador.');
@@ -240,7 +241,6 @@ function Admin() {
     setSesion(null);
   };
 
-  // Pantalla Admin
   if (!sesion || sesion.rol !== 'admin') {
     return (
       <div className="admin-wrapper py-5 d-flex align-items-center">
@@ -251,9 +251,9 @@ function Admin() {
 
                 <div className="auth-head border-bottom pb-3 mb-3">
                   <div className="mb-2">
-                    <img 
-                      src="/banner-web.webp" 
-                      alt="Ferrefix" 
+                    <img
+                      src="/banner-web.webp"
+                      alt="Ferrefix"
                       className="admin-login-banner"
                     />
                   </div>
@@ -266,23 +266,25 @@ function Admin() {
                   </div>
                 )}
 
-                <form onSubmit={handleLoginSubmit}>
+                <form onSubmit={handleLoginSubmit} noValidate>
                   <div className="mb-3">
-                    <label className="form-label admin-label mb-1">Correo Electrónico</label>
-                    <input 
-                      type="email" 
+                    <label className="form-label admin-label mb-1">Correo electrónico o RUT</label>
+                    <input
+                      type="text"
                       className="form-control form-control-sm rounded-1"
-                      placeholder="admin@ferrefix.cl"
-                      value={loginEmail}
-                      onChange={(e) => setLoginEmail(e.target.value)}
+                      placeholder="tucorreo@hotmail.cl / 11.111.111-1"
+                      autoComplete="username"
+                      maxLength={254}
+                      value={loginIdentificador}
+                      onChange={(e) => setLoginIdentificador(e.target.value)}
                       required
                     />
                   </div>
 
                   <div className="mb-3">
                     <label className="form-label admin-label mb-1">Contraseña</label>
-                    <input 
-                      type="password" 
+                    <input
+                      type="password"
                       className="form-control form-control-sm rounded-1"
                       placeholder="••••••••"
                       value={loginPassword}
@@ -291,11 +293,12 @@ function Admin() {
                     />
                   </div>
 
-                  <button 
-                    type="submit" 
+                  <button
+                    type="submit"
+                    disabled={iniciandoSesion}
                     className="btn btn-ambar auth-submit btn-sm w-100 rounded-1 py-2 mb-3"
                   >
-                    Ingresar al Panel
+                    {iniciandoSesion ? 'Conectando…' : 'Ingresar al Panel'}
                   </button>
                 </form>
 
@@ -313,53 +316,51 @@ function Admin() {
     );
   }
 
-  // PANEL ADMINISTRATIVO PRINCIPAL
   return (
     <div className="admin-wrapper">
 
-      {/* Barra de Navegación Exclusiva del Panel Admin */}
       <nav className="admin-navbar py-2 px-3">
         <div className="container-fluid d-flex flex-wrap align-items-center justify-content-between gap-2">
-          
-          {/* Marca / Identificador */}
+
           <div className="d-flex align-items-center gap-3">
-            {/* Pestañas de la barra */}
-            <div className="d-flex align-items-center gap-1 ms-2">
-              <button 
+
+            <div className="d-flex flex-wrap align-items-center gap-1 ms-2">
+              <button
                 type="button"
                 className={`admin-nav-btn ${tabActiva === 'dashboard' ? 'active' : ''}`}
                 onClick={() => setTabActiva('dashboard')}
               >
                 Dashboard
               </button>
-              <button 
+              <button
                 type="button"
                 className={`admin-nav-btn ${tabActiva === 'productos' ? 'active' : ''}`}
                 onClick={() => setTabActiva('productos')}
               >
-                Productos ({productos.length})
+                Productos
               </button>
-              <button 
+              <button
                 type="button"
                 className={`admin-nav-btn ${tabActiva === 'ordenes' ? 'active' : ''}`}
                 onClick={() => setTabActiva('ordenes')}
               >
-                Órdenes ({ordenes.length})
+                Órdenes
               </button>
-              <button 
+              <button
                 type="button"
                 className={`admin-nav-btn ${tabActiva === 'generadores' ? 'active' : ''}`}
                 onClick={() => setTabActiva('generadores')}
               >
                 Generadores
               </button>
+              <button type="button" className={`admin-nav-btn ${tabActiva === 'arriendos' ? 'active' : ''}`}
+                onClick={() => setTabActiva('arriendos')}>Arriendos</button>
             </div>
           </div>
 
-          {/* Acciones del Administrador en la barra */}
           <div className="d-flex align-items-center gap-2">
-            <button 
-              type="button" 
+            <button
+              type="button"
               className="btn btn-ambar admin-btn-strong btn-sm rounded-1 px-3"
               onClick={abrirModalCrear}
             >
@@ -372,8 +373,8 @@ function Admin() {
               {sesion.email}
             </span>
 
-            <button 
-              type="button" 
+            <button
+              type="button"
               className="btn btn-outline-light btn-sm rounded-1 px-2"
               onClick={handleCerrarSesion}
               title="Cerrar Sesión de Administrador"
@@ -385,28 +386,25 @@ function Admin() {
         </div>
       </nav>
 
-      {/* Contenedor Principal */}
       <main className="container-fluid px-3 px-md-4 py-4">
 
-        {/* Notificación informativa */}
         {mensajeAlerta && (
           <div className="admin-box p-3 mb-3 d-flex justify-content-between align-items-center" role="alert">
             <span className="admin-notice-text">
               {mensajeAlerta.texto}
             </span>
-            <button 
-              type="button" 
-              className="btn-close btn-close-sm" 
+            <button
+              type="button"
+              className="btn-close btn-close-sm"
               onClick={() => setMensajeAlerta(null)}
               aria-label="Cerrar"
             ></button>
           </div>
         )}
 
-        {/* Dashboard */}
         {tabActiva === 'dashboard' && (
           <div>
-            {/* 4 Cajas Cuadradas */}
+
             <div className="row g-3 mb-4">
               <div className="col-12 col-sm-6 col-xl-3">
                 <div className="admin-kpi-box">
@@ -465,7 +463,14 @@ function Admin() {
               </div>
             </div>
 
-            {/* Tabla de Inventario Crítico extendida */}
+            <div className="admin-box p-3 mb-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
+              <div>
+                <h2 className="admin-section-title mb-1">Arriendos de usuarios</h2>
+                <p className="admin-muted mb-0">{estadoArriendos.errorContratos ? 'No se pudieron consultar los arriendos.' : estadoArriendos.cargandoContratos ? 'Actualizando arriendos…' : `${arriendos.length} contratos registrados · ${arriendos.filter((contrato) => contrato.estado === 'Vigente').length} vigentes`}</p>
+              </div>
+              <button type="button" className="btn btn-outline-dark btn-sm" onClick={() => setTabActiva('arriendos')}>Ver arriendos</button>
+            </div>
+
             <div className="row g-4">
               <div className="col-12">
                 <div className="admin-box p-3">
@@ -474,7 +479,7 @@ function Admin() {
                       <h2 className="admin-section-title mb-0">Inventario con Stock Crítico (≤ 5)</h2>
                       <span className="admin-muted">Productos que requieren reposición prioritaria de inventario</span>
                     </div>
-                    <button 
+                    <button
                       type="button"
                       className="btn btn-outline-dark btn-sm rounded-1"
                       onClick={() => {
@@ -521,7 +526,7 @@ function Admin() {
                                 </td>
                                 <td className="admin-ta-end admin-cell-price">{formatearCLP(p.precioVenta)}</td>
                                 <td className="admin-ta-end">
-                                  <button 
+                                  <button
                                     type="button"
                                     className="btn btn-sm btn-outline-dark rounded-1 py-0 px-2"
                                     onClick={() => abrirModalEditar(p)}
@@ -541,15 +546,13 @@ function Admin() {
           </div>
         )}
 
-        {/* Inventario Productos (CRUD)*/}
         {tabActiva === 'productos' && (
           <div className="admin-box p-3">
-            
-            {/* Barra de Filtros y Búsqueda */}
+
             <div className="row g-2 align-items-center mb-3 pb-3 border-bottom">
               <div className="col-12 col-md-4">
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   className="form-control form-control-sm rounded-1"
                   placeholder="Buscar por nombre, marca o código..."
                   value={busqueda}
@@ -558,7 +561,7 @@ function Admin() {
               </div>
 
               <div className="col-6 col-md-3">
-                <select 
+                <select
                   className="form-select form-select-sm rounded-1"
                   value={filtroCategoria}
                   onChange={(e) => setFiltroCategoria(e.target.value)}
@@ -570,7 +573,7 @@ function Admin() {
               </div>
 
               <div className="col-6 col-md-3">
-                <button 
+                <button
                   type="button"
                   className={`btn btn-sm w-100 rounded-1 ${filtroStockCritico ? 'btn-dark' : 'btn-outline-dark'}`}
                   onClick={() => setFiltroStockCritico(!filtroStockCritico)}
@@ -580,8 +583,8 @@ function Admin() {
               </div>
 
               <div className="col-12 col-md-2 admin-ta-md-end">
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="btn btn-ambar admin-btn-strong btn-sm w-100 rounded-1"
                   onClick={abrirModalCrear}
                 >
@@ -590,7 +593,6 @@ function Admin() {
               </div>
             </div>
 
-            {/* Tabla de Productos */}
             <div className="table-responsive">
               <table className="table admin-table align-middle mb-0">
                 <thead>
@@ -618,9 +620,9 @@ function Admin() {
                       return (
                         <tr key={prod.idProducto}>
                           <td>
-                            <img 
-                              src={prod.imagen || '/banner-web.webp'} 
-                              alt={prod.nombre} 
+                            <img
+                              src={prod.imagen || '/banner-web.webp'}
+                              alt={prod.nombre}
                               className="admin-prod-thumb border rounded-1 bg-white object-fit-contain"
                               onError={(e) => { e.target.src = '/banner-web.webp'; }}
                             />
@@ -630,6 +632,7 @@ function Admin() {
                           </td>
                           <td>
                             <div className="admin-cell-strong">{prod.nombre}</div>
+                            <small className="admin-muted">{prod.contenidoPresentacion} por {unidadVenta(prod)}</small>
                           </td>
                           <td className="admin-muted">{prod.marca}</td>
                           <td>
@@ -639,15 +642,16 @@ function Admin() {
                           </td>
                           <td className="admin-ta-end admin-cell-price">
                             {formatearCLP(prod.precioVenta)}
+                            <small className="d-block admin-muted">por {unidadVenta(prod)}</small>
                           </td>
                           <td className="admin-ta-center">
                             <span className={`${esBajo ? 'admin-badge-warn' : 'admin-badge-soft'}`}>
-                              {prod.stock} unids {esBajo ? '(Bajo)' : ''}
+                              {cantidadPresentaciones(prod, prod.stock)} {esBajo ? '(Bajo)' : ''}
                             </span>
                           </td>
                           <td className="admin-ta-end">
                             <div className="btn-group btn-group-sm">
-                              <button 
+                              <button
                                 type="button"
                                 className="btn btn-outline-dark rounded-1 px-2 py-0 me-1"
                                 onClick={() => abrirModalEditar(prod)}
@@ -655,7 +659,7 @@ function Admin() {
                               >
                                 Editar
                               </button>
-                              <button 
+                              <button
                                 type="button"
                                 className="btn btn-outline-danger rounded-1 px-2 py-0"
                                 onClick={() => setProductoAEliminar(prod)}
@@ -681,13 +685,18 @@ function Admin() {
           </div>
         )}
 
-        {/* Boletas y Ordenes */}
         {tabActiva === 'ordenes' && (
           <div className="admin-box p-3">
+            {estadoOrdenes.error && <div className="alert alert-danger" role="alert">
+              {estadoOrdenes.error}
+              <button type="button" className="btn btn-outline-dark btn-sm ms-2" onClick={cargarOrdenes}>Reintentar</button>
+            </div>}
+            {estadoOrdenes.cargando && <p role="status">Actualizando pedidos…</p>}
+            {!estadoOrdenes.cargando && !estadoOrdenes.error && ordenes.length === 0 && <p>Todavía no hay pedidos registrados.</p>}
             <div className="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
               <div>
-                <h2 className="admin-section-title mb-0">Registro de Órdenes y Ventas</h2>
-                <span className="admin-muted">Listado de transacciones registradas</span>
+                <h2 className="admin-section-title mb-0">Registro de órdenes</h2>
+                <span className="admin-muted">Pedidos registrados</span>
               </div>
               <span className="admin-badge-soft">
                 {ordenes.length} órdenes registradas
@@ -703,7 +712,7 @@ function Admin() {
                     <th>Cliente</th>
                     <th>Dirección de Entrega</th>
                     <th>Método de Pago</th>
-                    <th className="admin-ta-end">Total Pagado</th>
+                    <th className="admin-ta-end">Total del pedido</th>
                     <th>Estado</th>
                     <th className="admin-ta-end">Acción</th>
                   </tr>
@@ -732,12 +741,12 @@ function Admin() {
                         </span>
                       </td>
                       <td className="admin-ta-end">
-                        <button 
+                        <button
                           type="button"
                           className="btn btn-sm btn-outline-dark rounded-1 py-0 px-2"
                           onClick={() => setOrdenSeleccionada(ord)}
                         >
-                          Ver Boleta
+                          Ver pedido
                         </button>
                       </td>
                     </tr>
@@ -749,25 +758,55 @@ function Admin() {
           </div>
         )}
 
-        {/* ============================================================== */}
-        {/* VISTA: GENERADOR DE TARJETAS DE PRODUCTO                       */}
-        {/* ============================================================== */}
+        {tabActiva === 'arriendos' && (
+          <section className="admin-box p-3">
+            <h2 className="admin-section-title">Arriendos de usuarios</h2>
+            <p className="admin-muted">Historial de arriendos de maquinaria.</p>
+            {estadoArriendos.errorContratos && <div className="alert alert-danger" role="alert">
+              {estadoArriendos.errorContratos}
+              <button type="button" className="btn btn-outline-dark btn-sm ms-2" onClick={cargarContratosArriendo}>Reintentar</button>
+            </div>}
+            {estadoArriendos.cargandoContratos && <p role="status">Actualizando arriendos…</p>}
+            {arriendos.length === 0 ? (!estadoArriendos.cargandoContratos && !estadoArriendos.errorContratos && <p className="mb-0 py-4 text-center">Todavía no hay arriendos registrados.</p>) : (
+              <div className="table-responsive">
+                <table className="table admin-table align-middle mb-0">
+                  <thead><tr><th>Contrato</th><th>Cliente</th><th>Maquinaria</th><th>Inicio</th><th>Término</th><th>Días</th><th>Total</th><th>Estado</th><th>Datos de entrega</th></tr></thead>
+                  <tbody>{arriendos.map((contrato) => (
+                    <tr key={contrato.idContrato}>
+                      <td>{contrato.idContrato}<div className="admin-muted">{contrato.fechaContrato}</div></td>
+                      <td>{contrato.usuario?.nombre || 'Sin nombre'}<div className="admin-muted">{contrato.usuario?.email}</div></td>
+                      <td>{contrato.nombreMaquina}<div className="admin-muted">{formatearCLP(contrato.tarifaDia)} / día</div></td>
+                      <td>{contrato.fechaInicio}</td><td>{contrato.fechaTermino}</td><td>{contrato.diasArriendo}</td>
+                      <td className="admin-cell-price">{formatearCLP(contrato.totalPagar)}</td>
+                      <td><span className="admin-badge-soft">{contrato.estado}</span></td>
+                      <td><details><summary>Ver datos</summary>
+                        <dl className="mb-0 mt-2">
+                          <dt>RUT</dt><dd>{contrato.usuario?.rut || 'No informado'}</dd>
+                          <dt>Teléfono</dt><dd>{contrato.usuario?.telefono || 'No informado'}</dd>
+                          <dt>Dirección</dt><dd>{[contrato.usuario?.direccion, contrato.usuario?.comuna, contrato.usuario?.region].filter(Boolean).join(', ') || 'No informada'}</dd>
+                        </dl>
+                      </details></td>
+                    </tr>
+                  ))}</tbody>
+                </table>
+              </div>
+            )}
+          </section>
+        )}
+
         {tabActiva === 'generadores' && (
           <div>
-            <GeneradorProductos />
+            <GeneradorProductos productos={productos} />
           </div>
         )}
 
       </main>
 
-      {/* ============================================================== */}
-      {/* MODAL: FORMULARIO AGREGAR / EDITAR PRODUCTO (CUADRADO)         */}
-      {/* ============================================================== */}
       {modalAbierto && (
         <div className="modal modal-backdrop-custom fade show d-block" tabIndex="-1">
           <div className="modal-dialog modal-lg modal-dialog-centered">
             <div className="modal-content rounded-1 border-0 shadow">
-              
+
               <div className="modal-header admin-modal-head border-bottom py-2 px-3">
                 <h5 className="modal-title admin-modal-title mb-0">
                   {modoEdicion ? 'Editar Producto' : 'Agregar Nuevo Producto'}
@@ -776,24 +815,25 @@ function Admin() {
               </div>
 
               <form onSubmit={handleSubmitForm}>
+                {errorProducto && <div className="alert alert-danger m-3" role="alert">{errorProducto}</div>}
                 <div className="modal-body p-3">
                   <div className="row g-3">
                     <div className="col-12 col-md-4">
                       <label className="form-label admin-label mb-1">Código ID</label>
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         className="form-control form-control-sm rounded-1 admin-mono"
                         value={formData.idProducto}
-                        disabled={modoEdicion}
-                        onChange={(e) => setFormData({ ...formData, idProducto: e.target.value })}
-                        required
+                        disabled
+                        placeholder="Asignado al guardar"
+                        readOnly
                       />
                     </div>
 
                     <div className="col-12 col-md-8">
                       <label className="form-label admin-label mb-1">Nombre del Producto *</label>
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         className="form-control form-control-sm rounded-1"
                         placeholder="Ej: Taladro Percutor 20V Max XR"
                         value={formData.nombre}
@@ -804,8 +844,8 @@ function Admin() {
 
                     <div className="col-12 col-md-6">
                       <label className="form-label admin-label mb-1">Marca *</label>
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         className="form-control form-control-sm rounded-1"
                         placeholder="Ej: DeWalt, Bosch, Makita..."
                         value={formData.marca}
@@ -816,7 +856,7 @@ function Admin() {
 
                     <div className="col-12 col-md-6">
                       <label className="form-label admin-label mb-1">Categoría *</label>
-                      <select 
+                      <select
                         className="form-select form-select-sm rounded-1"
                         value={formData.categoria}
                         onChange={(e) => setFormData({ ...formData, categoria: e.target.value })}
@@ -828,11 +868,11 @@ function Admin() {
                     </div>
 
                     <div className="col-12 col-md-6">
-                      <label className="form-label admin-label mb-1">Precio Unitario (CLP) *</label>
-                      <input 
-                        type="number" 
+                      <label className="form-label admin-label mb-1">Precio por {formData.unidadVenta} (CLP) *</label>
+                      <input
+                        type="number"
                         min="0"
-                        step="100"
+                        step="1"
                         className="form-control form-control-sm rounded-1 admin-mono"
                         placeholder="129990"
                         value={formData.precioVenta}
@@ -842,14 +882,42 @@ function Admin() {
                     </div>
 
                     <div className="col-12 col-md-6">
-                      <label className="form-label admin-label mb-1">Stock Disponible *</label>
-                      <input 
-                        type="number" 
+                      <label className="form-label admin-label mb-1">Stock disponible (cantidad de {formData.unidadVenta === 'unidad' ? 'unidades' : formData.unidadVenta + 's'}) *</label>
+                      <input
+                        type="number"
                         min="0"
                         className="form-control form-control-sm rounded-1 admin-mono"
                         placeholder="10"
+                        step="1"
                         value={formData.stock}
                         onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
+                        required
+                      />
+                    </div>
+
+                    <div className="col-12 col-md-6">
+                      <label htmlFor="producto-unidad-venta" className="form-label admin-label mb-1">Unidad de venta *</label>
+                      <select
+                        id="producto-unidad-venta"
+                        className="form-select form-select-sm rounded-1"
+                        value={formData.unidadVenta}
+                        onChange={(e) => setFormData({ ...formData, unidadVenta: e.target.value })}
+                        required
+                      >
+                        {UNIDADES_VENTA.map(unidad => <option key={unidad} value={unidad}>{unidad}</option>)}
+                      </select>
+                    </div>
+
+                    <div className="col-12 col-md-6">
+                      <label htmlFor="producto-contenido" className="form-label admin-label mb-1">Contenido por {formData.unidadVenta} *</label>
+                      <input
+                        id="producto-contenido"
+                        type="text"
+                        className="form-control form-control-sm rounded-1"
+                        maxLength={120}
+                        placeholder="Ej.: 100 unidades, 25 kg o 1 litro"
+                        value={formData.contenidoPresentacion}
+                        onChange={(e) => setFormData({ ...formData, contenidoPresentacion: e.target.value })}
                         required
                       />
                     </div>
@@ -878,34 +946,49 @@ function Admin() {
                     </div>
 
                     <div className="col-12">
-                      <label className="form-label admin-label mb-1">Descripción</label>
-                      <textarea 
+                      <label htmlFor="producto-descripcion-corta" className="form-label admin-label mb-1">Descripción corta</label>
+                      <textarea
+                        id="producto-descripcion-corta"
                         className="form-control form-control-sm rounded-1"
-                        rows="3"
-                        placeholder="Descripción técnica del producto..."
-                        value={formData.descripcion}
-                        onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
+                        rows="2"
+                        maxLength={300}
+                        placeholder="Resumen del producto (hasta 300 caracteres)..."
+                        value={formData.descripcionCorta}
+                        onChange={(e) => setFormData({ ...formData, descripcionCorta: e.target.value })}
+                      ></textarea>
+                    </div>
+
+                    <div className="col-12">
+                      <label htmlFor="producto-descripcion-larga" className="form-label admin-label mb-1">Descripción larga</label>
+                      <textarea
+                        id="producto-descripcion-larga"
+                        className="form-control form-control-sm rounded-1"
+                        rows="6"
+                        maxLength={4000}
+                        placeholder="Descripción completa del producto (hasta 4000 caracteres)..."
+                        value={formData.descripcionLarga}
+                        onChange={(e) => setFormData({ ...formData, descripcionLarga: e.target.value })}
                       ></textarea>
                     </div>
                   </div>
                 </div>
 
                 <div className="modal-footer admin-modal-foot border-top py-2 px-3">
-                  <button 
-                    type="button" 
-                    className="btn btn-sm btn-outline-secondary rounded-1" 
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline-secondary rounded-1"
                     onClick={cerrarModal}
                     disabled={subiendoImagen}
                   >
                     Cancelar
                   </button>
-                  <button 
-                    type="submit" 
+                  <button
+                    type="submit"
                     className="btn btn-ambar admin-btn-strong btn-sm rounded-1 px-3"
                     disabled={subiendoImagen}
                   >
                     {subiendoImagen
-                      ? 'Guardando imagen...'
+                      ? 'Guardando...'
                       : modoEdicion ? 'Guardar Cambios' : 'Registrar Producto'}
                   </button>
                 </div>
@@ -916,9 +999,6 @@ function Admin() {
         </div>
       )}
 
-      {/* ============================================================== */}
-      {/* MODAL: CONFIRMACIÓN DE ELIMINACIÓN                             */}
-      {/* ============================================================== */}
       {productoAEliminar && (
         <div className="modal modal-backdrop-custom fade show d-block" tabIndex="-1">
           <div className="modal-dialog modal-dialog-centered">
@@ -926,20 +1006,21 @@ function Admin() {
               <div className="modal-body admin-ta-center p-4">
                 <h5 className="admin-modal-title mb-2">¿Eliminar producto?</h5>
                 <p className="admin-muted mb-4">
-                  Se dará de baja el producto <strong>"{productoAEliminar.nombre}"</strong> (#{productoAEliminar.idProducto}) del catálogo en localStorage.
+                  Se desactivará el producto <strong>"{productoAEliminar.nombre}"</strong> (#{productoAEliminar.idProducto}). Su registro se conservará.
                 </p>
                 <div className="d-flex justify-content-center gap-2">
-                  <button 
-                    type="button" 
-                    className="btn btn-sm btn-outline-secondary rounded-1 px-3" 
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline-secondary rounded-1 px-3"
                     onClick={() => setProductoAEliminar(null)}
                   >
                     Cancelar
                   </button>
-                  <button 
-                    type="button" 
-                    className="btn btn-sm btn-danger rounded-1 px-3" 
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-danger rounded-1 px-3"
                     onClick={ejecutarEliminacion}
+                    disabled={subiendoImagen}
                   >
                     Eliminar
                   </button>
@@ -950,16 +1031,13 @@ function Admin() {
         </div>
       )}
 
-      {/* ============================================================== */}
-      {/* MODAL: VER BOLETA                                              */}
-      {/* ============================================================== */}
       {ordenSeleccionada && (
         <div className="modal modal-backdrop-custom fade show d-block" tabIndex="-1">
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content rounded-1 border-0 shadow">
               <div className="modal-header admin-modal-head border-bottom py-2 px-3">
                 <h5 className="modal-title admin-modal-title mb-0">
-                  Boleta Electrónica #{ordenSeleccionada.idOrden}
+                  Pedido #{ordenSeleccionada.idOrden}
                 </h5>
                 <button type="button" className="btn-close btn-close-sm" onClick={() => setOrdenSeleccionada(null)}></button>
               </div>
@@ -1006,9 +1084,9 @@ function Admin() {
               </div>
 
               <div className="modal-footer admin-modal-foot border-top py-2 px-3">
-                <button 
-                  type="button" 
-                  className="btn btn-secondary btn-sm rounded-1" 
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm rounded-1"
                   onClick={() => setOrdenSeleccionada(null)}
                 >
                   Cerrar

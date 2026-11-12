@@ -1,41 +1,47 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { mostrarToast } from '../components/ToastNotificacion';
-import { 
-  obtenerMaquinarias, 
-  registrarArriendo, 
+import {
+  obtenerMaquinarias,
+  registrarArriendo,
   EVENTO_MAQUINARIAS_ACTUALIZADAS,
-  IMAGENES_MAQUINARIAS
+  useEstadoArriendos,
+  cargarMaquinarias,
+  calcularFechaTermino,
+  fechaHoyChile
 } from '../data/maquinarias';
 import EspacioImagen from '../components/EspacioImagen';
-import { obtenerSesionActiva } from '../data/auth';
-import { REGIONES_CHILE, REGION_POR_DEFECTO, normalizarRegion, obtenerComunas, obtenerComunaPorDefecto } from '../data/chile';
+import { obtenerSesionActiva, useSesion, EVENTO_SESION_ACTUALIZADA } from '../data/auth';
+import { nombreCompleto } from '../utils/usuario';
+import { REGIONES_CHILE, normalizarRegion, obtenerComunas } from '../data/chile';
 import {
   validadores,
   validarFormulario,
-  formatearRut,
   formatearTelefono
 } from '../data/validaciones';
 
-// Reglas de validación del formulario de arriendo.
 const REGLAS_VALIDACION = {
   rutUsuario: validadores.rut,
   nombreUsuario: validadores.nombre,
   email: validadores.email,
   telefono: validadores.telefono,
   direccion: validadores.direccion,
+  region: validadores.requerido('La región'),
   comuna: validadores.requerido('La comuna'),
   diasArriendo: (valor) => {
     const dias = Number(valor);
-    if (!dias || dias < 1) return 'Ingresa al menos 1 día de arriendo.';
+    if (!Number.isInteger(dias) || dias < 1) return 'Ingresa al menos 1 día completo de arriendo.';
     if (dias > 90) return 'El máximo de arriendo es de 90 días.';
     return '';
-  }
+  },
+  fechaInicio: (valor) => !valor || valor < fechaHoyChile() ? 'Selecciona una fecha desde hoy.' : ''
 };
 
 function Arriendos() {
   const navigate = useNavigate();
-  const sesion = obtenerSesionActiva();
+  const sesion = useSesion();
+  const estadoArriendos = useEstadoArriendos();
+  const [guardando, setGuardando] = useState(false);
   const [maquinarias, setMaquinarias] = useState(obtenerMaquinarias);
   const [maquinaSeleccionada, setMaquinaSeleccionada] = useState(null);
   const [contratoGenerado, setContratoGenerado] = useState(null);
@@ -43,24 +49,37 @@ function Arriendos() {
   const [errores, setErrores] = useState({});
   const [touched, setTouched] = useState({});
 
-  // Formulario de arriendo con campos limpios y placeholders de ejemplo
-  const [regionSeleccionada, setRegionSeleccionada] = useState(REGION_POR_DEFECTO);
+  const [regionSeleccionada, setRegionSeleccionada] = useState('');
   const [form, setForm] = useState({
     rutUsuario: '',
-    nombreUsuario: sesion ? sesion.nombre : '',
+    nombreUsuario: nombreCompleto(sesion),
     email: sesion ? sesion.email : '',
     telefono: '',
     direccion: '',
-    region: REGION_POR_DEFECTO,
-    comuna: obtenerComunaPorDefecto(REGION_POR_DEFECTO),
+    region: '',
+    comuna: '',
     diasArriendo: 3,
-    fechaInicio: new Date().toISOString().slice(0, 10)
+    fechaInicio: fechaHoyChile()
   });
 
   useEffect(() => {
     const handleUpdate = () => setMaquinarias(obtenerMaquinarias());
+    let idUsuario = obtenerSesionActiva()?.idUsuario;
+    const handleSesion = () => {
+      const nuevoId = obtenerSesionActiva()?.idUsuario;
+      if (nuevoId !== idUsuario) {
+        setMaquinaSeleccionada(null);
+        setContratoGenerado(null);
+        setErrorMsg('');
+        idUsuario = nuevoId;
+      }
+    };
     window.addEventListener(EVENTO_MAQUINARIAS_ACTUALIZADAS, handleUpdate);
-    return () => window.removeEventListener(EVENTO_MAQUINARIAS_ACTUALIZADAS, handleUpdate);
+    window.addEventListener(EVENTO_SESION_ACTUALIZADA, handleSesion);
+    return () => {
+      window.removeEventListener(EVENTO_MAQUINARIAS_ACTUALIZADAS, handleUpdate);
+      window.removeEventListener(EVENTO_SESION_ACTUALIZADA, handleSesion);
+    };
   }, []);
 
   const formatearCLP = (valor) => {
@@ -82,20 +101,25 @@ function Arriendos() {
       navigate('/login');
       return;
     }
+    if (!sesionActiva.rut || !sesionActiva.apellidoPaterno) {
+      mostrarToast({ titulo: 'Completa tu perfil', mensaje: 'Guarda tu RUT y apellido paterno antes de arrendar.', tipo: 'warning' });
+      navigate('/cuenta');
+      return;
+    }
     setMaquinaSeleccionada(maq);
-    const regionUsuario = normalizarRegion(sesionActiva.region || REGION_POR_DEFECTO);
-    const comunasDisponibles = obtenerComunas(regionUsuario);
+    const regionUsuario = sesionActiva.region ? normalizarRegion(sesionActiva.region) : '';
+    const comunasDisponibles = regionUsuario ? obtenerComunas(regionUsuario) : [];
     const comunaUsuario = (sesionActiva.comuna && comunasDisponibles.includes(sesionActiva.comuna))
       ? sesionActiva.comuna
-      : (comunasDisponibles[0] || "");
+      : '';
 
     setForm((prev) => ({
       ...prev,
-      rutUsuario: sesionActiva.rut || prev.rutUsuario,
-      nombreUsuario: sesionActiva.nombre || prev.nombreUsuario,
-      email: sesionActiva.email || prev.email,
-      telefono: sesionActiva.telefono || prev.telefono,
-      direccion: sesionActiva.direccion || prev.direccion,
+      rutUsuario: sesionActiva.rut || '',
+      nombreUsuario: nombreCompleto(sesionActiva),
+      email: sesionActiva.email || '',
+      telefono: sesionActiva.telefono || '',
+      direccion: sesionActiva.direccion || '',
       region: regionUsuario,
       comuna: comunaUsuario
     }));
@@ -106,6 +130,7 @@ function Arriendos() {
   };
 
   const cerrarModal = () => {
+    if (guardando) return;
     setMaquinaSeleccionada(null);
     setErrorMsg('');
   };
@@ -128,15 +153,16 @@ function Arriendos() {
     `${base}${errores[campo] ? ' is-invalid' : ''}`;
 
   const handleCambiarRegion = (nuevaRegion) => {
-    const regionNorm = normalizarRegion(nuevaRegion);
+    const regionNorm = nuevaRegion ? normalizarRegion(nuevaRegion) : '';
     setRegionSeleccionada(regionNorm);
-    const comuna = obtenerComunaPorDefecto(regionNorm);
+    const comuna = '';
     setForm((prev) => ({ ...prev, region: regionNorm, comuna }));
     setErrores((prev) => ({ ...prev, comuna: '' }));
   };
 
-  const handleConfirmarArriendo = (e) => {
+  const handleConfirmarArriendo = async (e) => {
     e.preventDefault();
+    if (guardando) return;
     setErrorMsg('');
 
     const nuevosErrores = validarFormulario(REGLAS_VALIDACION, form);
@@ -146,15 +172,13 @@ function Arriendos() {
     );
 
     if (Object.keys(nuevosErrores).length > 0) {
-      setErrorMsg('Revisa los campos marcados en rojo antes de confirmar el arriendo.');
       return;
     }
 
-    const res = registrarArriendo({
+    const idUsuario = obtenerSesionActiva()?.idUsuario;
+    setGuardando(true);
+    const res = await registrarArriendo({
       idMaquina: maquinaSeleccionada.idMaquina,
-      rutUsuario: form.rutUsuario,
-      nombreUsuario: form.nombreUsuario,
-      email: form.email,
       telefono: form.telefono,
       direccion: form.direccion,
       region: regionSeleccionada,
@@ -162,9 +186,12 @@ function Arriendos() {
       diasArriendo: form.diasArriendo,
       fechaInicio: form.fechaInicio
     });
+    setGuardando(false);
+    if (idUsuario !== obtenerSesionActiva()?.idUsuario) return;
 
     if (!res.ok) {
       setErrorMsg(res.error);
+      setErrores(res.errores || {});
       return;
     }
 
@@ -178,7 +205,6 @@ function Arriendos() {
     <div className="arriendos-page py-4 py-lg-5">
       <div className="container">
 
-        {/* Breadcrumb */}
         <nav aria-label="breadcrumb" className="mb-4">
           <ol className="breadcrumb arriendos-breadcrumb mb-0">
             <li className="breadcrumb-item"><Link to="/">Inicio</Link></li>
@@ -186,7 +212,6 @@ function Arriendos() {
           </ol>
         </nav>
 
-        {/* Hero Banner */}
         <div className="brand-hero rounded-1 p-4 p-md-5 mb-5">
           <h1 className="brand-hero-title mb-3">
             Arriendo de Maquinaria Profesional en Santiago
@@ -196,7 +221,6 @@ function Arriendos() {
           </p>
         </div>
 
-        {/* Catálogo de Maquinarias para Arriendo */}
         <div id="catalogo-maquinas" className="mb-4">
           <div className="mb-3">
             <h2 className="arriendos-section-title mb-1">
@@ -205,10 +229,16 @@ function Arriendos() {
             <span className="arriendos-section-sub">Tarifas diarias transparentes con mantención oficial de fábrica</span>
           </div>
 
+          {estadoArriendos.errorMaquinas && <div className="alert alert-danger" role="alert">
+            {estadoArriendos.errorMaquinas}
+            <button type="button" className="btn btn-outline-dark btn-sm ms-2" onClick={cargarMaquinarias}>Reintentar</button>
+          </div>}
+          {estadoArriendos.cargandoMaquinas && maquinarias.length === 0 && <p role="status">Cargando maquinaria…</p>}
+          {!estadoArriendos.cargandoMaquinas && !estadoArriendos.errorMaquinas && maquinarias.length === 0 && <p>No hay maquinaria disponible en el catálogo.</p>}
           <div className="row g-4">
             {maquinarias.map((maq) => {
               const estaDisponible = maq.estado === 'Disponible';
-              const imagenMaquina = maq.imagen || IMAGENES_MAQUINARIAS[maq.idMaquina] || IMAGENES_MAQUINARIAS[maq.marca];
+              const imagenMaquina = maq.imagen;
 
               return (
                 <div key={maq.idMaquina} className="col-12 col-md-6">
@@ -227,7 +257,7 @@ function Arriendos() {
                       <div>
                         <div className="mb-2">
                           <span className={`arriendo-estado-badge ${estaDisponible ? 'arriendo-estado-badge--disponible' : 'arriendo-estado-badge--arrendada'}`}>
-                            {estaDisponible ? '● Disponible' : '■ En Faena (Arrendada)'}
+                            {maq.estado}
                           </span>
                         </div>
 
@@ -253,8 +283,8 @@ function Arriendos() {
                           </span>
                         </div>
 
-                        <button 
-                          type="button" 
+                        <button
+                          type="button"
                           className={`btn btn-sm rounded-1 px-3 ${estaDisponible ? 'btn-ambar arriendo-btn' : 'btn-outline-secondary'}`}
                           disabled={!estaDisponible}
                           onClick={() => abrirModalArriendo(maq)}
@@ -274,9 +304,6 @@ function Arriendos() {
 
       </div>
 
-      {/* ============================================================== */}
-      {/* MODAL: FORMULARIO DE ARRIENDO CON RUN Y SELECTOR DE COMUNA     */}
-      {/* ============================================================== */}
       {maquinaSeleccionada && (
         <div className="modal modal-backdrop-custom fade show d-block" tabIndex="-1">
           <div className="modal-dialog modal-lg modal-dialog-centered">
@@ -292,7 +319,6 @@ function Arriendos() {
               <form onSubmit={handleConfirmarArriendo} noValidate>
                 <div className="modal-body p-3 p-md-4">
 
-                  {/* Ficha Resumen de la Máquina */}
                   <div className="arriendo-summary p-3 mb-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
                     <div>
                       <strong className="arriendo-summary-name d-block">{maquinaSeleccionada.nombre}</strong>
@@ -320,13 +346,12 @@ function Arriendos() {
                       <label className="form-label arriendo-label mb-1">
                         RUN / RUT del Usuario *
                       </label>
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         className={claseCampo('rutUsuario', 'form-control form-control-sm rounded-1 arriendo-mono')}
                         placeholder="Ej: 12.345.678-9"
                         value={form.rutUsuario}
-                        onChange={(e) => handleChange('rutUsuario', formatearRut(e.target.value))}
-                        onBlur={() => handleBlur('rutUsuario')}
+                        readOnly
                         maxLength={12}
                         required
                       />
@@ -339,13 +364,12 @@ function Arriendos() {
                       <label className="form-label arriendo-label mb-1">
                         Nombre Completo del Responsable *
                       </label>
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         className={claseCampo('nombreUsuario')}
                         placeholder="Ej: Juan Carlos Soto"
                         value={form.nombreUsuario}
-                        onChange={(e) => handleChange('nombreUsuario', e.target.value)}
-                        onBlur={() => handleBlur('nombreUsuario')}
+                        readOnly
                         required
                       />
                       {errores.nombreUsuario && <div className="invalid-feedback">{errores.nombreUsuario}</div>}
@@ -355,13 +379,12 @@ function Arriendos() {
                       <label className="form-label arriendo-label mb-1">
                         Correo Electrónico (Gmail o Corporativo) *
                       </label>
-                      <input 
-                        type="email" 
+                      <input
+                        type="email"
                         className={claseCampo('email')}
                         placeholder="ejemplo@gmail.com"
                         value={form.email}
-                        onChange={(e) => handleChange('email', e.target.value)}
-                        onBlur={() => handleBlur('email')}
+                        readOnly
                         required
                       />
                       {errores.email && <div className="invalid-feedback">{errores.email}</div>}
@@ -371,8 +394,8 @@ function Arriendos() {
                       <label className="form-label arriendo-label mb-1">
                         Teléfono Móvil de Contacto *
                       </label>
-                      <input 
-                        type="tel" 
+                      <input
+                        type="tel"
                         className={claseCampo('telefono')}
                         placeholder="+56 9 9876 5432"
                         value={form.telefono}
@@ -395,15 +418,19 @@ function Arriendos() {
                       <label className="form-label arriendo-label mb-1">
                         Región *
                       </label>
-                      <select 
-                        className="form-select form-select-sm rounded-1"
+                      <select
+                        className={claseCampo('region', 'form-select form-select-sm rounded-1')}
                         value={regionSeleccionada}
                         onChange={(e) => handleCambiarRegion(e.target.value)}
+                        onBlur={() => handleBlur('region')}
+                        required
                       >
+                        <option value="">Selecciona una región</option>
                         {REGIONES_CHILE.map((r) => (
                           <option key={r.region} value={r.region}>{r.region}</option>
                         ))}
                       </select>
+                      {errores.region && <div className="invalid-feedback">{errores.region}</div>}
                     </div>
 
                     <div className="col-12 col-md-7">
@@ -412,14 +439,16 @@ function Arriendos() {
                       </label>
                       <div className="input-group input-group-sm">
                         <span className="input-group-text arriendo-input-icon"><i className="bi bi-search"></i></span>
-                        <select 
+                        <select
                           className={`form-select form-select-sm rounded-end-1${errores.comuna ? ' is-invalid' : ''}`}
                           value={form.comuna}
+                          disabled={!regionSeleccionada}
                           onChange={(e) => handleChange('comuna', e.target.value)}
                           onBlur={() => handleBlur('comuna')}
                           required
                         >
-                          {obtenerComunas(regionSeleccionada).map((com) => (
+                          <option value="">Selecciona una comuna</option>
+                          {(regionSeleccionada ? obtenerComunas(regionSeleccionada) : []).map((com) => (
                             <option key={com} value={com}>{com}</option>
                           ))}
                         </select>
@@ -431,8 +460,8 @@ function Arriendos() {
                       <label className="form-label arriendo-label mb-1">
                         Dirección Exacta de la Obra *
                       </label>
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         className={claseCampo('direccion')}
                         placeholder="Ej: Pasaje Los Aromos 740, Faena Constructora Sur"
                         value={form.direccion}
@@ -451,20 +480,22 @@ function Arriendos() {
                   <div className="row g-3 mb-3">
                     <div className="col-12 col-md-6">
                       <label className="form-label arriendo-label mb-1">Fecha de Inicio *</label>
-                      <input 
-                        type="date" 
-                        className="form-control form-control-sm rounded-1"
+                      <input
+                        type="date"
+                        className={claseCampo('fechaInicio')}
                         value={form.fechaInicio}
-                        onChange={(e) => setForm({ ...form, fechaInicio: e.target.value })}
+                        min={fechaHoyChile()}
+                        onChange={(e) => handleChange('fechaInicio', e.target.value)}
+                        onBlur={() => handleBlur('fechaInicio')}
                         required
                       />
                     </div>
 
                     <div className="col-12 col-md-6">
                       <label className="form-label arriendo-label mb-1">Días de Arriendo *</label>
-                      <input 
-                        type="number" 
-                        min="1" 
+                      <input
+                        type="number"
+                        min="1"
                         max="90"
                         className={claseCampo('diasArriendo', 'form-control form-control-sm rounded-1 arriendo-mono')}
                         value={form.diasArriendo}
@@ -474,9 +505,12 @@ function Arriendos() {
                       />
                       {errores.diasArriendo && <div className="invalid-feedback">{errores.diasArriendo}</div>}
                     </div>
+                    <div className="col-12">
+                      {errores.fechaInicio && <div className="invalid-feedback d-block">{errores.fechaInicio}</div>}
+                      <span className="arriendo-help-text">Fecha de término: {calcularFechaTermino(form.fechaInicio, form.diasArriendo) || 'Selecciona el período'} (día incluido)</span>
+                    </div>
                   </div>
 
-                  {/* Cálculo en vivo */}
                   <div className="arriendo-summary p-3 d-flex justify-content-between align-items-center">
                     <div>
                       <span className="arriendo-total-label d-block">
@@ -492,11 +526,11 @@ function Arriendos() {
                 </div>
 
                 <div className="modal-footer arriendo-modal-foot border-top py-2 px-3">
-                  <button type="button" className="btn btn-outline-secondary btn-sm rounded-1" onClick={cerrarModal}>
+                  <button type="button" className="btn btn-outline-secondary btn-sm rounded-1" onClick={cerrarModal} disabled={guardando}>
                     Cancelar
                   </button>
-                  <button type="submit" className="btn btn-ambar arriendo-btn btn-sm rounded-1 px-4 shadow-sm">
-                    Confirmar Arriendo
+                  <button type="submit" className="btn btn-ambar arriendo-btn btn-sm rounded-1 px-4 shadow-sm" disabled={guardando}>
+                    {guardando ? 'Confirmando…' : 'Confirmar Arriendo'}
                   </button>
                 </div>
               </form>
@@ -506,9 +540,6 @@ function Arriendos() {
         </div>
       )}
 
-      {/* ============================================================== */}
-      {/* MODAL: COMPROBANTE DE CONTRATO DE ARRIENDO GENERADO            */}
-      {/* ============================================================== */}
       {contratoGenerado && (
         <div className="modal modal-backdrop-custom fade show d-block" tabIndex="-1">
           <div className="modal-dialog modal-dialog-centered">
@@ -535,7 +566,7 @@ function Arriendos() {
                   <div><strong>RUN:</strong> {contratoGenerado.usuario.rut}</div>
                   <div><strong>Contacto:</strong> {contratoGenerado.usuario.telefono} | {contratoGenerado.usuario.email}</div>
                   <div><strong>Faena:</strong> {contratoGenerado.usuario.direccion}, {contratoGenerado.usuario.comuna}</div>
-                  <div><strong>Vigencia:</strong> {contratoGenerado.diasArriendo} días desde {contratoGenerado.fechaInicio}</div>
+                  <div><strong>Vigencia:</strong> {contratoGenerado.fechaInicio} al {contratoGenerado.fechaTermino} ({contratoGenerado.diasArriendo} días)</div>
                 </div>
 
                 <div className="arriendo-summary p-3 d-flex justify-content-between align-items-center">

@@ -1,5 +1,4 @@
-// Test: agregarAlCarrito: agrega un producto con stock suficiente, rechaza una cantidad mayor al stock y bloquea un producto agotado
-// Función: agregarAlCarrito()
+
 
 import { describe, test, expect, beforeEach } from 'vitest';
 import { agregarAlCarrito, obtenerCarrito, vaciarCarrito } from '../data/carrito.js';

@@ -5,7 +5,6 @@ function Nosotros() {
     <div className="nosotros-page py-4 py-lg-5">
       <div className="container">
 
-        {/* Breadcrumb */}
         <nav aria-label="breadcrumb" className="mb-4">
           <ol className="breadcrumb nosotros-breadcrumb mb-0">
             <li className="breadcrumb-item"><Link to="/">Inicio</Link></li>
@@ -13,7 +12,6 @@ function Nosotros() {
           </ol>
         </nav>
 
-        {/* Hero Section Corporativo */}
         <div className="brand-hero rounded-1 p-4 p-md-5 mb-4">
           <h1 className="brand-hero-title mb-3">
             Especialistas en Herramientas y Soluciones para la Construcción
@@ -23,7 +21,6 @@ function Nosotros() {
           </p>
         </div>
 
-        {/* Indicadores de Rendimiento y Experiencia */}
         <div className="row g-3 mb-4">
           <div className="col-12 col-sm-6 col-lg-3">
             <div className="nosotros-stat-card bg-white rounded-1 p-4 shadow-sm h-100">
@@ -74,7 +71,6 @@ function Nosotros() {
           </div>
         </div>
 
-        {/* Ubicación Física con Mapa Nativo Embed */}
         <div className="bg-white border rounded-1 shadow-sm p-4 p-md-5 mb-4">
           <div className="row g-4 align-items-center">
 
@@ -103,7 +99,6 @@ function Nosotros() {
               </div>
             </div>
 
-            {/* Mapa Embebido Nativo */}
             <div className="col-12 col-lg-7">
               <div className="nosotros-map-container border rounded-1 overflow-hidden shadow-sm">
                 <iframe

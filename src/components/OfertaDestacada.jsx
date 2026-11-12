@@ -1,12 +1,22 @@
 import { Link } from 'react-router-dom';
+import { useState } from 'react';
 
-/**
- * Grilla de ofertas destacadas.
- *
- * Acepta cualquier cantidad de ofertas: en escritorio se acomodan de a 4 por
- * fila (col-md-3) y en móvil de a 2 (col-6), por lo que una quinta oferta o
- * posteriores bajan automáticamente a la fila siguiente.
- */
+function TarjetaOferta({ oferta, posicion }) {
+  const [usarRespaldo, setUsarRespaldo] = useState(false);
+  return (
+    <Link to={usarRespaldo ? oferta.linkRespaldo || oferta.link : oferta.link} className="oferta-link">
+      <img
+        src={usarRespaldo ? oferta.imgRespaldo : oferta.img}
+        alt={(usarRespaldo ? oferta.altRespaldo : oferta.alt) || 'Oferta destacada'}
+        className={`oferta-img oferta-img-${posicion}`}
+        onError={() => {
+          if (oferta.imgRespaldo && !usarRespaldo) setUsarRespaldo(true);
+        }}
+      />
+    </Link>
+  );
+}
+
 function OfertaDestacada({ ofertas = [] }) {
   if (!ofertas.length) return null;
 
@@ -21,13 +31,7 @@ function OfertaDestacada({ ofertas = [] }) {
               key={`${oferta.link}-${indice}`}
               className={`col-6 col-md-3 oferta-col oferta-col-${posicion}`}
             >
-              <Link to={oferta.link} className="oferta-link">
-                <img
-                  src={oferta.img}
-                  alt={oferta.alt || `Oferta destacada ${indice + 1}`}
-                  className={`oferta-img oferta-img-${posicion}`}
-                />
-              </Link>
+              <TarjetaOferta key={oferta.img} oferta={oferta} posicion={posicion} />
             </div>
           );
         })}

@@ -7,12 +7,12 @@ const PREGUNTAS = [
   {
     categoria: 'Compras y Pagos',
     pregunta: '¿Qué medios de pago aceptan?',
-    respuesta: 'Aceptamos WebPay Plus (débito y crédito), RedCompra y transferencia bancaria electrónica. Para compras por volumen o licitaciones trabajamos con orden de compra y facturación a 30 días.'
+    respuesta: 'El sitio registra pedidos pendientes de confirmación. El pago se coordina con atención comercial; no realizamos cobros en línea.'
   },
   {
     categoria: 'Compras y Pagos',
     pregunta: '¿Emiten factura para empresas?',
-    respuesta: 'Sí. Emitimos boleta y factura electrónica. Al momento del pago o del registro puedes indicar tu RUT y razón social para que la factura se genere correctamente.'
+    respuesta: 'Coordina el documento tributario que necesitas con atención comercial. El número de pedido del sitio no corresponde a una boleta ni factura.'
   },
   {
     categoria: 'Despachos',
@@ -52,7 +52,7 @@ const PREGUNTAS = [
   {
     categoria: 'Cuenta y Cotizaciones',
     pregunta: '¿Cómo solicito una cotización?',
-    respuesta: 'Ingresa a la sección Cotizaciones y completa el formulario con el detalle de productos, cantidades y región de entrega. Un asesor te enviará la propuesta en menos de 2 horas hábiles.'
+    respuesta: 'Ingresa a la sección Cotizaciones y completa el formulario con el detalle de productos, cantidades y región de entrega. La solicitud quedará disponible para revisión por nuestro equipo comercial.'
   }
 ];
 
@@ -67,7 +67,6 @@ function PreguntasFrecuentes() {
     <div className="info-page py-4 py-lg-5">
       <div className="container">
 
-        {/* Breadcrumb */}
         <nav aria-label="breadcrumb" className="mb-4">
           <ol className="breadcrumb info-breadcrumb mb-0">
             <li className="breadcrumb-item"><Link to="/">Inicio</Link></li>
@@ -75,7 +74,6 @@ function PreguntasFrecuentes() {
           </ol>
         </nav>
 
-        {/* Hero */}
         <div className="brand-hero rounded-1 p-4 p-md-5 mb-4">
           <h1 className="brand-hero-title mb-3">
             Preguntas Frecuentes
@@ -88,7 +86,6 @@ function PreguntasFrecuentes() {
 
         <div className="row g-4">
 
-          {/* Acordeón de preguntas */}
           <div className="col-12 col-lg-8">
             <div className="info-card shadow-sm p-4 p-md-5">
               <h2 className="info-section-title mb-4">Respuestas Rápidas</h2>
@@ -101,7 +98,7 @@ function PreguntasFrecuentes() {
                       type="button"
                       className="faq-button"
                       onClick={() => alternar(i)}
-                      aria-expanded={estaAbierta}
+                      aria-expanded={estaAbierta} aria-controls={`faq-panel-${i}`} id={`faq-boton-${i}`}
                     >
                       <span className="d-flex flex-column">
                         <span className="faq-categoria">{p.categoria}</span>
@@ -109,7 +106,7 @@ function PreguntasFrecuentes() {
                       </span>
                       <i className={`bi bi-chevron-down faq-chevron ${estaAbierta ? 'faq-chevron--abierta' : ''}`}></i>
                     </button>
-                    <div className={`faq-body ${estaAbierta ? 'faq-body--abierta' : ''}`}>
+                    <div id={`faq-panel-${i}`} role="region" aria-labelledby={`faq-boton-${i}`} hidden={!estaAbierta} className={`faq-body ${estaAbierta ? 'faq-body--abierta' : ''}`}>
                       <p className="mb-0">{p.respuesta}</p>
                     </div>
                   </div>
@@ -118,7 +115,6 @@ function PreguntasFrecuentes() {
             </div>
           </div>
 
-          {/* Barra lateral */}
           <div className="col-12 col-lg-4">
             <div className="info-card shadow-sm p-4 mb-4">
               <EspacioImagen
@@ -131,7 +127,7 @@ function PreguntasFrecuentes() {
               />
               <h2 className="info-subtitle mb-2">¿No encuentras tu respuesta?</h2>
               <p className="info-mini-text mb-3">
-                Escríbenos y un asesor te responderá en menos de 2 horas hábiles.
+                Escríbenos para coordinar la atención de tu consulta.
               </p>
               <div className="d-grid gap-2">
                 <Link to="/contacto" className="btn btn-ambar marca-strong rounded-1 py-2">

@@ -16,7 +16,7 @@ const SECCIONES = [
       'Datos de identificación: nombre, RUT y razón social.',
       'Datos de contacto: correo electrónico, teléfono y dirección de despacho.',
       'Datos de la compra o arriendo: productos, montos, fechas y método de pago.',
-      'Datos de navegación: páginas visitadas y preferencias guardadas en tu navegador.'
+      'Referencias del carrito y cookie técnica para mantener la sesión. No se integra analítica de navegación en esta versión.'
     ]
   },
   {
@@ -24,7 +24,7 @@ const SECCIONES = [
     titulo: '3. Finalidad del Tratamiento',
     parrafos: [
       'Utilizamos tus datos para procesar compras, gestionar cotizaciones y arriendos, coordinar despachos, emitir documentos tributarios y entregar soporte postventa.',
-      'También podemos usar tu información para enviarte comunicaciones comerciales o novedades, siempre que hayas autorizado su envío.'
+      'Esta versión no incluye suscripción a comunicaciones comerciales. El mapa y las fuentes tipográficas cargan recursos de Google al visitar las páginas correspondientes.'
     ]
   },
   {
@@ -40,7 +40,7 @@ const SECCIONES = [
     titulo: '5. Conservación de los Datos',
     parrafos: [
       'Los datos se conservan mientras exista una relación comercial o mientras lo exija la normativa tributaria y legal aplicable.',
-      'Cumplidos esos plazos, los datos son eliminados o anonimizados de forma segura.'
+      'Para solicitar la eliminación o corrección de datos, contacta al responsable indicado en esta política. Las solicitudes requieren revisión y no se ejecutan automáticamente desde el navegador.'
     ]
   },
   {
@@ -55,7 +55,7 @@ const SECCIONES = [
     id: 'cookies',
     titulo: '7. Cookies y Tecnologías Similares',
     parrafos: [
-      'El sitio utiliza almacenamiento local del navegador y cookies técnicas para recordar tu carrito, tu sesión y tus preferencias.',
+      'El carrito se guarda en el servidor. Una cookie técnica permite recuperar el carrito de invitados; al iniciar sesión se vincula a tu cuenta.',
       'Puedes eliminar o bloquear estas cookies desde la configuración de tu navegador; algunas funciones podrían dejar de estar disponibles.'
     ]
   },
@@ -75,7 +75,7 @@ const SECCIONES = [
     titulo: '9. Seguridad de la Información',
     parrafos: [
       'Adoptamos medidas técnicas y organizativas razonables para proteger tus datos frente a accesos no autorizados, pérdida o alteración.',
-      'La información vinculada a tu carrito y sesión se almacena en tu propio navegador y no es compartida con terceros ajenos a la operación.'
+      'Los perfiles, productos, maquinarias, contratos de arriendo, carritos, pedidos, ofertas y cotizaciones se guardan en el servidor. La sesión se mantiene en memoria mientras navegas.'
     ]
   },
   {
@@ -93,7 +93,6 @@ function Privacidad() {
     <div className="info-page py-4 py-lg-5">
       <div className="container">
 
-        {/* Breadcrumb */}
         <nav aria-label="breadcrumb" className="mb-4">
           <ol className="breadcrumb info-breadcrumb mb-0">
             <li className="breadcrumb-item"><Link to="/">Inicio</Link></li>
@@ -101,7 +100,6 @@ function Privacidad() {
           </ol>
         </nav>
 
-        {/* Hero */}
         <div className="brand-hero rounded-1 p-4 p-md-5 mb-4">
           <h1 className="brand-hero-title mb-3">
             Política de Privacidad
@@ -114,11 +112,10 @@ function Privacidad() {
 
         <div className="row g-4">
 
-          {/* Contenido */}
           <div className="col-12 col-lg-8">
             <div className="info-card shadow-sm p-4 p-md-5">
               <span className="marca-chip marca-chip--gris mb-3 d-inline-block">
-                Última actualización: enero de 2026
+                Última actualización: noviembre de 2026
               </span>
 
               <div className="info-highlight rounded-1 p-3 mb-4">
@@ -145,7 +142,6 @@ function Privacidad() {
             </div>
           </div>
 
-          {/* Barra lateral */}
           <div className="col-12 col-lg-4">
             <div className="info-sidebar">
               <div className="info-card shadow-sm p-4">

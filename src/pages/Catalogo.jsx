@@ -1,19 +1,17 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ProductGrid from '../components/ProductGrid';
-import { 
-  obtenerProductos, 
-  CATEGORIAS_PRODUCTOS, 
-  EVENTO_PRODUCTOS_ACTUALIZADOS 
+import {
+  obtenerProductos,
+  CATEGORIAS_PRODUCTOS,
+  EVENTO_PRODUCTOS_ACTUALIZADOS
 } from '../data/productos';
 
 function Catalogo() {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Estado dinámico de productos conectados con localStorage
   const [productos, setProductos] = useState(obtenerProductos);
 
-  // Escuchar cambios en localStorage (ej. cuando se crea/edita un producto en el admin)
   useEffect(() => {
     const handleActualizacion = () => {
       setProductos(obtenerProductos());
@@ -25,52 +23,45 @@ function Catalogo() {
     };
   }, []);
 
-  // Derivar la categoría seleccionada directamente desde la URL
   const categoriaSeleccionada = searchParams.get('categoria') || 'Todas';
-  const [busquedaTexto, setBusquedaTexto] = useState('');
-  const [ordenPrecio, setOrdenPrecio] = useState('default');
+  const busquedaTexto = searchParams.get('q') || '';
+  const ordenPrecio = searchParams.get('orden') || 'default';
+  const filtro = (key, value) => setSearchParams(prev => { const next = new URLSearchParams(prev); if (value && value !== 'default') next.set(key, value); else next.delete(key); return next; }, { replace: true });
+  const setBusquedaTexto = value => filtro('q', value);
+  const setOrdenPrecio = value => filtro('orden', value);
 
-  // Asegurar scroll arriba al entrar al catálogo o cambiar categoría
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [categoriaSeleccionada]);
 
-  // Manejar cambio de categoría y actualizar URL de forma reactiva
   const handleCambiarCategoria = (cat) => {
     if (cat === 'Todas') {
       searchParams.delete('categoria');
       setSearchParams(searchParams);
     } else {
-      setSearchParams({ categoria: cat });
+      filtro('categoria', cat);
     }
   };
 
-  // Restablecer todos los filtros
   const handleResetFilters = () => {
-    setBusquedaTexto('');
-    setOrdenPrecio('default');
     setSearchParams({});
   };
 
-  // Filtrado y ordenamiento con useMemo para máximo rendimiento
   const productosFiltrados = useMemo(() => {
     let resultado = [...productos];
 
-    // Normaliza el texto para buscar sin distinguir mayúsculas ni tildes.
     const normalizarTexto = (valor) =>
       String(valor ?? '')
         .toLowerCase()
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '');
 
-    // Filtrar por categoría
     if (categoriaSeleccionada !== 'Todas') {
       resultado = resultado.filter(
         (p) => p.categoria.toLowerCase() === categoriaSeleccionada.toLowerCase()
       );
     }
 
-    // Filtrar por texto (nombre o marca)
     if (busquedaTexto.trim() !== '') {
       const termino = normalizarTexto(busquedaTexto.trim());
       resultado = resultado.filter(
@@ -80,7 +71,6 @@ function Catalogo() {
       );
     }
 
-    // Ordenar por precio, fecha/llegada o nombre
     if (ordenPrecio === 'precio-asc') {
       resultado.sort((a, b) => a.precioVenta - b.precioVenta);
     } else if (ordenPrecio === 'precio-desc') {
@@ -88,7 +78,7 @@ function Catalogo() {
     } else if (ordenPrecio === 'nombre-asc') {
       resultado.sort((a, b) => a.nombre.localeCompare(b.nombre));
     } else if (ordenPrecio === 'ultimas-llegadas') {
-      resultado.reverse(); // Los últimos agregados aparecen primero
+      resultado.sort((a, b) => new Date(b.fechaCreacion || 0) - new Date(a.fechaCreacion || 0));
     }
 
     return resultado;
@@ -98,7 +88,6 @@ function Catalogo() {
     <div className="catalogo-page py-4 py-md-5">
       <div className="container">
 
-        {/* Encabezado del Catálogo */}
         <div className="catalogo-header mb-4">
           <nav aria-label="breadcrumb">
             <ol className="breadcrumb catalogo-breadcrumb mb-2">
@@ -116,11 +105,9 @@ function Catalogo() {
           </div>
         </div>
 
-        {/* Barra de Filtros y Búsqueda */}
         <div className="catalogo-bar-filtros bg-white p-3 p-md-4 rounded-4 shadow-sm border mb-4">
           <div className="row g-3 align-items-center">
-            
-            {/* Input de Búsqueda por texto */}
+
             <div className="col-12 col-md-6 col-lg-5">
               <div className="input-group">
                 <span className="input-group-text bg-white border-end-0 marca-muted">
@@ -129,7 +116,7 @@ function Catalogo() {
                 <input
                   type="text"
                   className="form-control border-start-0 ps-0 shadow-none"
-                  placeholder="Buscar por nombre o marca (ej. Taladro, Bosch)..."
+                  aria-label="Buscar productos por nombre o marca" placeholder="Buscar por nombre o marca (ej. Taladro, Bosch)..."
                   value={busquedaTexto}
                   onChange={(e) => setBusquedaTexto(e.target.value)}
                 />
@@ -146,7 +133,6 @@ function Catalogo() {
               </div>
             </div>
 
-            {/* Ordenamiento por precio */}
             <div className="col-12 col-sm-6 col-md-3 col-lg-4 ms-auto">
               <div className="d-flex align-items-center gap-2">
                 <label htmlFor="ordenarPor" className="form-label marca-label marca-nowrap mb-0">
@@ -167,7 +153,6 @@ function Catalogo() {
               </div>
             </div>
 
-            {/* Botón reset rápido si hay filtros activos */}
             {(categoriaSeleccionada !== 'Todas' || busquedaTexto !== '' || ordenPrecio !== 'default') && (
               <div className="col-12 col-sm-auto">
                 <button
@@ -182,7 +167,6 @@ function Catalogo() {
             )}
           </div>
 
-          {/* Filtro por Categorías */}
           <hr className="catalogo-divisor my-3" />
           <div className="catalogo-categorias-container">
             <span className="marca-etiqueta d-block mb-2">
@@ -195,10 +179,10 @@ function Catalogo() {
                   <button
                     key={cat}
                     type="button"
-                    onClick={() => handleCambiarCategoria(cat)}
+                    aria-pressed={esActiva} onClick={() => handleCambiarCategoria(cat)}
                     className={`btn btn-sm rounded-pill px-3 py-1 transition-all ${
-                      esActiva 
-                        ? 'btn-dark shadow-sm' 
+                      esActiva
+                        ? 'btn-dark shadow-sm'
                         : 'btn-outline-secondary'
                     }`}
                   >
@@ -210,9 +194,8 @@ function Catalogo() {
           </div>
         </div>
 
-        {/* Grilla de Productos */}
-        <ProductGrid 
-          productos={productosFiltrados} 
+        <ProductGrid
+          productos={productosFiltrados}
           onResetFilters={handleResetFilters}
         />
 

@@ -1,5 +1,4 @@
-// Test: Formulario Login: acepta credenciales bien formadas, detecta email inválido y contraseña vacía, y valida un email con espacios adicionales
-// Función: validarFormulario()
+
 
 import { describe, test, expect } from 'vitest';
 import { validarFormulario, validadores } from '../data/validaciones.js';

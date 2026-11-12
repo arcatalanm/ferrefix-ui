@@ -1,163 +1,77 @@
-// SISTEMA DE CARRITO DE COMPRAS CON PERSISTENCIA EN LOCALSTORAGE
+import { useSyncExternalStore } from 'react';
+import { clienteApi } from '../services/api';
+import { obtenerMensajeApi } from '../services/crearClienteApi';
+import { obtenerSesionActiva, EVENTO_SESION_ACTUALIZADA } from './auth';
 
-const STORAGE_KEY_CARRITO = 'ferrefix_carrito_v1';
 export const EVENTO_CARRITO_ACTUALIZADO = 'ferrefix:carrito_actualizado';
-
-const notificarCarrito = () => {
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent(EVENTO_CARRITO_ACTUALIZADO));
-  }
+let items = [];
+let revision = 0;
+let cola = Promise.resolve();
+let inicializado = false;
+let estado = { cargando: false, error: '' };
+const mediaBase = (import.meta.env.VITE_MEDIA_URL || '/media').replace(/\/$/, '');
+const notificar = () => window.dispatchEvent(new CustomEvent(EVENTO_CARRITO_ACTUALIZADO));
+const publicar = cambios => { estado = { ...estado, ...cambios }; notificar(); };
+export const obtenerCarrito = () => items;
+const suscribir = callback => {
+  window.addEventListener(EVENTO_CARRITO_ACTUALIZADO, callback);
+  return () => window.removeEventListener(EVENTO_CARRITO_ACTUALIZADO, callback);
 };
+export const useEstadoCarrito = () => useSyncExternalStore(suscribir, () => estado);
+const adaptar = data => data.map(item => ({ ...item,
+  imagen: item.imagen?.startsWith('/media/') ? mediaBase + item.imagen.slice(6) : item.imagen,
+}));
+window.addEventListener(EVENTO_SESION_ACTUALIZADA, () => {
+  revision += 1; items = []; inicializado = false; publicar({ cargando: false, error: '' });
+});
 
-/**
- * Obtiene los productos actuales dentro del carrito desde localStorage
- */
-export const obtenerCarrito = () => {
-  if (typeof window === 'undefined' || !window.localStorage) {
-    return [];
-  }
-  try {
-    const data = localStorage.getItem(STORAGE_KEY_CARRITO);
-    return data ? JSON.parse(data) : [];
-  } catch (error) {
-    console.error('Error al leer el carrito de localStorage:', error);
-    return [];
-  }
-};
-
-/**
- * Guarda los productos del carrito en localStorage y notifica en tiempo real
- */
-export const guardarCarrito = (items) => {
-  if (typeof window !== 'undefined' && window.localStorage) {
-    localStorage.setItem(STORAGE_KEY_CARRITO, JSON.stringify(items));
-    notificarCarrito();
-  }
-};
-
-/**
- * Agrega un producto al carrito validando el stock disponible
- */
-export const agregarAlCarrito = (producto, cantidadDeseada = 1) => {
-  if (!producto || !producto.idProducto) {
-    return { ok: false, error: 'Producto no válido' };
-  }
-
-  const carrito = obtenerCarrito();
-  const stockMaximo = Number(producto.stock) || 0;
-
-  if (stockMaximo <= 0) {
-    return { ok: false, error: 'El producto no cuenta con stock disponible actualmente.' };
-  }
-
-  const indiceExistente = carrito.findIndex(
-    (item) => String(item.idProducto) === String(producto.idProducto)
-  );
-
-  let nuevaCantidad = cantidadDeseada;
-
-  if (indiceExistente !== -1) {
-    nuevaCantidad = carrito[indiceExistente].cantidad + cantidadDeseada;
-
-    // Validación estricta contra stock
-    if (nuevaCantidad > stockMaximo) {
-      return { 
-        ok: false, 
-        error: `No puedes agregar más unidades. El stock máximo disponible es de ${stockMaximo} unidades.` 
-      };
+function encolar(operacion) {
+  const sesion = obtenerSesionActiva();
+  const actual = revision;
+  const solicitud = cola.then(async () => {
+    if (actual !== revision || sesion !== obtenerSesionActiva()) return { ok: false, error: 'La sesión cambió.' };
+    publicar({ cargando: true, error: '' });
+    try {
+      if (!inicializado) {
+        const { data } = await clienteApi.http.get('/ordenes/carrito', { withCredentials: true });
+        if (actual !== revision || sesion !== obtenerSesionActiva()) return { ok: false, error: 'La sesión cambió.' };
+        items = adaptar(data); inicializado = true;
+      }
+      const { data } = await operacion();
+      if (actual !== revision || sesion !== obtenerSesionActiva()) return { ok: false, error: 'La sesión cambió.' };
+      items = adaptar(data); publicar({ cargando: false });
+      return { ok: true };
+    } catch (error) {
+      const mensaje = obtenerMensajeApi(error);
+      if (actual === revision) publicar({ cargando: false, error: mensaje });
+      return { ok: false, error: mensaje };
     }
+  });
+  cola = solicitud.catch(() => {});
+  return solicitud;
+}
 
-    carrito[indiceExistente].cantidad = nuevaCantidad;
-  } else {
-    if (nuevaCantidad > stockMaximo) {
-      return { 
-        ok: false, 
-        error: `No puedes agregar ${nuevaCantidad} unidades. Solo hay ${stockMaximo} disponibles en stock.` 
-      };
-    }
+export const cargarCarrito = () => encolar(() => clienteApi.http.get('/ordenes/carrito', { withCredentials: true }));
+export const agregarAlCarrito = (producto, cantidad = 1) => encolar(() =>
+  clienteApi.http.post(`/ordenes/carrito/items/${encodeURIComponent(producto.idProducto)}`, { cantidad }, { withCredentials: true }));
+export const actualizarCantidad = (id, cantidad) => Number(cantidad) <= 0 ? eliminarDelCarrito(id) : encolar(() =>
+  clienteApi.http.put(`/ordenes/carrito/items/${encodeURIComponent(id)}`, { cantidad: Number(cantidad) }, { withCredentials: true }));
+export const eliminarDelCarrito = id => encolar(() =>
+  clienteApi.http.delete(`/ordenes/carrito/items/${encodeURIComponent(id)}`, { withCredentials: true }));
+export const vaciarCarrito = () => encolar(() => clienteApi.http.delete('/ordenes/carrito', { withCredentials: true }));
 
-    carrito.push({
-      idProducto: producto.idProducto,
-      nombre: producto.nombre,
-      marca: producto.marca,
-      categoria: producto.categoria,
-      precioVenta: Number(producto.precioVenta) || 0,
-      imagen: producto.imagen || '/banner-web.webp',
-      stock: stockMaximo,
-      cantidad: nuevaCantidad
-    });
-  }
+export function sincronizarCarrito(productos) {
+  if (!items.length) return;
+  items = items.map(item => {
+    const p = productos.find(producto => producto.idProducto === item.idProducto);
+    return p ? { ...item, ...p, cantidad: item.cantidad, disponible: true } : { ...item, stock: 0, disponible: false };
+  });
+  notificar();
+}
 
-  guardarCarrito(carrito);
-  return { 
-    ok: true, 
-    mensaje: `Se agregaron ${cantidadDeseada} unid(s) de "${producto.nombre}" al carrito.`,
-    cantidadTotal: nuevaCantidad 
-  };
-};
-
-/**
- * Actualiza la cantidad de un producto en el carrito (con validación de límites)
- */
-export const actualizarCantidad = (idProducto, nuevaCantidad) => {
-  const carrito = obtenerCarrito();
-  const indice = carrito.findIndex((item) => String(item.idProducto) === String(idProducto));
-
-  if (indice === -1) return false;
-
-  const cantidadNum = Number(nuevaCantidad);
-
-  // Si la cantidad es 0 o menor, se elimina
-  if (cantidadNum <= 0) {
-    return eliminarDelCarrito(idProducto);
-  }
-
-  // Validación de stock
-  const stockMaximo = Number(carrito[indice].stock) || 999;
-  if (cantidadNum > stockMaximo) {
-    return { 
-      ok: false, 
-      error: `La cantidad solicitada supera el stock disponible (${stockMaximo} unids).` 
-    };
-  }
-
-  carrito[indice].cantidad = cantidadNum;
-  guardarCarrito(carrito);
-  return { ok: true };
-};
-
-/**
- * Elimina un producto del carrito
- */
-export const eliminarDelCarrito = (idProducto) => {
-  const carrito = obtenerCarrito();
-  const nuevoCarrito = carrito.filter((item) => String(item.idProducto) !== String(idProducto));
-  guardarCarrito(nuevoCarrito);
-  return { ok: true };
-};
-
-/**
- * Vacía completamente el carrito
- */
-export const vaciarCarrito = () => {
-  guardarCarrito([]);
-};
-
-/**
- * Calcula totales y conteo general de productos en el carrito
- */
-export const obtenerTotalesCarrito = () => {
-  const carrito = obtenerCarrito();
-  const totalArticulos = carrito.reduce((acc, item) => acc + (Number(item.cantidad) || 0), 0);
-  const subtotal = carrito.reduce(
-    (acc, item) => acc + (Number(item.precioVenta) || 0) * (Number(item.cantidad) || 0),
-    0
-  );
-
-  return {
-    totalArticulos,
-    subtotal,
-    despacho: subtotal > 50000 ? 0 : (subtotal > 0 ? 3990 : 0), // Despacho gratis sobre $50.000
-    total: subtotal + (subtotal > 50000 ? 0 : (subtotal > 0 ? 3990 : 0))
-  };
-};
+export function obtenerTotalesCarrito(metodoEntrega = 'despacho') {
+  const totalArticulos = items.reduce((acc, item) => acc + item.cantidad, 0);
+  const subtotal = items.reduce((acc, item) => acc + item.precioVenta * item.cantidad, 0);
+  const despacho = metodoEntrega === 'retiro' || subtotal > 50000 || subtotal === 0 ? 0 : 3990;
+  return { totalArticulos, subtotal, despacho, total: subtotal + despacho };
+}

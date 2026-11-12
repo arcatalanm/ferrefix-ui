@@ -1,15 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-/*
-  Zona de carga de imagen de producto (Permite seleccionar una imagen haciendo clic o arrastrándola y soltándola)
- */
 function ImagenProductoUploader({ archivo, onSeleccionar, onQuitar, imagenActual }) {
   const inputRef = useRef(null);
   const previewRef = useRef('');
   const [arrastrando, setArrastrando] = useState(false);
   const [previsualizacion, setPrevisualizacion] = useState('');
 
-  // Libera la URL temporal al desmontar el componente.
   useEffect(() => {
     return () => {
       if (previewRef.current) URL.revokeObjectURL(previewRef.current);
@@ -69,7 +65,7 @@ function ImagenProductoUploader({ archivo, onSeleccionar, onQuitar, imagenActual
       <input
         ref={inputRef}
         type="file"
-        accept="image/*"
+        accept="image/jpeg,image/png,image/webp" aria-label="Imagen del producto"
         className="d-none"
         onChange={handleInputChange}
       />
@@ -108,7 +104,7 @@ function ImagenProductoUploader({ archivo, onSeleccionar, onQuitar, imagenActual
               Arrastra una imagen aquí o haz clic para seleccionarla
             </div>
             <div className="admin-upload-hint">
-              Formatos: JPG, PNG, WEBP, GIF o AVIF · Máximo 6 MB
+              Formatos: JPG, PNG o WEBP · Máximo 6 MB
             </div>
           </div>
         )}

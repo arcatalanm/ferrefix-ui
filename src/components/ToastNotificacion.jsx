@@ -1,12 +1,9 @@
-/* eslint-disable react-refresh/only-export-components */
+
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
-export const EVENTO_TOAST = 'ferrefix:mostrar_toast';
+const EVENTO_TOAST = 'ferrefix:mostrar_toast';
 
-/**
- * Función global para disparar una notificación flotante en la esquina inferior derecha
- */
 export const mostrarToast = ({
   titulo,
   mensaje,
@@ -40,7 +37,7 @@ export default function ToastNotificacion() {
   useEffect(() => {
     const handleNuevoToast = (e) => {
       const nuevo = e.detail;
-      setToasts((prev) => [...prev.slice(-2), nuevo]); // Máximo 3 visibles a la vez
+      setToasts((prev) => [...prev.slice(-2), nuevo]);
 
       setTimeout(() => {
         setToasts((actuales) => actuales.filter((t) => t.id !== nuevo.id));
@@ -64,7 +61,7 @@ export default function ToastNotificacion() {
         const esPeligro = toast.tipo === 'danger';
         const esAlerta = toast.tipo === 'warning';
 
-        let colorBorde = '#ffb703'; // Ámbar por defecto de Ferrefix
+        let colorBorde = '#ffb703';
         if (esExito) colorBorde = '#198754';
         if (esPeligro) colorBorde = '#dc3545';
         if (esAlerta) colorBorde = '#fd7e14';
@@ -77,7 +74,7 @@ export default function ToastNotificacion() {
             role="status"
           >
             <div className="d-flex align-items-start gap-3 p-3">
-              {/* Imagen de producto o Icono de estado */}
+
               {toast.imagen ? (
                 <div className="toast-ferrefix-img-wrapper border rounded-1 overflow-hidden flex-shrink-0">
                   <img
@@ -115,7 +112,6 @@ export default function ToastNotificacion() {
                 </div>
               )}
 
-              {/* Contenido textual */}
               <div className="flex-grow-1 min-w-0">
                 <div className="d-flex align-items-center justify-content-between mb-1">
                   <strong className="toast-ferrefix-titulo text-dark small fw-bold text-truncate">
@@ -134,7 +130,6 @@ export default function ToastNotificacion() {
                   {toast.mensaje}
                 </p>
 
-                {/* Botón de acción opcional (ej: Ver Carrito) */}
                 {toast.link && (
                   <Link
                     to={toast.link}
@@ -148,7 +143,6 @@ export default function ToastNotificacion() {
               </div>
             </div>
 
-            {/* Barra de progreso de autodestrucción */}
             <div
               className="toast-ferrefix-progreso"
               style={{
