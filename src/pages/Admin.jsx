@@ -17,6 +17,8 @@ import {
   EVENTO_SESION_ACTUALIZADA
 } from '../data/auth';
 import ImagenProductoUploader from '../components/ImagenProductoUploader';
+import EditorFichaTecnica from '../components/EditorFichaTecnica';
+import { convertirFichaTecnica, validarFichaTecnica } from '../utils/fichaTecnica';
 import GeneradorProductos from '../components/GeneradorProductos';
 import { validadores } from '../data/validaciones';
 import { obtenerContratosArriendo, EVENTO_MAQUINARIAS_ACTUALIZADAS, useEstadoArriendos, cargarContratosArriendo } from '../data/maquinarias';
@@ -34,6 +36,7 @@ const FORM_INICIAL = {
   contenidoPresentacion: '1 unidad',
   descripcionCorta: '',
   descripcionLarga: '',
+  especificaciones: [],
   imagen: ''
 };
 
@@ -62,6 +65,7 @@ function Admin() {
   const [imagenArchivo, setImagenArchivo] = useState(null);
   const [subiendoImagen, setSubiendoImagen] = useState(false);
   const [errorProducto, setErrorProducto] = useState('');
+  const [validarFicha, setValidarFicha] = useState(false);
   const [productoAEliminar, setProductoAEliminar] = useState(null);
   const [ordenSeleccionada, setOrdenSeleccionada] = useState(null);
   const [mensajeAlerta, setMensajeAlerta] = useState(null);
@@ -99,7 +103,7 @@ function Admin() {
       (acc, p) => acc + (Number(p.precioVenta) || 0) * (Number(p.stock) || 0),
       0
     );
-    const totalVentas = ordenes.filter(o => o.estado === 'Completada').reduce((acc, o) => acc + (Number(o.total) || 0), 0);
+    const totalVentas = ordenes.filter(o => ['Pagado', 'Completada'].includes(o.estado)).reduce((acc, o) => acc + (Number(o.total) || 0), 0);
 
     return {
       totalProductos,
@@ -129,6 +133,7 @@ function Admin() {
 
   const abrirModalCrear = () => {
     setErrorProducto('');
+    setValidarFicha(false);
     setModoEdicion(false);
     setImagenArchivo(null);
     setFormData({ ...FORM_INICIAL });
@@ -137,11 +142,14 @@ function Admin() {
 
   const abrirModalEditar = (prod) => {
     setErrorProducto('');
+    setValidarFicha(false);
     setModoEdicion(true);
     setImagenArchivo(null);
     setFormData({
       idProducto: prod.idProducto,
-      especificaciones: prod.especificaciones,
+      especificaciones: Object.entries(prod.especificaciones || {}).map(([atributo, valor]) => ({
+        id: crypto.randomUUID(), atributo, valor: String(valor),
+      })),
       nombre: prod.nombre,
       marca: prod.marca,
       categoria: prod.categoria,
@@ -166,6 +174,13 @@ function Admin() {
     e.preventDefault();
     if (subiendoImagen) return;
     setErrorProducto('');
+    setValidarFicha(true);
+    const erroresFicha = validarFichaTecnica(formData.especificaciones);
+    if (Object.keys(erroresFicha).length) {
+      const [id, campos] = Object.entries(erroresFicha)[0];
+      document.getElementById(`${campos.atributo ? 'atributo' : 'valor'}-${id}`)?.focus();
+      return;
+    }
     setSubiendoImagen(true);
     try {
       let imagen = formData.imagen.trim();
@@ -175,7 +190,7 @@ function Admin() {
         setImagenArchivo(null);
       }
       if (!imagen) throw new Error('Selecciona una imagen para el producto.');
-      const datos = { ...formData, imagen };
+      const datos = { ...formData, imagen, especificaciones: convertirFichaTecnica(formData.especificaciones) };
       if (modoEdicion) await actualizarProducto(formData.idProducto, datos);
       else await crearProducto(datos);
       mostrarMensaje(modoEdicion ? 'Producto actualizado.' : 'Producto creado.');
@@ -969,6 +984,12 @@ function Admin() {
                         value={formData.descripcionLarga}
                         onChange={(e) => setFormData({ ...formData, descripcionLarga: e.target.value })}
                       ></textarea>
+                    </div>
+                    <div className="col-12">
+                      <EditorFichaTecnica filas={formData.especificaciones}
+                        onChange={especificaciones => setFormData(prev => ({ ...prev, especificaciones }))}
+                        errores={validarFicha ? validarFichaTecnica(formData.especificaciones) : {}}
+                        disabled={subiendoImagen} />
                     </div>
                   </div>
                 </div>

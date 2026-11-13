@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { obtenerProductos, EVENTO_PRODUCTOS_ACTUALIZADOS, useEstadoCatalogo } from '../data/productos';
 import { agregarAlCarrito } from '../data/carrito';
 import { mostrarToast } from '../components/ToastNotificacion';
+import SelectorCantidad from '../components/SelectorCantidad';
 import { unidadVenta, cantidadPresentaciones } from '../utils/presentacionProducto';
 
 function DetalleProducto() {
@@ -57,16 +58,11 @@ function DetalleProducto() {
     maximumFractionDigits: 0
   }).format(producto.precioVenta);
 
-  const handleRestar = () => {
-    if (cantidad > 1) setCantidad((prev) => prev - 1);
-  };
-
-  const handleSumar = () => {
-    if (cantidad < producto.stock) setCantidad((prev) => prev + 1);
-  };
-
   const handleAgregarCarrito = async () => {
-    const res = await agregarAlCarrito(producto, cantidad);
+    const cantidadValidada = Math.min(producto.stock, Math.max(1, Number(cantidad) || 1));
+    if (cantidadValidada <= 0) return;
+    setCantidad(cantidadValidada);
+    const res = await agregarAlCarrito(producto, cantidadValidada);
     if (!res.ok) {
       mostrarToast({
         titulo: "Stock Insuficiente",
@@ -79,7 +75,7 @@ function DetalleProducto() {
 
       mostrarToast({
         titulo: "¡Añadido al Carrito!",
-        mensaje: `${producto.nombre} (${cantidadPresentaciones(producto, cantidad)})`,
+        mensaje: `${producto.nombre} (${cantidadPresentaciones(producto, cantidadValidada)})`,
         tipo: "success",
         imagen: producto.imagen,
         link: "/carrito",
@@ -124,183 +120,70 @@ function DetalleProducto() {
           </button>
         </div>
 
-        <div className="row g-4 g-lg-5 mb-5 align-items-start">
-
-          <div className="col-12 col-lg-6">
-            <div className="detalle-img-card rounded-4 p-3 p-md-4 border bg-platino shadow-sm position-relative overflow-hidden">
-              <img
-                src={producto.imagen}
-                alt={producto.nombre}
-                className="img-fluid w-100 object-fit-contain rounded-3 detalle-producto-foto"
-              />
-            </div>
-
-            <div className="row g-2 mt-3 marca-centro marca-nota">
-              <div className="col-4">
-                <div className="p-2 border rounded-3 bg-light">
-                  <i className="bi bi-truck detalle-garantia-icon d-block mb-1"></i>
-                  <span>Envío a todo Chile</span>
-                </div>
-              </div>
-              <div className="col-4">
-                <div className="p-2 border rounded-3 bg-light">
-                  <i className="bi bi-shield-check detalle-garantia-icon d-block mb-1"></i>
-                  <span>Garantía Oficial</span>
-                </div>
-              </div>
-              <div className="col-4">
-                <div className="p-2 border rounded-3 bg-light">
-                  <i className="bi bi-shop detalle-garantia-icon d-block mb-1"></i>
-                  <span>Retiro en Tienda</span>
-                </div>
-              </div>
+        <div className="detalle-principal">
+          <div className="detalle-galeria">
+            <div className="detalle-img-card">
+              <img src={producto.imagen} alt={producto.nombre} className="detalle-producto-foto" />
             </div>
           </div>
 
-          <div className="col-12 col-lg-6">
-            <div className="detalle-info-panel">
-
-              <div className="d-flex align-items-center gap-2 mb-2">
-                <span className="marca-chip marca-chip--ambar">
-                  {producto.marca}
-                </span>
-                <span className="marca-nota">Código Ref: #{producto.idProducto}</span>
-              </div>
-
-              <h1 className="detalle-producto-titulo mb-3">
-                {producto.nombre}
-              </h1>
-
-              <div className="detalle-precio-box p-3 bg-light rounded-4 mb-4 border border-light-subtle">
-                <div className="marca-nota mb-1">Precio por {unidadVenta(producto)} con IVA incluido:</div>
-                <div className="detalle-precio-valor">
-                  {precioFormateado}
-                </div>
-                {producto.contenidoPresentacion && (
-                  <div className="marca-nota mt-2">Contenido por {unidadVenta(producto)}: {producto.contenidoPresentacion}</div>
-                )}
-              </div>
-
-              {producto.descripcionCorta && (
-                <p className="marca-parrafo mb-4" style={{ whiteSpace: 'pre-line' }}>
-                  {producto.descripcionCorta}
-                </p>
-              )}
-
-              <div className="mb-4">
-                <label htmlFor="producto-cantidad" className="form-label marca-etiqueta mb-2">
-                  Cantidad de {unidadVenta(producto) === 'unidad' ? 'unidades' : unidadVenta(producto) + 's'}:
-                </label>
-                <div className="d-flex align-items-center gap-3">
-                  <div className="input-group detalle-cantidad-group">
-                    <button
-                      className="btn btn-outline-secondary px-3"
-                      type="button"
-                      onClick={handleRestar}
-                      disabled={cantidad <= 1}
-                      aria-label="Restar una unidad"
-                    >
-                      <i className="bi bi-dash"></i>
-                    </button>
-                    <input
-                      type="text"
-                      className="form-control marca-centro marca-bold bg-white"
-                      id="producto-cantidad" value={cantidad}
-                      readOnly
-                    />
-                    <button
-                      className="btn btn-outline-secondary px-3"
-                      type="button"
-                      onClick={handleSumar}
-                      disabled={cantidad >= producto.stock}
-                      aria-label="Sumar una unidad"
-                    >
-                      <i className="bi bi-plus"></i>
-                    </button>
-                  </div>
-                  <span className="marca-nota">
-                    Máximo: {cantidadPresentaciones(producto, producto.stock)}
-                  </span>
-                </div>
-              </div>
-
-              <div className="d-grid gap-2 mb-4">
-                <button
-                  type="button"
-                  onClick={handleAgregarCarrito}
-                  disabled={producto.stock <= 0}
-                  className={`btn btn-lg py-3 rounded-2 shadow-sm d-flex align-items-center justify-content-center gap-2 transition-all ${
-                    botonAnimado ? "btn-success text-white" : "btn-ambar"
-                  }`}
-                  style={{ transition: "all 0.25s ease" }}
-                >
-                  <i className={`bi ${botonAnimado ? "bi-check2-circle" : "bi-cart-plus-fill"} marca-icono`}></i>
-                  {producto.stock <= 0
-                    ? "Agotado Temporalmente"
-                    : botonAnimado
-                    ? "¡Añadido con éxito! ✓"
-                    : "Agregar al Carrito"}
-                </button>
-              </div>
-
+          <section className="detalle-info-panel" aria-labelledby="producto-titulo">
+            <div className="detalle-info-cabecera">
+              <span className="marca-etiqueta">{producto.marca}</span>
+              <h1 id="producto-titulo" className="detalle-producto-titulo">{producto.nombre}</h1>
+              <p className="marca-nota mb-0">Código del producto: {producto.idProducto}</p>
             </div>
-          </div>
+            <div className="detalle-precio-box">
+              <span className="marca-nota">Precio por {unidadVenta(producto)}</span>
+              <div className="detalle-precio-valor">{precioFormateado}</div>
+              <span className="marca-nota">IVA incluido</span>
+            </div>
+            <div className="detalle-info-extra">
+              {producto.contenidoPresentacion && <p className="marca-nota">Contenido por {unidadVenta(producto)}: {producto.contenidoPresentacion}</p>}
+              {producto.descripcionCorta && <p className="marca-parrafo mb-0 detalle-texto">{producto.descripcionCorta}</p>}
+            </div>
+          </section>
 
+          <aside className="detalle-compra" aria-label="Compra y entrega">
+            <div className="detalle-compra-card">
+              <label htmlFor="producto-cantidad" className="marca-strong">Cantidad</label>
+              <SelectorCantidad id="producto-cantidad" cantidad={cantidad} maximo={producto.stock}
+                onChange={setCantidad} disabled={producto.stock <= 0} describedBy="producto-stock" />
+              <p id="producto-stock" className="marca-nota mt-2 mb-4">{producto.stock > 0 ? `Disponible: ${cantidadPresentaciones(producto, producto.stock)}` : 'Sin stock disponible'}</p>
+              <button type="button" onClick={handleAgregarCarrito} disabled={producto.stock <= 0}
+                className={`btn w-100 detalle-agregar ${botonAnimado ? 'btn-success' : 'btn-ambar'}`}>
+                <i className={`bi ${botonAnimado ? 'bi-check2-circle' : 'bi-cart-plus'} me-2`} aria-hidden="true" />
+                {producto.stock <= 0 ? 'Agotado temporalmente' : botonAnimado ? '¡Añadido al carrito!' : 'Agregar al carrito'}
+              </button>
+            </div>
+            <details className="detalle-entrega" open>
+              <summary><i className="bi bi-geo-alt" aria-hidden="true" /> Opciones de entrega <i className="bi bi-chevron-down" aria-hidden="true" /></summary>
+              <div className="detalle-entrega-opcion">
+                <i className="bi bi-box-seam" aria-hidden="true" />
+                <div><h2>Despacho a domicilio</h2><p>Revisa los datos y el costo de envío al continuar tu compra.</p><Link to="/fletes">Ver información de despacho</Link></div>
+              </div>
+              <div className="detalle-entrega-opcion">
+                <i className="bi bi-shop" aria-hidden="true" />
+                <div><h2>Retiro en tienda</h2><p>Antonio Varas 666, Providencia.</p><Link to="/contacto">Consultar disponibilidad de retiro</Link></div>
+              </div>
+            </details>
+          </aside>
         </div>
 
-        <div className="detalle-ficha-seccion border-top pt-5">
-          <div className="row g-4">
-
-            <div className="col-12 col-lg-6">
-              <h3 className="mb-3 d-flex align-items-center gap-2">
-                <i className="bi bi-info-circle marca-icono-ambar"></i>
-                Descripción Detallada
-              </h3>
-              <p className="marca-parrafo mb-4" style={{ whiteSpace: 'pre-line' }}>
-                {producto.descripcionLarga}
-              </p>
-              <div className="p-3 bg-light rounded-3 border">
-                <h6 className="marca-titulo marca-tam-6 mb-2">
-                  <i className="bi bi-geo-alt-fill marca-icono-rojo me-1"></i>
-                  ¿Prefieres comprar presencialmente?
-                </h6>
-                <p className="marca-nota mb-0">
-                  Encuentra este producto en nuestro local ubicado en <strong>Antonio Varas 666, Providencia</strong>. Consulta disponibilidad y atención personalizada con nuestros expertos ferreteros.
-                </p>
-              </div>
-            </div>
-
-            <div className="col-12 col-lg-6">
-              <h3 className="mb-3 d-flex align-items-center gap-2">
-                <i className="bi bi-tools marca-icono-ambar"></i>
-                Ficha Técnica
-              </h3>
-
-              {producto.especificaciones ? (
-                <div className="table-responsive rounded-3 border overflow-hidden">
-                  <table className="table table-striped table-hover mb-0 align-middle">
-                    <tbody>
-                      {Object.entries(producto.especificaciones).map(([clave, valor]) => (
-                        <tr key={clave}>
-                          <th scope="row" className="bg-platino marca-strong py-3 ps-3 w-40 marca-fino">
-                            {clave}
-                          </th>
-                          <td className="py-3 ps-3 marca-parrafo marca-fino">
-                            {valor}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <p className="marca-muted">No hay especificaciones adicionales registradas.</p>
-              )}
-            </div>
-
-          </div>
-        </div>
-
+        <section className="detalle-descripcion" aria-labelledby="descripcion-titulo">
+          <h2 id="descripcion-titulo">Descripción del producto</h2>
+          <p className="marca-parrafo detalle-texto mb-0">{producto.descripcionLarga || producto.descripcionCorta || 'No hay una descripción adicional disponible.'}</p>
+        </section>
+        <section className="detalle-ficha-seccion" aria-labelledby="especificaciones-titulo">
+          <h2 id="especificaciones-titulo">Especificaciones</h2>
+          {Object.keys(producto.especificaciones || {}).length > 0 ? (
+            <dl className="detalle-especificaciones">
+              {Object.entries(producto.especificaciones).map(([clave, valor]) => (
+                <div className="detalle-especificacion" key={clave}><dt>{clave}</dt><dd>{valor}</dd></div>
+              ))}
+            </dl>
+          ) : <p className="marca-muted">No hay especificaciones adicionales registradas.</p>}
+        </section>
       </div>
     </div>
   );

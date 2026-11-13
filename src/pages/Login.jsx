@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { iniciarSesion, registrarUsuario } from '../data/auth';
 import { validadores, validarFormulario, formatearRut } from '../data/validaciones';
+import ProgresoCompra from '../components/ProgresoCompra';
 
 function Login() {
   const navigate = useNavigate();
@@ -82,6 +83,7 @@ function Login() {
   return (
     <div className="login-page py-5 d-flex align-items-center">
       <div className="container">
+        {volver.startsWith('/carrito') && <ProgresoCompra pasoActual="sesion" onVolver={() => navigate('/carrito')} bloqueado={enviando} />}
         <div className="row justify-content-center">
           <div className="col-12 col-sm-10 col-md-8 col-lg-5">
 

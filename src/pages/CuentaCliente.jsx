@@ -417,7 +417,7 @@ export default function CuentaCliente() {
             <div className="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom flex-wrap gap-2">
               <div>
                 <h2 className="info-section-title mb-1">Historial de Compras Realizadas</h2>
-                <span className="text-muted small">Consulta el estado, los productos y la entrega de tus pedidos</span>
+                <span className="text-muted small">Consulta los productos y la entrega de tus pedidos</span>
               </div>
               <span className="badge bg-dark px-3 py-2 font-monospace">Total Compras: {ordenes.length}</span>
             </div>
@@ -444,9 +444,11 @@ export default function CuentaCliente() {
                   <div key={ord.idOrden} className="border rounded-1 p-3 p-md-4 bg-white shadow-sm">
                     <div className="d-flex flex-wrap justify-content-between align-items-center pb-2 mb-3 border-bottom gap-2">
                       <div>
-                        <span className="badge bg-success-subtle text-success border border-success-subtle me-2">
-                          ● {ord.estado || "Pendiente de confirmación"}
-                        </span>
+                        {ord.estado && ord.estado !== "Pendiente de pago" && (
+                          <span className="badge bg-success-subtle text-success border border-success-subtle me-2">
+                            ● {ord.estado}
+                          </span>
+                        )}
                         <strong className="text-dark me-2">Orden #{ord.idOrden}</strong>
                         {ord.numeroBoleta && (
                           <span className="badge bg-secondary-subtle text-secondary font-monospace">

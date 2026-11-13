@@ -617,15 +617,19 @@
 }
 
 .detalle-img-card {
-  min-height: 400px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-color: #e2e8f0 !important;
+  aspect-ratio: 1;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid #e2e5e8;
+  border-radius: 12px;
+  background: #fff;
 }
 
 .detalle-producto-foto {
-  max-height: 380px;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .detalle-precio-valor {
@@ -635,7 +639,8 @@
   color: var(--color-oscuro);
 }
 
-.detalle-ficha-seccion h3 {
+.detalle-ficha-seccion h2,
+.detalle-descripcion h2 {
   font-family: "Oswald", sans-serif;
   font-size: 1.5rem;
   font-weight: 700;
@@ -653,10 +658,6 @@
   white-space: nowrap;
 }
 
-.detalle-cantidad-group {
-  width: 135px;
-}
-
 .detalle-error-icon {
   font-size: 3.5rem;
   color: var(--color-ambar);
@@ -671,13 +672,150 @@
   min-height: 75vh;
 }
 
+.detalle-principal {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) minmax(255px, 0.78fr);
+  gap: 24px;
+  align-items: start;
+  margin-bottom: 40px;
+}
+.detalle-info-panel,
+.detalle-compra-card,
+.detalle-entrega {
+  border: 1px solid #e2e5e8;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.detalle-info-cabecera,
+.detalle-info-extra,
+.detalle-compra-card { padding: 24px; }
+.detalle-producto-titulo { font-size: clamp(1.55rem, 2.2vw, 2rem); margin: 12px 0 16px; overflow-wrap: anywhere; }
+.detalle-precio-box { padding: 20px 24px; text-align: right; background: var(--color-platino); }
+.detalle-info-extra:empty { display: none; }
+.detalle-texto { white-space: pre-line; overflow-wrap: anywhere; }
+.detalle-compra-card > label { display: block; margin-bottom: 12px; }
+.detalle-agregar { min-height: 48px; border-radius: 8px; font-weight: 600; font-size: 0.95rem; }
+.detalle-entrega { margin-top: 18px; background: #fafafa; padding: 20px; }
+.detalle-entrega summary { display: flex; align-items: center; gap: 8px; list-style: none; cursor: pointer; font-weight: 600; }
+.detalle-entrega summary::-webkit-details-marker { display: none; }
+.detalle-entrega summary > .bi:last-child { margin-left: auto; font-size: 0.8rem; }
+.detalle-entrega[open] summary > .bi:last-child { transform: rotate(180deg); }
+.detalle-entrega-opcion { display: flex; gap: 12px; padding-top: 20px; margin-top: 20px; border-top: 1px solid #e2e5e8; }
+.detalle-entrega-opcion > .bi { font-size: 1.2rem; }
+.detalle-entrega-opcion h2 { font: 600 0.95rem/1.4 system-ui, sans-serif; margin-bottom: 8px; }
+.detalle-entrega-opcion p,
+.detalle-entrega-opcion a { font-size: 0.8rem; line-height: 1.6; }
+.detalle-entrega-opcion p { color: #6b7280; margin-bottom: 4px; }
+.detalle-entrega-opcion a { color: var(--color-bronce); text-underline-offset: 3px; }
+.detalle-descripcion { margin-bottom: 32px; }
+.detalle-descripcion h2,
+.detalle-ficha-seccion h2 { margin-bottom: 18px; }
+.detalle-especificaciones { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; margin: 0; }
+.detalle-especificacion { display: grid; grid-template-columns: 1fr 1fr; align-items: baseline; gap: 16px; padding: 18px 20px; border-radius: 8px; background: #f7f7f7; overflow-wrap: anywhere; }
+.detalle-especificacion:nth-child(even) { background: #ededed; }
+.detalle-especificacion dt { font-size: 0.9rem; font-weight: 600; }
+.detalle-especificacion dd { font-size: 0.9rem; color: #4b5563; margin: 0; }
+
+.selector-cantidad { display: inline-flex; flex: 0 0 auto; border: 1px solid #adb5bd; border-radius: 6px; background: #fff; overflow: hidden; max-width: 100%; }
+.selector-cantidad button { flex: 0 0 36px; width: 36px; height: 40px; padding: 0; border: 0; background: transparent; color: var(--color-oscuro); font-size: 1.15rem; }
+.selector-cantidad button:disabled { color: #adb5bd; cursor: not-allowed; }
+.selector-cantidad input { width: calc(var(--cantidad-digitos, 3) * 1ch + 24px); min-width: 64px; max-width: 100%; padding: 8px; border: 0; border-inline: 1px solid #e2e5e8; border-radius: 0; text-align: center; font: 600 1rem/1.4 system-ui, sans-serif; font-variant-numeric: tabular-nums; color: var(--color-oscuro); background: #fff; }
+.selector-cantidad :focus-visible { outline: 2px solid var(--color-bronce); outline-offset: -3px; }
+.selector-cantidad button:not(:disabled):hover { background: var(--color-platino); }
+
+.compra-progreso { margin-bottom: 36px; background: #fff; border: 1px solid #e2e5e8; border-radius: 16px; padding: 24px 20px; box-shadow: 0 2px 3px #1c222605; }
+.compra-progreso ol { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); list-style: none; margin: 0; padding: 0; }
+.compra-progreso li { position: relative; text-align: center; }
+.compra-progreso li:not(:last-child)::after { content: ''; position: absolute; height: 2px; top: 20px; left: calc(50% + 28px); right: calc(-50% + 28px); background: #e2e5e8; }
+.compra-progreso li.es-completo::after { background: var(--color-ambar); }
+.compra-progreso button { width: 100%; border: 0; padding: 0 6px; background: transparent; color: var(--color-oscuro); display: flex; align-items: center; flex-direction: column; gap: 6px; }
+.compra-progreso button:disabled { opacity: 1; }
+.compra-progreso button:not(:disabled):hover .compra-paso-titulo { text-decoration: underline; }
+.compra-paso-numero { display: grid; place-items: center; width: 40px; height: 40px; margin-bottom: 8px; border-radius: 50%; background: #ededed; color: #4b5563; font-weight: 700; }
+.es-actual .compra-paso-numero { background: var(--color-ambar); color: var(--color-oscuro); }
+.es-completo .compra-paso-numero { background: var(--color-oscuro); color: var(--color-dorado); }
+.compra-paso-titulo { font-family: 'Oswald', sans-serif; font-size: 1rem; }
+.compra-paso-descripcion { font-size: 0.72rem; color: #6b7280; }
+.carrito-productos,
+.compra-resumen-card,
+.compra-formulario { background: #fff; border: 1px solid #e2e5e8; border-radius: 16px; box-shadow: 0 2px 3px #1c222605; }
+.carrito-productos { padding: 24px; }
+.carrito-cabecera { display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
+.carrito-cabecera > div { flex: 1 1 240px; }
+.boleta-numero { overflow-wrap: anywhere; }
+.boleta-importe { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; margin-bottom: 8px; }
+.boleta-importe:last-child { margin-bottom: 0; }
+.boleta-importe dt { font-weight: 500; }
+.boleta-importe dd { margin: 0; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.carrito-producto { display: grid; grid-template-columns: 100px minmax(0, 1fr) auto 28px; gap: 16px 20px; padding-block: 24px; }
+.carrito-producto + .carrito-producto { border-top: 1px solid #e2e5e8; }
+.carrito-producto:first-of-type { padding-top: 0; }
+.carrito-producto:last-child { padding-bottom: 0; }
+.carrito-producto-imagen { grid-row: span 2; align-self: start; aspect-ratio: 1; }
+.carrito-producto-imagen img { width: 100%; height: 100%; object-fit: contain; }
+.carrito-producto-info { display: flex; flex-direction: column; align-items: start; gap: 6px; overflow-wrap: anywhere; }
+.carrito-item-nombre { font-size: 0.95rem; font-weight: 400; }
+.carrito-producto-info > strong { font-size: 0.85rem; }
+.carrito-producto-precio { display: flex; flex-direction: column; text-align: right; }
+.carrito-producto-precio > strong { font-size: 1.15rem; font-variant-numeric: tabular-nums; }
+.carrito-quitar { align-self: start; padding: 0; background: none; border: 0; color: #6b7280; min-height: 32px; font-size: 1.15rem; }
+.carrito-quitar:hover { color: #b02a37; }
+.carrito-producto-cantidad { grid-column: 2 / -1; display: flex; flex-direction: column; align-items: end; gap: 6px; }
+.carrito-producto-cantidad > .marca-nota { font-size: 0.75rem; }
+.compra-resumen { position: sticky; top: 24px; }
+.compra-resumen-importes,
+.compra-resumen-acciones { padding: 28px; }
+.compra-resumen-acciones { border-top: 1px solid #e2e5e8; }
+.compra-resumen-productos summary { display: flex; align-items: center; gap: 10px; list-style: none; cursor: pointer; font-size: 0.85rem; }
+.compra-resumen-productos summary::-webkit-details-marker { display: none; }
+.compra-resumen-productos summary strong { margin-left: auto; white-space: nowrap; }
+.compra-resumen-productos summary > i { font-size: 0.7rem; }
+.compra-resumen-productos[open] summary > i { transform: rotate(180deg); }
+.compra-resumen-productos ul { list-style: none; padding: 0; margin: 16px 0 0; }
+.compra-resumen-productos li { display: flex; justify-content: space-between; gap: 16px; font-size: 0.75rem; color: #6b7280; margin-bottom: 12px; }
+.compra-resumen-productos li > span:last-child { white-space: nowrap; }
+.compra-resumen-linea { display: flex; justify-content: space-between; gap: 16px; font-size: 0.9rem; margin-top: 24px; }
+.compra-resumen-total { font-weight: 600; margin-bottom: 8px; }
+.compra-resumen-total strong { font-size: 1.25rem; white-space: nowrap; }
+.compra-continuar { width: 100%; min-height: 48px; border-radius: 24px; font-weight: 600; padding: 12px 16px; }
+.compra-envio-nota { display: flex; align-items: start; gap: 8px; background: #fff8e6; color: #725008; border: 1px solid #f0dfb9; padding: 12px; border-radius: 4px; font-size: 0.75rem; line-height: 1.6; margin: 24px 0; }
+.compra-seguir { display: block; text-align: center; font-size: 0.85rem; color: var(--color-oscuro); text-underline-offset: 3px; }
+.compra-formulario { padding: 32px; }
+.compra-volver { display: block; width: 100%; color: var(--color-oscuro); font-size: 0.85rem; margin-top: 10px; }
+
+@media (min-width: 992px) and (max-width: 1199px) {
+  .detalle-principal { grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr) 250px; gap: 16px; }
+  .detalle-info-cabecera, .detalle-info-extra, .detalle-compra-card { padding: 18px; }
+  .compra-resumen-importes, .compra-resumen-acciones { padding: 20px; }
+}
+@media (max-width: 991px) {
+  .detalle-principal { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .detalle-compra { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; align-items: start; }
+  .detalle-entrega { margin-top: 0; }
+  .compra-resumen { position: static; }
+}
+@media (max-width: 575px) {
+  .detalle-principal, .detalle-compra, .detalle-especificaciones { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .detalle-principal { margin-bottom: 28px; }
+  .detalle-especificacion { padding: 16px; }
+  .compra-progreso { padding: 16px 8px; margin-bottom: 24px; border-radius: 12px; }
+  .compra-paso-numero { width: 32px; height: 32px; margin-bottom: 4px; font-size: 0.85rem; }
+  .compra-progreso li:not(:last-child)::after { top: 16px; left: calc(50% + 19px); right: calc(-50% + 19px); }
+  .compra-paso-titulo { font: 500 0.68rem/1.4 system-ui, sans-serif; }
+  .compra-paso-descripcion { display: none; }
+  .compra-progreso button { padding: 0 3px; }
+  .carrito-productos, .compra-formulario { padding: 20px; }
+  .carrito-producto { grid-template-columns: 72px minmax(0, 1fr) 28px; gap: 16px 12px; }
+  .carrito-producto-imagen { grid-row: 1 / 3; }
+  .carrito-quitar { grid-column: 3; grid-row: 1; }
+  .carrito-producto-precio { grid-column: 2 / -1; text-align: left; }
+  .carrito-producto-cantidad { grid-column: 1 / -1; align-items: end; }
+  .compra-resumen-importes, .compra-resumen-acciones { padding: 24px; }
+}
+
 .carrito-vacio-icon {
   font-size: 3.5rem;
   color: #9ca3af;
-}
-
-.carrito-check-icon {
-  font-size: 3rem;
 }
 
 .carrito-item-nombre {
@@ -701,6 +839,16 @@
 .admin-wrapper {
   background-color: var(--color-platino);
   min-height: 100vh;
+}
+
+.admin-ficha-tecnica { min-width: 0; }
+.admin-ficha-fila { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) 34px; gap: 12px; padding: 12px; border-radius: 4px; background: #f7f7f7; align-items: start; }
+.admin-ficha-fila:nth-child(even) { background: #ededed; }
+.admin-ficha-quitar { margin-top: 25px; min-height: 32px; }
+@media (max-width: 575px) {
+  .admin-ficha-fila { grid-template-columns: minmax(0, 1fr) 34px; gap: 10px; }
+  .admin-ficha-fila > div:nth-child(2) { grid-column: 1; }
+  .admin-ficha-quitar { grid-column: 2; grid-row: 1; }
 }
 
 .admin-navbar {

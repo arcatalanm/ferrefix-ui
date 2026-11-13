@@ -156,13 +156,6 @@ function ContactoCotizacion() {
                 </p>
               </div>
 
-              {Object.values(errores).some(Boolean) && (
-                <div className="alert alert-danger d-flex align-items-center p-3 rounded-1 mb-4" role="alert">
-                  <i className="bi bi-exclamation-triangle-fill me-2"></i>
-                  <div>Revisa los campos marcados en rojo antes de enviar tu solicitud.</div>
-                </div>
-              )}
-
               <form onSubmit={handleSubmit} noValidate>
                 <div className="row g-3">
 

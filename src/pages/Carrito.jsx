@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import ProgresoCompra from '../components/ProgresoCompra';
+import ResumenCompra from '../components/ResumenCompra';
+import SelectorCantidad from '../components/SelectorCantidad';
+import { Link, useLocation } from 'react-router-dom';
 import {
   obtenerCarrito,
   actualizarCantidad,
   eliminarDelCarrito,
-  vaciarCarrito,
   obtenerTotalesCarrito,
   cargarCarrito,
   useEstadoCarrito,
@@ -40,7 +42,8 @@ function Carrito() {
   const [guardando, setGuardando] = useState(false);
   const idSolicitud = useRef(crypto.randomUUID());
 
-  const [pasoActual, setPasoActual] = useState('carrito');
+  const location = useLocation();
+  const [pasoActual, setPasoActual] = useState(() => sesion && new URLSearchParams(location.search).get('paso') === 'entrega' ? 'entrega' : 'carrito');
   const [ordenCreada, setOrdenCreada] = useState(null);
   const [alertaStock, setAlertaStock] = useState(null);
 
@@ -112,13 +115,6 @@ function Carrito() {
     if (!resultado.ok) setAlertaStock(resultado.error);
   };
 
-  const handleVaciar = async () => {
-    if (window.confirm('¿Seguro que deseas vaciar todos los productos del carrito?')) {
-      const resultado = await vaciarCarrito();
-      if (!resultado.ok) setAlertaStock(resultado.error);
-    }
-  };
-
   const validarCampo = (campo, valor) => {
     const validador = REGLAS_VALIDACION[campo];
     if (!validador) return;
@@ -147,17 +143,30 @@ function Carrito() {
     setErrores((prev) => ({ ...prev, comuna: '' }));
   };
 
+  const cambiarPaso = paso => {
+    setPasoActual(paso);
+    setAlertaStock(null);
+    window.scrollTo(0, 0);
+  };
+
+  const validarEntrega = () => {
+    const nuevosErrores = validarFormulario(REGLAS_VALIDACION, formCliente);
+    setErrores(nuevosErrores);
+    setTouched(Object.fromEntries(Object.keys(REGLAS_VALIDACION).map(campo => [campo, true])));
+    return Object.keys(nuevosErrores).length === 0;
+  };
+
+  const handleContinuarEntrega = e => {
+    e.preventDefault();
+    if (validarEntrega()) cambiarPaso('pago');
+  };
+
   const handleProcesarCompra = async (e) => {
     e.preventDefault();
 
     if (items.length === 0 || guardando || estadoCarrito.cargando) return;
 
-    const nuevosErrores = validarFormulario(REGLAS_VALIDACION, formCliente);
-    setErrores(nuevosErrores);
-    setTouched(
-      Object.keys(REGLAS_VALIDACION).reduce((acc, campo) => ({ ...acc, [campo]: true }), {})
-    );
-    if (Object.keys(nuevosErrores).length > 0) return;
+    if (!validarEntrega()) { cambiarPaso('entrega'); return; }
 
     setAlertaStock(null);
     setGuardando(true);
@@ -174,6 +183,7 @@ function Carrito() {
     if (!resultado.ok) {
       setAlertaStock(resultado.error);
       setErrores(Object.fromEntries(Object.entries(resultado.errores || {}).map(([campo, mensaje]) => [campo.replace(/^cliente\./, ''), mensaje])));
+      if (Object.keys(resultado.errores || {}).some(campo => campo.startsWith('cliente.'))) setPasoActual('entrega');
       return;
     }
     setOrdenCreada(resultado.orden);
@@ -181,6 +191,25 @@ function Carrito() {
     idSolicitud.current = crypto.randomUUID();
     window.scrollTo(0, 0);
   };
+
+  const cabeceraCarrito = (
+  <div className="carrito-cabecera">
+    <div>
+      <h1 className="marca-titulo marca-tam-2 mb-1">
+        Carrito de Compras
+      </h1>
+      <p className="marca-nota mb-0">
+        Revisa tus productos seleccionados y confirma las cantidades antes de pagar.
+      </p>
+    </div>
+
+  </div>
+  );
+
+  // Los precios finales ya incluyen IVA: desglosarlo no cambia el total cobrado.
+  const totalOrden = Number(ordenCreada?.total || 0);
+  const netoOrden = Math.round(totalOrden / 1.19);
+  const ivaOrden = totalOrden - netoOrden;
 
   return (
     <div className="carrito-page py-4 py-lg-5">
@@ -197,11 +226,16 @@ function Carrito() {
             <li className="breadcrumb-item"><Link to="/catalogo">Catálogo</Link></li>
             <li className="breadcrumb-item active" aria-current="page">
               {pasoActual === 'carrito' && 'Carrito de Compras'}
-              {pasoActual === 'checkout' && 'Paso de Pago y Despacho'}
+              {pasoActual === 'sesion' && 'Inicio de sesión'}
+              {pasoActual === 'entrega' && 'Entrega'}
+              {pasoActual === 'pago' && 'Pago'}
               {pasoActual === 'exito' && 'Confirmación de Compra'}
             </li>
           </ol>
         </nav>
+
+        <ProgresoCompra pasoActual={pasoActual} onVolver={cambiarPaso}
+          bloqueado={guardando || pasoActual === 'exito'} />
 
         {alertaStock && (
           <div className="alert alert-warning alert-dismissible fade show rounded-2 shadow-sm d-flex align-items-center mb-4" role="alert">
@@ -213,27 +247,7 @@ function Carrito() {
 
         {pasoActual === 'carrito' && (
           <div>
-            <div className="d-flex justify-content-between align-items-center mb-3">
-              <div>
-                <h1 className="marca-titulo marca-tam-2 mb-1">
-                  Carrito de Compras
-                </h1>
-                <p className="marca-nota mb-0">
-                  Revisa tus productos seleccionados y confirma las cantidades antes de pagar.
-                </p>
-              </div>
-
-              {items.length > 0 && (
-                <button
-                  type="button"
-                  className="btn btn-outline-danger btn-sm rounded-1"
-                  onClick={handleVaciar}
-                >
-                  <i className="bi bi-trash3 me-1"></i>
-                  Vaciar Carrito
-                </button>
-              )}
-            </div>
+            {items.length === 0 && cabeceraCarrito}
 
             {items.length === 0 ? (
 
@@ -253,87 +267,31 @@ function Carrito() {
               <div className="row g-4">
 
                 <div className="col-12 col-lg-8">
-                  <div className="bg-white border rounded-1 shadow-sm p-3">
-                    <div className="table-responsive">
-                      <table className="table align-middle mb-0">
-                        <thead className="table-light marca-fino">
-                          <tr>
-                            <th className="cart-th-photo">Foto</th>
-                            <th>Producto</th>
-                            <th className="marca-derecha">Precio</th>
-                            <th className="cart-th-qty marca-centro">Cantidad</th>
-                            <th className="marca-derecha">Subtotal</th>
-                            <th className="cart-th-action marca-derecha"></th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {items.map((item) => (
-                            <tr key={item.idProducto}>
-                              <td>
-                                <img
-                                  src={item.imagen}
-                                  alt={item.nombre}
-                                  className="cart-item-img border rounded-1 bg-white object-fit-contain"
-                                  onError={(e) => { e.target.src = '/banner-web.webp'; }}
-                                />
-                              </td>
-                              <td>
-                                <Link
-                                  to={`/producto/${item.idProducto}`}
-                                  className="carrito-item-nombre d-block"
-                                >
-                                  {item.nombre}
-                                </Link>
-                                <small className="marca-muted">Marca: {item.marca} | Stock: {cantidadPresentaciones(item, item.stock)}</small>
-                                {item.contenidoPresentacion && <small className="d-block marca-muted">Contenido por {unidadVenta(item)}: {item.contenidoPresentacion}</small>}
-                              </td>
-                              <td className="marca-derecha marca-nota marca-mono">
-                                {formatearCLP(item.precioVenta)}
-                                <small className="d-block marca-muted">por {unidadVenta(item)}</small>
-                              </td>
-                              <td className="marca-centro">
-                                <div className="input-group input-group-sm">
-                                  <button
-                                    className="btn btn-outline-secondary"
-                                    type="button"
-                                    onClick={() => handleModificarCantidad(item.idProducto, item.cantidad - 1)}
-                                  >
-                                    -
-                                  </button>
-                                  <input
-                                    type="text"
-                                    className="form-control marca-centro marca-bold bg-white"
-                                    value={item.cantidad}
-                                    readOnly
-                                  />
-                                  <button
-                                    className="btn btn-outline-secondary"
-                                    type="button"
-                                    onClick={() => handleModificarCantidad(item.idProducto, item.cantidad + 1)}
-                                    disabled={item.cantidad >= item.stock}
-                                  >
-                                    +
-                                  </button>
-                                </div>
-                              </td>
-                              <td className="marca-derecha marca-precio">
-                                {formatearCLP(item.precioVenta * item.cantidad)}
-                              </td>
-                              <td className="marca-derecha">
-                                <button
-                                  type="button"
-                                  className="btn btn-sm btn-outline-danger border-0 p-1"
-                                  onClick={() => handleEliminarItem(item.idProducto)}
-                                  title="Quitar producto"
-                                >
-                                  <i className="bi bi-trash3"></i>
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                  {cabeceraCarrito}
+                  <div className="carrito-productos">
+                    {items.map(item => (
+                      <article className="carrito-producto" key={item.idProducto} aria-label={item.nombre}>
+                        <Link to={`/producto/${item.idProducto}`} className="carrito-producto-imagen">
+                          <img src={item.imagen} alt={item.nombre} onError={({ currentTarget }) => {
+                            if (currentTarget.getAttribute('src') !== '/banner-web.webp') currentTarget.src = '/banner-web.webp';
+                          }} />
+                        </Link>
+                        <div className="carrito-producto-info">
+                          <Link to={`/producto/${item.idProducto}`} className="carrito-item-nombre">{item.nombre}</Link>
+                          <strong>{item.marca}</strong>
+                          <span className="marca-nota">Código: {item.idProducto}</span>
+                          {item.contenidoPresentacion && <span className="marca-nota">{item.contenidoPresentacion}</span>}
+                        </div>
+                        <div className="carrito-producto-precio"><strong>{formatearCLP(item.precioVenta)}</strong><span className="marca-nota">por {unidadVenta(item)}</span></div>
+                        <button type="button" className="carrito-quitar" onClick={() => handleEliminarItem(item.idProducto)}
+                          disabled={estadoCarrito.cargando} aria-label={`Quitar ${item.nombre}`}><i className="bi bi-trash3" aria-hidden="true" /></button>
+                        <div className="carrito-producto-cantidad">
+                          <SelectorCantidad cantidad={item.cantidad} maximo={item.stock} etiqueta={`Cantidad de ${item.nombre}`}
+                            disabled={estadoCarrito.cargando || item.stock <= 0} onChange={valor => handleModificarCantidad(item.idProducto, valor)} />
+                          <span className="marca-nota">Máx. {cantidadPresentaciones(item, item.stock)}</span>
+                        </div>
+                      </article>
+                    ))}
                   </div>
 
                   <div className="d-flex justify-content-between align-items-center mt-3">
@@ -347,50 +305,11 @@ function Carrito() {
                 </div>
 
                 <div className="col-12 col-lg-4">
-                  <div className="bg-white border rounded-1 shadow-sm p-4">
-                    <h2 className="marca-titulo marca-tam-5 mb-3 border-bottom pb-2">
-                      Resumen del Pedido
-                    </h2>
-
-                    <div className="d-flex justify-content-between mb-2 marca-nota">
-                      <span>Artículos ({totales.totalArticulos}):</span>
-                      <span className="marca-mono marca-strong">{formatearCLP(totales.subtotal)}</span>
-                    </div>
-
-                    <div className="d-flex justify-content-between mb-3 marca-nota">
-                      <span>Despacho a domicilio:</span>
-                      <span className="marca-mono marca-strong marca-exito">
-                        {totales.despacho === 0 ? 'Gratis' : formatearCLP(totales.despacho)}
-                      </span>
-                    </div>
-
-                    <div className="cart-promo-alert alert alert-info py-2 px-3 marca-fino rounded-1 mb-3">
-                      <i className="bi bi-truck me-1"></i>
-                      Despacho gratis en compras superiores a $50.000 en la Región Metropolitana.
-                    </div>
-
-                    <hr />
-
-                    <div className="d-flex justify-content-between align-items-center mb-4">
-                      <span className="marca-bold marca-tam-5">Total:</span>
-                      <span className="marca-total">
-                        {formatearCLP(totales.total)}
-                      </span>
-                    </div>
-
-                    <button
-                      type="button"
-                      className="btn btn-ambar w-100 marca-bold py-3 rounded-1 shadow-sm mb-2"
-                      onClick={() => setPasoActual('checkout')}
-                    >
-                      Continuar al Pago →
-                    </button>
-
-                    <div className="marca-centro marca-nota mt-2">
-                      <i className="bi bi-shield-check me-1 marca-exito"></i>
-                      Compra 100% segura con garantía de fábrica
-                    </div>
-                  </div>
+                  <ResumenCompra items={items} totales={totales} inicial>
+                    <button type="button" className="btn btn-dark compra-continuar"
+                      disabled={estadoCarrito.cargando || Boolean(estadoCarrito.error)}
+                      onClick={() => cambiarPaso(sesion ? 'entrega' : 'sesion')}>Continuar <i className="bi bi-arrow-right ms-2" aria-hidden="true" /></button>
+                  </ResumenCompra>
                 </div>
 
               </div>
@@ -398,35 +317,33 @@ function Carrito() {
           </div>
         )}
 
-        {pasoActual === 'checkout' && (
-          <div className="row justify-content-center">
+        {pasoActual === 'sesion' && (
+          <div className="row g-4">
             <div className="col-12 col-lg-8">
-              <div className="bg-white border rounded-1 shadow-sm p-4 p-md-5">
+              <section className="compra-formulario">
+                <h1 className="marca-titulo marca-tam-2 mb-3">Inicio de sesión</h1>
+                {sesion ? <>
+                  <p>Estás comprando como <strong>{nombreCompleto(sesion)}</strong>.</p>
+                  <button type="button" className="btn btn-dark compra-continuar" onClick={() => cambiarPaso('entrega')}>Continuar a entrega</button>
+                </> : <>
+                  <p className="marca-parrafo">Ingresa a tu cuenta para usar tus datos guardados y consultar tus pedidos.</p>
+                  <Link to="/login?volver=%2Fcarrito%3Fpaso%3Dentrega" className="btn btn-dark compra-continuar mb-3">Iniciar sesión</Link>
+                  <button type="button" className="btn btn-outline-dark compra-continuar" onClick={() => cambiarPaso('entrega')}>Continuar como invitado</button>
+                </>}
+              </section>
+            </div>
+            <div className="col-12 col-lg-4"><ResumenCompra items={items} totales={totales} /></div>
+          </div>
+        )}
 
-                <div className="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
-                  <div>
-                    <h2 className="marca-titulo marca-tam-4 mb-1">
-                      Paso de Pago y Despacho
-                    </h2>
-                    <p className="marca-nota mb-0">
-                      Completa los datos de envío y selecciona tu método de pago.
-                    </p>
-                  </div>
-                </div>
-
-                {!sesion && (
-                  <div className="alert alert-warning marca-fino mb-4 rounded-1 d-flex align-items-center justify-content-between">
-                    <div>
-                      <i className="bi bi-info-circle-fill me-1"></i>
-                      ¿Ya tienes cuenta? Inicia sesión
-                    </div>
-                    <Link to="/login" className="btn btn-sm btn-dark rounded-1">
-                      Iniciar Sesión
-                    </Link>
-                  </div>
-                )}
-
-                  <form onSubmit={handleProcesarCompra} noValidate>
+        {(pasoActual === 'entrega' || pasoActual === 'pago') && (
+          <div className="row g-4">
+            <div className="col-12 col-lg-8">
+              <div className="compra-formulario">
+                <h1 className="marca-titulo marca-tam-2 mb-2">{pasoActual === 'entrega' ? 'Datos de entrega' : 'Método de pago'}</h1>
+                <p className="marca-nota mb-4">{pasoActual === 'entrega' ? 'Completa tus datos y la dirección donde recibirás tu compra.' : 'Selecciona cómo quieres pagar y revisa tu pedido.'}</p>
+                <form id="compra-formulario" onSubmit={pasoActual === 'entrega' ? handleContinuarEntrega : handleProcesarCompra} noValidate>
+                  <div hidden={pasoActual !== 'entrega'}>
                   <h3 className="checkout-section-title marca-titulo marca-tam-6 mb-3">
                     1. Información del Cliente
                   </h3>
@@ -560,10 +477,8 @@ function Carrito() {
                     </div>
                   </div>
 
-                  <h3 className="checkout-section-title marca-titulo marca-tam-6 mb-3">
-                    3. Método de Pago
-                  </h3>
-
+                  </div>
+                  <div hidden={pasoActual !== 'pago'}>
                   <div className="mb-4">
                     <div className="form-check p-2 border rounded-1 mb-2 bg-light">
                       <input
@@ -611,35 +526,20 @@ function Carrito() {
                     </div>
                   </div>
 
-                  <div className="p-3 bg-platino border rounded-1 mb-4">
-                    <div className="d-flex justify-content-between mb-1 marca-fino">
-                      <span>Total de productos:</span>
-                      <span className="marca-mono">{formatearCLP(totales.subtotal)}</span>
-                    </div>
-                    <div className="d-flex justify-content-between mb-2 marca-fino">
-                      <span>Costo de envío:</span>
-                      <span className="marca-mono marca-exito">
-                        {totales.despacho === 0 ? 'Gratis' : formatearCLP(totales.despacho)}
-                      </span>
-                    </div>
-                    <div className="d-flex justify-content-between align-items-center pt-2 border-top">
-                      <strong className="marca-bold marca-tam-5">Total a Pagar:</strong>
-                      <strong className="marca-total">{formatearCLP(totales.total)}</strong>
-                    </div>
                   </div>
-
-                  <p className="marca-nota">El pedido quedará pendiente de pago. Registrarlo no realiza un cobro.</p>
-                  <button
-                    type="submit"
-                    className="btn btn-ambar w-100 marca-bold py-3 rounded-1 shadow-sm marca-tam-5"
-                    disabled={guardando || estadoCarrito.cargando || Boolean(estadoCarrito.error)}
-                  >
-                    {guardando ? 'Guardando pedido…' : `Registrar pedido por ${formatearCLP(totales.total)}`}
-                  </button>
-
                 </form>
 
               </div>
+            </div>
+            <div className="col-12 col-lg-4">
+              <ResumenCompra items={items} totales={totales}>
+                <button type="submit" form="compra-formulario" className="btn btn-dark compra-continuar"
+                  disabled={guardando || estadoCarrito.cargando || Boolean(estadoCarrito.error) || items.length === 0}>
+                  {pasoActual === 'entrega' ? 'Continuar al pago' : guardando ? 'Guardando pedido…' : 'Registrar pedido'}
+                </button>
+                <button type="button" className="btn btn-link compra-volver" disabled={guardando}
+                  onClick={() => cambiarPaso(pasoActual === 'pago' ? 'entrega' : 'carrito')}>Volver a {pasoActual === 'pago' ? 'entrega' : 'mi carrito'}</button>
+              </ResumenCompra>
             </div>
           </div>
         )}
@@ -647,27 +547,21 @@ function Carrito() {
         {pasoActual === 'exito' && ordenCreada && (
           <div className="row justify-content-center">
             <div className="col-12 col-md-8 col-lg-7">
-              <div className="bg-white border rounded-1 shadow-sm p-4 p-md-5">
+              <div className="boleta-compra bg-white border rounded-1 shadow-sm p-4 p-md-5">
 
                 <div className="marca-centro pb-4 border-bottom mb-4">
-                  <div className="d-inline-flex p-3 bg-success-subtle marca-exito rounded-circle mb-3">
-                    <i className="bi bi-check-lg carrito-check-icon"></i>
-                  </div>
                   <h1 className="marca-titulo marca-tam-4 mb-1">
-                    Pedido registrado, pendiente de pago
+                    {['Pagado', 'Completada'].includes(ordenCreada.estado) ? 'Pago procesado' : 'Pedido registrado'}
                   </h1>
-                  <div className="d-flex justify-content-center gap-2 mt-2">
-                    <span className="marca-chip marca-chip--oscuro marca-mono px-3 py-2">
-                      Orden: #{ordenCreada.idOrden}
-                    </span>
-                    <span className="marca-chip marca-chip--gris marca-mono px-3 py-2">
-                      {ordenCreada.estado}
-                    </span>
-                  </div>
                 </div>
 
                 <div className="mb-4 marca-fino">
+                  <h2 className="marca-titulo marca-tam-5 mb-3">Detalle de la boleta</h2>
                   <div className="row g-2">
+                    <div className="col-12 mb-2">
+                      <strong className="d-block marca-muted">Número de orden:</strong>
+                      <span className="boleta-numero marca-mono">{ordenCreada.idOrden}</span>
+                    </div>
                     <div className="col-sm-6">
                       <strong className="d-block marca-muted">Cliente:</strong>
                       <span className="marca-strong">{ordenCreada.cliente.nombre}</span>
@@ -716,9 +610,29 @@ function Carrito() {
                   </table>
                 </div>
 
-                <div className="d-flex justify-content-between align-items-center p-3 bg-platino border rounded-1 mb-4">
-                  <span className="marca-bold marca-tam-5">Total del pedido:</span>
-                  <span className="marca-total marca-exito">{formatearCLP(ordenCreada.total)}</span>
+                <div className="boleta-importes p-3 bg-platino border rounded-1 mb-4">
+                  <dl className="mb-0">
+                    <div className="boleta-importe marca-fino">
+                      <dt>Productos (IVA incluido)</dt>
+                      <dd>{formatearCLP(ordenCreada.subtotal)}</dd>
+                    </div>
+                    <div className="boleta-importe marca-fino mb-3">
+                      <dt>Despacho (IVA incluido)</dt>
+                      <dd>{Number(ordenCreada.despacho) === 0 ? 'Gratis' : formatearCLP(ordenCreada.despacho)}</dd>
+                    </div>
+                    <div className="boleta-importe marca-fino border-top pt-3">
+                      <dt>Monto neto</dt>
+                      <dd>{formatearCLP(netoOrden)}</dd>
+                    </div>
+                    <div className="boleta-importe marca-fino">
+                      <dt>IVA (19%)</dt>
+                      <dd>{formatearCLP(ivaOrden)}</dd>
+                    </div>
+                    <div className="boleta-importe border-top pt-3 mt-3">
+                      <dt className="marca-bold marca-tam-5">Total</dt>
+                      <dd className="marca-total">{formatearCLP(totalOrden)}</dd>
+                    </div>
+                  </dl>
                 </div>
 
                 <div className="d-flex flex-wrap gap-2 justify-content-center">
