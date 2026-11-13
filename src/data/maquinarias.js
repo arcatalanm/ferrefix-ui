@@ -48,7 +48,7 @@ export async function cargarMaquinarias() {
   const actual = ++revisionMaquinas;
   actualizarEstado({ cargandoMaquinas: true, errorMaquinas: '' });
   try {
-    const { data } = await clienteApi.http.get('/ordenes/maquinas', { omitirAuth: true });
+    const { data } = await clienteApi.http.get('/arriendos/maquinas', { omitirAuth: true });
     if (actual !== revisionMaquinas) return;
     maquinarias = data.map(maquina => ({
       ...maquina,
@@ -70,7 +70,7 @@ export async function cargarContratosArriendo() {
   }
   actualizarEstado({ cargandoContratos: true, errorContratos: '' });
   try {
-    const { data } = await clienteApi.http.get('/ordenes/arriendos');
+    const { data } = await clienteApi.http.get('/arriendos/contratos');
     if (actual !== revisionContratos || sesion !== obtenerSesionActiva()) return;
     contratos = data.map(adaptarContrato);
     actualizarEstado({ cargandoContratos: false });
@@ -85,7 +85,7 @@ export async function registrarArriendo({ idMaquina, fechaInicio, diasArriendo, 
   const sesion = obtenerSesionActiva();
   if (!sesion) return { ok: false, error: 'Inicia sesión para arrendar maquinaria.' };
   try {
-    const { data } = await clienteApi.http.post('/ordenes/arriendos', {
+    const { data } = await clienteApi.http.post('/arriendos/contratos', {
       idMaquina, fechaInicio, fechaTermino: calcularFechaTermino(fechaInicio, diasArriendo),
       telefono: telefono.trim(), direccion: direccion.trim(), region, comuna,
     });
