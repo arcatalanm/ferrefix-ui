@@ -47,3 +47,47 @@ export async function crearOrden(datos) {
     return { ok: false, error: obtenerMensajeApi(error), errores: error.response?.data?.errores || {} };
   }
 }
+
+// Solo se permite enviar al usuario a estos hosts de Transbank (integración y producción).
+const HOSTS_WEBPAY = ['webpay3gint.transbank.cl', 'webpay3g.transbank.cl'];
+
+/** Pide al backend crear la transacción Webpay del pedido. Devuelve { ok, url, token } o { ok:false, error, estado }. */
+export async function iniciarPagoWebpay(idOrden) {
+  try {
+    const { data } = await clienteApi.http.post(
+      `/ordenes/pedidos/${encodeURIComponent(idOrden)}/pago/webpay`, null, { withCredentials: true });
+    const destino = new URL(data.url);
+    if (!data.token || destino.protocol !== 'https:' || !HOSTS_WEBPAY.includes(destino.hostname)) {
+      throw new Error('Destino de pago no permitido');
+    }
+    return { ok: true, url: destino.href, token: data.token };
+  } catch (error) {
+    return { ok: false, error: obtenerMensajeApi(error), estado: error.response?.status };
+  }
+}
+
+/** Redirige el navegador a Webpay con un formulario POST (campo token_ws). Sale de la SPA. */
+export function enviarAWebpay({ url, token }) {
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = url;
+  form.style.display = 'none';
+  const campo = document.createElement('input');
+  campo.type = 'hidden';
+  campo.name = 'token_ws';
+  campo.value = token;
+  form.appendChild(campo);
+  document.body.appendChild(form);
+  form.submit();
+}
+
+/** Lee un pedido (dueño por JWT o por cookie de invitado). */
+export async function obtenerOrden(idOrden) {
+  try {
+    const { data } = await clienteApi.http.get(
+      `/ordenes/pedidos/${encodeURIComponent(idOrden)}`, { withCredentials: true });
+    return { ok: true, orden: adaptar(data) };
+  } catch (error) {
+    return { ok: false, error: obtenerMensajeApi(error), estado: error.response?.status };
+  }
+}

@@ -27,6 +27,8 @@ import Garantias from './pages/Garantias';
 import Faq from './pages/PreguntasFrecuentes';
 import Terminos from './pages/TerminosCondiciones';
 import Privacidad from './pages/Privacidad';
+
+import PagoResultado from './pages/PagoResultado';
 const titulos = { '/': 'Ferretería, herramientas y arriendos', '/catalogo': 'Catálogo de productos', '/arriendos': 'Arriendo de maquinaria', '/nosotros': 'Nosotros', '/contacto': 'Cotizaciones y contacto', '/carrito': 'Tu pedido', '/login': 'Iniciar sesión', '/registro': 'Crear cuenta', '/cuenta': 'Mi cuenta', '/admin': 'Administración', '/fletes': 'Fletes y despacho', '/garantias': 'Garantías', '/faq': 'Preguntas frecuentes', '/terminos': 'Términos y condiciones', '/privacidad': 'Privacidad' };
 function NoEncontrada() {
   return <div className="container py-5"><p className="marca-etiqueta">Error 404</p><h1>Página no encontrada</h1><p>El enlace cambió o la página ya no está disponible.</p><a className="btn btn-ambar" href="/catalogo">Ir al catálogo</a></div>;
@@ -59,7 +61,7 @@ export default function App() {
     document.querySelector('meta[name="description"]')?.setAttribute('content', `${titulo}. Herramientas, materiales de construcción y arriendos de Ferrefix en Providencia.`);
     document.querySelector('meta[property="og:title"]')?.setAttribute('content', document.title);
     document.querySelector('link[rel="canonical"]')?.setAttribute('href', window.location.origin + location.pathname);
-    document.querySelector('meta[name="robots"]')?.setAttribute('content', /\/(admin|login|registro|cuenta|carrito)/.test(location.pathname) ? 'noindex, nofollow' : 'index, follow');
+    document.querySelector('meta[name="robots"]')?.setAttribute('content', /\/(admin|login|registro|cuenta|carrito|pago)/.test(location.pathname) ? 'noindex, nofollow' : 'index, follow');
     if (location.hash) requestAnimationFrame(() => document.getElementById(location.hash.slice(1))?.scrollIntoView());
     else { window.scrollTo(0, 0); document.getElementById('contenido-principal')?.focus({ preventScroll: true }); }
   }, [location.pathname, location.hash, estadoCatalogo]);
@@ -75,7 +77,7 @@ export default function App() {
           <Route path="/producto/:id" element={<DetalleProducto key={location.pathname} />} />
           <Route path="/arriendos" element={<Arriendos />} /><Route path="/nosotros" element={<Nosotros />} />
           <Route path="/contacto" element={<Contacto />} /><Route path="/cotizaciones" element={<Navigate to="/contacto" replace />} />
-          <Route path="/carrito" element={<Carrito />} /><Route path="/login" element={<Login />} /><Route path="/registro" element={<Login />} />
+          <Route path="/carrito" element={<Carrito />} /><Route path="/login" element={<Login />} /><Route path="/registro" element={<Login />} /> <Route path="/pago/resultado" element={<PagoResultado />} />
           <Route path="/cuenta" element={<Cuenta />} /><Route path="/mi-cuenta" element={<Navigate to="/cuenta" replace />} /><Route path="/perfil" element={<Navigate to="/cuenta" replace />} />
           <Route path="/admin" element={<Admin />} /><Route path="/fletes" element={<Fletes />} /><Route path="/garantias" element={<Garantias />} />
           <Route path="/faq" element={<Faq />} /><Route path="/terminos" element={<Terminos />} /><Route path="/privacidad" element={<Privacidad />} />

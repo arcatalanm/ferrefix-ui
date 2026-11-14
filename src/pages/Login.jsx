@@ -10,7 +10,7 @@ function Login() {
 
   const modo = location.pathname === '/registro' ? 'registro' : 'login';
   const destino = new URLSearchParams(location.search).get('volver');
-  const volver = destino && /^\/(?:carrito|arriendos|cuenta)(?:\?[^#]*)?$/.test(destino) ? destino : '/catalogo';
+  const volver = destino && /^\/(?:carrito|arriendos|cuenta|pago\/resultado)(?:\?[^#]*)?$/.test(destino) ? destino : '/catalogo';
 
   const [nombre, setNombre] = useState('');
   const [segNombre, setSegNombre] = useState('');

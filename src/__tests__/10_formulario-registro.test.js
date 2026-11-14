@@ -10,7 +10,7 @@ const REGLAS_REGISTRO = {
 };
 
 describe('Formulario Registro de Cliente', () => {
-  test('Formulario Registro: acepta nombre, correo y contraseña válidos, rechaza una contraseña de 5 caracteres y acepta los límites mínimos de 3 y 6 caracteres', () => {
+  test('Formulario Registro: acepta nombre, correo y contraseña válidos, rechaza una contraseña de 5 caracteres y acepta los límites mínimos de 3 y 8 caracteres', () => {
     const correcto = validarFormulario(REGLAS_REGISTRO, {
       nombre: 'Juan Pérez',
       email: 'juan@ferrefix.cl',
@@ -23,14 +23,14 @@ describe('Formulario Registro de Cliente', () => {
       email: 'juan@ferrefix.cl',
       password: '12345'
     });
-    expect(passwordCorta.password).toContain('6 caracteres');
+    expect(passwordCorta.password).toContain('8 caracteres');
     expect(passwordCorta.nombre).toBeUndefined();
     expect(passwordCorta.email).toBeUndefined();
 
     const enElLimite = validarFormulario(REGLAS_REGISTRO, {
       nombre: 'Ana',
       email: 'ana@correo.cl',
-      password: '123456'
+      password: '12345678'
     });
     expect(Object.keys(enElLimite)).toHaveLength(0);
   });

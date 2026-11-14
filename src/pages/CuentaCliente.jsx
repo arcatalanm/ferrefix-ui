@@ -7,6 +7,7 @@ import { REGIONES_CHILE, normalizarRegion, obtenerComunas } from "../data/chile"
 import { validadores, formatearRut, formatearTelefono } from "../data/validaciones";
 import { mostrarToast } from "../components/ToastNotificacion";
 import { nombreCompleto } from "../utils/usuario";
+import { claseInsigniaPedido } from '../utils/estadoPedido';
 
 export default function CuentaCliente() {
   const estadoOrdenes = useEstadoOrdenes();
@@ -444,8 +445,8 @@ export default function CuentaCliente() {
                   <div key={ord.idOrden} className="border rounded-1 p-3 p-md-4 bg-white shadow-sm">
                     <div className="d-flex flex-wrap justify-content-between align-items-center pb-2 mb-3 border-bottom gap-2">
                       <div>
-                        {ord.estado && ord.estado !== "Pendiente de pago" && (
-                          <span className="badge bg-success-subtle text-success border border-success-subtle me-2">
+                        {ord.estado && (
+                          <span className={`${claseInsigniaPedido(ord.estado)} me-2`}>
                             ● {ord.estado}
                           </span>
                         )}

@@ -30,8 +30,9 @@ describe('Componente ProductCard', () => {
     expect(screen.getByText('Taladro Percutor Inalámbrico 20V')).toBeTruthy();
     expect(screen.getByText('DeWalt')).toBeTruthy();
     expect(screen.getByText(/\$129\.990/)).toBeTruthy();
-    const enlace = screen.getByRole('link');
-    expect(enlace.getAttribute('href')).toBe('/producto/5422223214');
+    const enlaces = screen.getAllByRole('link');
+    expect(enlaces).toHaveLength(2);
+    enlaces.forEach((enlace) => expect(enlace.getAttribute('href')).toBe('/producto/5422223214'));
     expect(screen.getByRole('img').getAttribute('alt')).toBe(
       'Taladro Percutor Inalámbrico 20V'
     );
@@ -44,6 +45,8 @@ describe('Componente ProductCard', () => {
     const imagenRespaldo = screen.getByRole('img').getAttribute('src');
     expect(imagenRespaldo).toBe('/banner-web.webp');
     expect(screen.getByText(/\$0/)).toBeTruthy();
-    expect(screen.getByRole('link').getAttribute('href')).toBe('/producto/999');
+    const enlacesRespaldo = screen.getAllByRole('link');
+    expect(enlacesRespaldo).toHaveLength(2);
+    enlacesRespaldo.forEach((enlace) => expect(enlace.getAttribute('href')).toBe('/producto/999'));
   });
 });

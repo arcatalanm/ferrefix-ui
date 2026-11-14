@@ -1,37 +1,63 @@
+import { describe, test, expect, beforeEach, vi } from 'vitest';
 
+const datos = vi.hoisted(() => ({
+  sesion: { idUsuario: 'u1' },
+  http: { get: vi.fn(), post: vi.fn(), put: vi.fn(), delete: vi.fn() },
+}));
 
-import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
+vi.mock('../services/api', () => ({
+  clienteApi: { http: datos.http },
+  alExpirarSesion: vi.fn(),
+}));
+vi.mock('../data/auth', () => ({
+  obtenerSesionActiva: () => datos.sesion,
+  EVENTO_SESION_ACTUALIZADA: 'sesion-prueba',
+}));
+
 import { crearOrden, obtenerOrdenes } from '../data/ordenes.js';
 
-describe('Órdenes — crearOrden (con mock de Date.now)', () => {
+const ordenBackend = {
+  idOrden: 'ORD-BACK-1',
+  fecha: '2024-01-01T12:00:00Z',
+  estado: 'Pendiente de pago',
+  total: 45990,
+};
+
+describe('Órdenes — crearOrden', () => {
   beforeEach(() => {
-    localStorage.clear();
-    vi.spyOn(Date, 'now').mockReturnValue(1000000000042);
+    vi.clearAllMocks();
+    datos.http.get.mockImplementation((url) => Promise.resolve({
+      data: url === '/ordenes/pedidos' ? [ordenBackend] : [],
+    }));
   });
 
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
+  test('crearOrden: envía la solicitud al backend, adapta la orden creada y refresca el historial', async () => {
+    datos.http.post.mockResolvedValue({ data: ordenBackend });
 
-  test('crearOrden: genera una boleta nueva con id mockeado, aplica el estado "Completada" ante un estado vacío y construye una orden segura con objeto vacío', () => {
-    const orden = crearOrden({
+    const resultado = await crearOrden({
       cliente: { nombre: 'Cliente Boleta' },
-      total: 45990
+      total: 45990,
     });
-    expect(orden.idOrden).toBe('ORD-2024-000042');
-    expect(orden.numeroBoleta).toContain('BOL-2024-');
-    expect(orden.estado).toBe('Completada');
-    expect(obtenerOrdenes()[0].idOrden).toBe('ORD-2024-000042');
 
-    const sinEstado = crearOrden({
-      cliente: { nombre: 'Cliente Sin Estado' },
-      estado: ''
+    expect(resultado.ok).toBe(true);
+    expect(resultado.orden.idOrden).toBe('ORD-BACK-1');
+    expect(resultado.orden.fecha).toBeTruthy();
+    expect(obtenerOrdenes()[0].idOrden).toBe('ORD-BACK-1');
+    expect(datos.http.post).toHaveBeenCalledWith(
+      '/ordenes/pedidos',
+      expect.objectContaining({ cliente: { nombre: 'Cliente Boleta' } }),
+      { withCredentials: true }
+    );
+  });
+
+  test('crearOrden: propaga el error del backend sin tocar el historial', async () => {
+    datos.http.post.mockRejectedValue({
+      response: { status: 409, data: { detail: 'Ya existe un pedido con este identificador.' } },
     });
-    expect(sinEstado.estado).toBe('Completada');
 
-    const vacia = crearOrden({});
-    expect(vacia.idOrden).toBeDefined();
-    expect(vacia.numeroBoleta).toBeDefined();
-    expect(vacia.fecha).toBeDefined();
+    const resultado = await crearOrden({});
+
+    expect(resultado.ok).toBe(false);
+    expect(resultado.error).toContain('Ya existe un pedido');
   });
 });

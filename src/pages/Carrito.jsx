@@ -14,7 +14,10 @@ import {
 } from '../data/carrito';
 import { useSesion, obtenerSesionActiva, EVENTO_SESION_ACTUALIZADA } from '../data/auth';
 import { nombreCompleto } from '../utils/usuario';
-import { crearOrden } from '../data/ordenes';
+
+import { crearOrden, iniciarPagoWebpay, enviarAWebpay } from '../data/ordenes';
+import BoletaCompra from '../components/BoletaCompra';
+
 import { unidadVenta, cantidadPresentaciones } from '../utils/presentacionProducto';
 import { REGIONES_CHILE, normalizarRegion, obtenerComunas } from '../data/chile';
 import {
@@ -23,6 +26,8 @@ import {
   formatearRut,
   formatearTelefono
 } from '../data/validaciones';
+
+
 
 const REGLAS_VALIDACION = {
   nombre: validadores.nombre,
@@ -33,6 +38,8 @@ const REGLAS_VALIDACION = {
   region: validadores.requerido('La región'),
   comuna: validadores.requerido('La comuna')
 };
+
+const METODO_TRANSFERENCIA = 'Transferencia Bancaria';
 
 function Carrito() {
   const [items, setItems] = useState(obtenerCarrito);
@@ -91,6 +98,12 @@ function Carrito() {
     };
     window.addEventListener(EVENTO_CARRITO_ACTUALIZADO, handleActualizar);
     return () => window.removeEventListener(EVENTO_CARRITO_ACTUALIZADO, handleActualizar);
+  }, []);
+
+  useEffect(() => {
+    const alVolver = (e) => { if (e.persisted) setGuardando(false); };
+    window.addEventListener('pageshow', alVolver);
+    return () => window.removeEventListener('pageshow', alVolver);
   }, []);
 
   const formatearCLP = (valor) => {
@@ -178,39 +191,39 @@ function Carrito() {
       items: items.map(({ idProducto, cantidad }) => ({ idProducto, cantidad })),
       metodoEntrega, metodoPago, indicaciones,
     });
-    setGuardando(false);
-    if (sesionActual !== obtenerSesionActiva()) return;
+    if (sesionActual !== obtenerSesionActiva()) { setGuardando(false); return; }
     if (!resultado.ok) {
+      setGuardando(false);
       setAlertaStock(resultado.error);
       setErrores(Object.fromEntries(Object.entries(resultado.errores || {}).map(([campo, mensaje]) => [campo.replace(/^cliente\./, ''), mensaje])));
       if (Object.keys(resultado.errores || {}).some(campo => campo.startsWith('cliente.'))) setPasoActual('entrega');
       return;
     }
+
+    // Pago con Webpay: el pedido queda "Pendiente de pago" y el usuario sale a Transbank.
+    if (metodoPago !== METODO_TRANSFERENCIA) {
+      const pago = await iniciarPagoWebpay(resultado.orden.idOrden);
+      if (sesionActual !== obtenerSesionActiva()) { setGuardando(false); return; }
+      if (!pago.ok) {
+        if (pago.estado === 409) idSolicitud.current = crypto.randomUUID();
+        setAlertaStock(pago.error);
+        setGuardando(false);
+        return;
+      }
+      enviarAWebpay(pago); // la página se descarga; no se reactiva el botón a propósito
+      return;
+    }
+
+    // Transferencia: se mantiene el flujo actual (boleta inmediata, pedido "Pendiente de pago").
+    setGuardando(false);
     setOrdenCreada(resultado.orden);
     setPasoActual('exito');
     idSolicitud.current = crypto.randomUUID();
     window.scrollTo(0, 0);
   };
 
-  const cabeceraCarrito = (
-  <div className="carrito-cabecera">
-    <div>
-      <h1 className="marca-titulo marca-tam-2 mb-1">
-        Carrito de Compras
-      </h1>
-      <p className="marca-nota mb-0">
-        Revisa tus productos seleccionados y confirma las cantidades antes de pagar.
-      </p>
-    </div>
-
-  </div>
-  );
-
-  // Los precios finales ya incluyen IVA: desglosarlo no cambia el total cobrado.
-  const totalOrden = Number(ordenCreada?.total || 0);
-  const netoOrden = Math.round(totalOrden / 1.19);
-  const ivaOrden = totalOrden - netoOrden;
-
+  const pagaConWebpay = formCliente.metodoPago !== METODO_TRANSFERENCIA;
+  
   return (
     <div className="carrito-page py-4 py-lg-5">
       <div className="container">
@@ -247,8 +260,6 @@ function Carrito() {
 
         {pasoActual === 'carrito' && (
           <div>
-            {items.length === 0 && cabeceraCarrito}
-
             {items.length === 0 ? (
 
               <div className="bg-white border rounded-1 p-5 marca-centro my-4 shadow-sm">
@@ -267,7 +278,6 @@ function Carrito() {
               <div className="row g-4">
 
                 <div className="col-12 col-lg-8">
-                  {cabeceraCarrito}
                   <div className="carrito-productos">
                     {items.map(item => (
                       <article className="carrito-producto" key={item.idProducto} aria-label={item.nombre}>
@@ -535,7 +545,7 @@ function Carrito() {
               <ResumenCompra items={items} totales={totales}>
                 <button type="submit" form="compra-formulario" className="btn btn-dark compra-continuar"
                   disabled={guardando || estadoCarrito.cargando || Boolean(estadoCarrito.error) || items.length === 0}>
-                  {pasoActual === 'entrega' ? 'Continuar al pago' : guardando ? 'Guardando pedido…' : 'Registrar pedido'}
+                  {pasoActual === 'entrega' ? 'Continuar al pago': guardando ? (pagaConWebpay ? 'Redirigiendo a Webpay…' : 'Guardando pedido…'): pagaConWebpay ? 'Pagar con Webpay' : 'Registrar pedido'}
                 </button>
                 <button type="button" className="btn btn-link compra-volver" disabled={guardando}
                   onClick={() => cambiarPaso(pasoActual === 'pago' ? 'entrega' : 'carrito')}>Volver a {pasoActual === 'pago' ? 'entrega' : 'mi carrito'}</button>
@@ -545,105 +555,8 @@ function Carrito() {
         )}
 
         {pasoActual === 'exito' && ordenCreada && (
-          <div className="row justify-content-center">
-            <div className="col-12 col-md-8 col-lg-7">
-              <div className="boleta-compra bg-white border rounded-1 shadow-sm p-4 p-md-5">
-
-                <div className="marca-centro pb-4 border-bottom mb-4">
-                  <h1 className="marca-titulo marca-tam-4 mb-1">
-                    {['Pagado', 'Completada'].includes(ordenCreada.estado) ? 'Pago procesado' : 'Pedido registrado'}
-                  </h1>
-                </div>
-
-                <div className="mb-4 marca-fino">
-                  <h2 className="marca-titulo marca-tam-5 mb-3">Detalle de la boleta</h2>
-                  <div className="row g-2">
-                    <div className="col-12 mb-2">
-                      <strong className="d-block marca-muted">Número de orden:</strong>
-                      <span className="boleta-numero marca-mono">{ordenCreada.idOrden}</span>
-                    </div>
-                    <div className="col-sm-6">
-                      <strong className="d-block marca-muted">Cliente:</strong>
-                      <span className="marca-strong">{ordenCreada.cliente.nombre}</span>
-                    </div>
-                    <div className="col-sm-6">
-                      <strong className="d-block marca-muted">RUT:</strong>
-                      <span className="marca-oscuro">{ordenCreada.cliente.rut}</span>
-                    </div>
-                    <div className="col-sm-6 mt-2">
-                      <strong className="d-block marca-muted">Correo:</strong>
-                      <span className="marca-oscuro">{ordenCreada.cliente.email}</span>
-                    </div>
-                    <div className="col-12 mt-2">
-                      <strong className="d-block marca-muted">Dirección de Entrega:</strong>
-                      <span className="marca-oscuro">{ordenCreada.cliente.direccion}</span>
-                    </div>
-                    <div className="col-sm-6 mt-2">
-                      <strong className="d-block marca-muted">Fecha del pedido:</strong>
-                      <span className="marca-oscuro">{ordenCreada.fecha}</span>
-                    </div>
-                    <div className="col-sm-6 mt-2">
-                      <strong className="d-block marca-muted">Método de Pago:</strong>
-                      <span className="marca-oscuro">{ordenCreada.metodoPago}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="table-responsive border rounded-1 mb-4">
-                  <table className="table table-sm align-middle mb-0 marca-fino">
-                    <thead className="table-light">
-                      <tr>
-                        <th>Producto</th>
-                        <th className="marca-centro">Cant.</th>
-                        <th className="marca-derecha">Subtotal</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {ordenCreada.items.map((it, idx) => (
-                        <tr key={idx}>
-                          <td>{it.nombre}</td>
-                          <td className="marca-centro">{it.cantidad}</td>
-                          <td className="marca-derecha marca-mono">{formatearCLP(it.precioUnitario * it.cantidad)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                <div className="boleta-importes p-3 bg-platino border rounded-1 mb-4">
-                  <dl className="mb-0">
-                    <div className="boleta-importe marca-fino">
-                      <dt>Productos (IVA incluido)</dt>
-                      <dd>{formatearCLP(ordenCreada.subtotal)}</dd>
-                    </div>
-                    <div className="boleta-importe marca-fino mb-3">
-                      <dt>Despacho (IVA incluido)</dt>
-                      <dd>{Number(ordenCreada.despacho) === 0 ? 'Gratis' : formatearCLP(ordenCreada.despacho)}</dd>
-                    </div>
-                    <div className="boleta-importe marca-fino border-top pt-3">
-                      <dt>Monto neto</dt>
-                      <dd>{formatearCLP(netoOrden)}</dd>
-                    </div>
-                    <div className="boleta-importe marca-fino">
-                      <dt>IVA (19%)</dt>
-                      <dd>{formatearCLP(ivaOrden)}</dd>
-                    </div>
-                    <div className="boleta-importe border-top pt-3 mt-3">
-                      <dt className="marca-bold marca-tam-5">Total</dt>
-                      <dd className="marca-total">{formatearCLP(totalOrden)}</dd>
-                    </div>
-                  </dl>
-                </div>
-
-                <div className="d-flex flex-wrap gap-2 justify-content-center">
-                  <Link to="/catalogo" className="btn btn-ambar btn-sm marca-strong rounded-1 px-4">
-                    Volver al Catálogo
-                  </Link>
-                </div>
-
-              </div>
-            </div>
-          </div>
+          <BoletaCompra orden={ordenCreada}
+            titulo={['Pagado', 'Completada'].includes(ordenCreada.estado) ? 'Pago procesado' : 'Pedido registrado'} />
         )}
 
       </div>

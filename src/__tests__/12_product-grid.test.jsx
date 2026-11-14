@@ -27,10 +27,11 @@ describe('Componente ProductGrid', () => {
     renderizar(productosMock);
     expect(screen.getByText('Taladro')).toBeTruthy();
     expect(screen.getByText('Sierra')).toBeTruthy();
+    // Cada tarjeta tiene dos enlaces al detalle: la imagen y el título.
     const enlaces = screen.getAllByRole('link');
-    expect(enlaces).toHaveLength(2);
-    expect(enlaces[0].getAttribute('href')).toBe('/producto/1');
-    expect(enlaces[1].getAttribute('href')).toBe('/producto/2');
+    expect(enlaces).toHaveLength(4);
+    expect(enlaces.map((enlace) => enlace.getAttribute('href')))
+      .toEqual(['/producto/1', '/producto/1', '/producto/2', '/producto/2']);
 
     cleanup();
     renderizar([]);

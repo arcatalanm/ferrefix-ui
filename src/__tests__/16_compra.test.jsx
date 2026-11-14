@@ -5,15 +5,25 @@ import { MemoryRouter } from 'react-router-dom';
 import SelectorCantidad from '../components/SelectorCantidad';
 import Carrito from '../pages/Carrito';
 
-const datos = vi.hoisted(() => ({ sesion: null, crearOrden: vi.fn(), actualizarCantidad: vi.fn() }));
+const datos = vi.hoisted(() => ({
+  sesion: null, crearOrden: vi.fn(), actualizarCantidad: vi.fn(),
+  iniciarPagoWebpay: vi.fn(), enviarAWebpay: vi.fn(),
+}));
+
 const producto = { idProducto: '1', nombre: 'Taladro', marca: 'Bosch', cantidad: 15, stock: 250, precioVenta: 1000 };
 vi.mock('../data/carrito', () => ({
   obtenerCarrito: () => [producto], obtenerTotalesCarrito: () => ({ totalArticulos: 15, subtotal: 15000, despacho: 3990, total: 18990 }),
   useEstadoCarrito: () => ({ cargando: false, error: '' }), EVENTO_CARRITO_ACTUALIZADO: 'carrito-prueba',
   actualizarCantidad: (...args) => datos.actualizarCantidad(...args), eliminarDelCarrito: vi.fn(), vaciarCarrito: vi.fn(), cargarCarrito: vi.fn(),
 }));
-vi.mock('../data/auth', () => ({ useSesion: () => datos.sesion, obtenerSesionActiva: () => datos.sesion, EVENTO_SESION_ACTUALIZADA: 'sesion-prueba' }));
-vi.mock('../data/ordenes', () => ({ crearOrden: (...args) => datos.crearOrden(...args) }));
+vi.mock('../data/auth', () => ({ 
+  useSesion: () => datos.sesion, obtenerSesionActiva: () => datos.sesion, EVENTO_SESION_ACTUALIZADA: 'sesion-prueba' }));
+
+  vi.mock('../data/ordenes', () => ({
+  crearOrden: (...args) => datos.crearOrden(...args),
+  iniciarPagoWebpay: (...args) => datos.iniciarPagoWebpay(...args),
+  enviarAWebpay: (...args) => datos.enviarAWebpay(...args),
+}));
 
 beforeEach(() => { datos.sesion = null; vi.clearAllMocks(); vi.spyOn(window, 'scrollTo').mockImplementation(() => {}); });
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
@@ -105,4 +115,30 @@ test('confirma la compra con la orden integrada y desglosa el IVA incluido sin c
   expect(screen.getByText('IVA (19%)').parentElement.textContent).toContain('$3.032');
   expect(screen.getByText('Total', { selector: 'dt' }).parentElement.textContent).toContain('$18.990');
   expect(screen.getByText('Despacho (IVA incluido)').parentElement.textContent).toContain('$3.990');
+});
+
+test('con Webpay crea el pedido, pide el pago y redirige sin mostrar la boleta', async () => {
+  datos.sesion = { nombre: 'Pedro', apellidoPaterno: 'González', rut: '12.345.678-5', email: 'pedro@example.com', telefono: '+56 9 1234 5678', direccion: 'Providencia 123', region: 'Metropolitana de Santiago', comuna: 'Providencia' };
+  datos.crearOrden.mockResolvedValue({ ok: true, orden: { idOrden: 'ORD-9', estado: 'Pendiente de pago' } });
+  datos.iniciarPagoWebpay.mockResolvedValue({ ok: true, url: 'https://webpay3gint.transbank.cl/webpayserver/initTransaction', token: 'tok-123' });
+  mostrarCarrito('/carrito?paso=entrega');
+  fireEvent.click(screen.getByRole('button', { name: 'Continuar al pago' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Pagar con Webpay' }));
+  await waitFor(() => expect(datos.enviarAWebpay).toHaveBeenCalledWith(
+    expect.objectContaining({ token: 'tok-123', url: expect.stringContaining('webpay3gint.transbank.cl') })));
+  expect(datos.crearOrden).toHaveBeenCalledWith(expect.objectContaining({ metodoPago: 'WebPay Plus (Débito)' }));
+  expect(datos.iniciarPagoWebpay).toHaveBeenCalledWith('ORD-9');
+  expect(screen.queryByText('Detalle de la boleta')).toBeNull();
+});
+
+test('si no se puede iniciar el pago muestra el error y permite reintentar', async () => {
+  datos.sesion = { nombre: 'Pedro', apellidoPaterno: 'González', rut: '12.345.678-5', email: 'pedro@example.com', telefono: '+56 9 1234 5678', direccion: 'Providencia 123', region: 'Metropolitana de Santiago', comuna: 'Providencia' };
+  datos.crearOrden.mockResolvedValue({ ok: true, orden: { idOrden: 'ORD-9' } });
+  datos.iniciarPagoWebpay.mockResolvedValue({ ok: false, error: 'No se pudo iniciar el pago. Intenta nuevamente.', estado: 502 });
+  mostrarCarrito('/carrito?paso=entrega');
+  fireEvent.click(screen.getByRole('button', { name: 'Continuar al pago' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Pagar con Webpay' }));
+  await waitFor(() => expect(screen.getByText('No se pudo iniciar el pago. Intenta nuevamente.')).toBeTruthy());
+  expect(datos.enviarAWebpay).not.toHaveBeenCalled();
+  expect(screen.getByRole('button', { name: 'Pagar con Webpay' }).disabled).toBe(false);
 });

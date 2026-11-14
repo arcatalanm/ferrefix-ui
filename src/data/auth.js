@@ -9,6 +9,23 @@ let sesion = null;
 let temporizador;
 let revision = 0;
 let revisionPerfil = 0;
+const CLAVE_SESION = 'ferrefix:sesion';
+
+function guardarSesion(data) {
+  try {
+    localStorage.setItem(CLAVE_SESION, JSON.stringify({
+      accessToken: data.accessToken,
+      usuario: data.usuario,
+      expiraEn: Date.now() + data.expiresIn * 1000,
+    }));
+  } catch { /* almacenamiento no disponible: la sesión queda solo en memoria */ }
+}
+
+function borrarSesionGuardada() {
+  try { localStorage.removeItem(CLAVE_SESION); } catch { /* nada que borrar */ }
+  // Limpia la entrada de versiones anteriores que guardaban en sessionStorage.
+  try { sessionStorage.removeItem(CLAVE_SESION); } catch { /* nada que borrar */ }
+}
 
 const notificar = () => window.dispatchEvent(new CustomEvent(EVENTO_SESION_ACTUALIZADA));
 export const obtenerSesionActiva = () => sesion;
@@ -22,6 +39,7 @@ export function cerrarSesion() {
   revision += 1;
   clearTimeout(temporizador);
   clienteApi.limpiarToken();
+  borrarSesionGuardada();
   sesion = null;
   notificar();
 }
@@ -41,6 +59,7 @@ async function autenticar(operacion) {
     if (actual !== revision) return { ok: false, mensaje: 'La solicitud de acceso fue cancelada.' };
     clienteApi.establecerToken(data.accessToken);
     sesion = Object.freeze({ ...data.usuario });
+    guardarSesion(data);
     temporizador = setTimeout(cerrarSesion, data.expiresIn * 1000);
     notificar();
     return { ok: true, usuario: sesion };
@@ -90,4 +109,30 @@ export async function actualizarDatosUsuario(datos) {
   } catch (error) {
     return fallo(error);
   }
+}
+
+/** Restaura la sesión guardada (p. ej. al volver desde Webpay o abrir otra pestaña). */
+export function restaurarSesion() {
+  if (sesion) return;
+  let guardada;
+  try { guardada = JSON.parse(localStorage.getItem(CLAVE_SESION) || 'null'); } catch { guardada = null; }
+  // Migra la sesión que versiones anteriores guardaban en sessionStorage.
+  if (!guardada) {
+    try { guardada = JSON.parse(sessionStorage.getItem(CLAVE_SESION) || 'null'); } catch { guardada = null; }
+  }
+  if (!guardada?.accessToken || !guardada.usuario || guardada.expiraEn <= Date.now()) {
+    borrarSesionGuardada();
+    return;
+  }
+  try {
+    localStorage.setItem(CLAVE_SESION, JSON.stringify(guardada));
+    sessionStorage.removeItem(CLAVE_SESION);
+  } catch { /* almacenamiento no disponible */ }
+  clienteApi.establecerToken(guardada.accessToken);
+  sesion = Object.freeze({ ...guardada.usuario });
+  temporizador = setTimeout(cerrarSesion, guardada.expiraEn - Date.now());
+  notificar();
+  // Valida el token contra el backend y refresca el perfil. Si el token ya no sirve (401),
+  // el interceptor de axios llama a cerrarSesion() y se limpia todo.
+  refrescarPerfil();
 }
