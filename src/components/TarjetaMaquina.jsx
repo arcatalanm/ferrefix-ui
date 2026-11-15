@@ -17,10 +17,6 @@ function TarjetaMaquina({ maquina, onArrendar }) {
       </Link>
 
       <div className="maq-fila-datos">
-        <div className="maq-fila-meta">
-          <span className="maq-fila-categoria">{maquina.categoria}</span>
-          <span className="maq-fila-codigo">cód: {maquina.idMaquina}</span>
-        </div>
         <h3 className="maq-fila-nombre"><Link to={ruta}>{maquina.nombre}</Link></h3>
         <p className="maq-fila-marca">{maquina.marca}</p>
         {maquina.incluye && <p className="maq-fila-incluye"><strong>Incluye:</strong> {maquina.incluye}</p>}
