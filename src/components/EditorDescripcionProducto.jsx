@@ -6,6 +6,7 @@ import Image from '@tiptap/extension-image';
 import DescripcionProducto from './DescripcionProducto';
 import { esHtml } from '../utils/descripcionRica';
 import { actualizarProducto, subirImagenProducto } from '../data/productos';
+import { obtenerDescripcionMaquina, guardarDescripcionMaquina } from '../data/descripcionesMaquina';
 import { obtenerMensajeApi } from '../services/crearClienteApi';
 
 // Límite actual del backend (descripcionLarga). Si el equipo lo amplía, subir este valor.
@@ -55,7 +56,13 @@ function Toolbar({ editor, onImagen, subiendo }) {
   );
 }
 
-export default function EditorDescripcionProducto({ productos, onNotificar }) {
+// tipo: 'producto' (se guarda en el catálogo vía API) o 'maquina' (guardado local por ahora)
+export default function EditorDescripcionProducto({ items, tipo = 'producto', onNotificar }) {
+  const esMaquina = tipo === 'maquina';
+  const idDe = (item) => (esMaquina ? item.idMaquina : item.idProducto);
+  const htmlDe = (item) => (esMaquina ? obtenerDescripcionMaquina(item.idMaquina) : item.descripcionLarga || '');
+  const nombreTipo = esMaquina ? 'máquina' : 'producto';
+
   const [busqueda, setBusqueda] = useState('');
   const [seleccionadoId, setSeleccionadoId] = useState(null);
   const [html, setHtml] = useState('');
@@ -65,13 +72,15 @@ export default function EditorDescripcionProducto({ productos, onNotificar }) {
   const inputImagen = useRef(null);
 
   const seleccionado = useMemo(
-    () => productos.find(p => p.idProducto === seleccionadoId) || null,
-    [productos, seleccionadoId]
+    () => items.find(p => idDe(p) === seleccionadoId) || null,
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+    [items, seleccionadoId]
   );
   const filtrados = useMemo(() => {
     const q = busqueda.trim().toLowerCase();
-    return productos.filter(p => !q || `${p.nombre} ${p.marca} ${p.idProducto}`.toLowerCase().includes(q));
-  }, [productos, busqueda]);
+    return items.filter(p => !q || `${p.nombre} ${p.marca} ${idDe(p)}`.toLowerCase().includes(q));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items, busqueda]);
 
   const editor = useEditor({
     extensions: [
@@ -84,16 +93,16 @@ export default function EditorDescripcionProducto({ productos, onNotificar }) {
   });
 
   const seleccionar = (id) => {
-    const prod = productos.find(p => p.idProducto === id);
-    const inicial = aHtmlInicial(prod?.descripcionLarga || '');
+    const prod = items.find(p => idDe(p) === id);
+    const inicial = aHtmlInicial(prod ? htmlDe(prod) : '');
     editor?.commands.setContent(inicial, { emitUpdate: false });
     setSeleccionadoId(id);
     setHtml(inicial);
     setError('');
   };
 
-  const excedido = html.length > LIMITE_DESCRIPCION;
-  const sinCambios = seleccionado && html === aHtmlInicial(seleccionado.descripcionLarga || '');
+  const excedido = !esMaquina && html.length > LIMITE_DESCRIPCION;
+  const sinCambios = seleccionado && html === aHtmlInicial(htmlDe(seleccionado));
 
   const elegirImagen = async (e) => {
     const archivo = e.target.files?.[0];
@@ -114,10 +123,11 @@ export default function EditorDescripcionProducto({ productos, onNotificar }) {
     if (!seleccionado || excedido) return;
     setGuardando(true); setError('');
     try {
-      await actualizarProducto(seleccionado.idProducto, { ...seleccionado, descripcionLarga: html });
+      if (esMaquina) guardarDescripcionMaquina(seleccionado.idMaquina, html);
+      else await actualizarProducto(seleccionado.idProducto, { ...seleccionado, descripcionLarga: html });
       onNotificar?.('Descripción guardada correctamente.');
     } catch (err) {
-      setError(obtenerMensajeApi(err) || 'No se pudo guardar la descripción.');
+      setError(obtenerMensajeApi(err) || err.message || 'No se pudo guardar la descripción.');
     } finally {
       setGuardando(false);
     }
@@ -127,19 +137,19 @@ export default function EditorDescripcionProducto({ productos, onNotificar }) {
     <section aria-labelledby="desc-titulo">
       <div className="mb-3">
         <h2 id="desc-titulo" className="h5 mb-1">Descripciones enriquecidas</h2>
-        <p className="text-muted small mb-0">Selecciona un producto y edita su descripción con formato (Tiptap). Se muestra en la página de detalle.</p>
+        <p className="text-muted small mb-0">{esMaquina ? 'Selecciona una máquina y edita su descripción con formato (Tiptap). Se muestra en su ficha técnica. Por ahora se guarda solo en este navegador.' : 'Selecciona un producto y edita su descripción con formato (Tiptap). Se muestra en la página de detalle.'}</p>
       </div>
       <div className="row g-3">
         <div className="col-lg-3">
-          <input type="search" className="form-control form-control-sm mb-2" placeholder="Buscar producto..."
-            aria-label="Buscar producto" value={busqueda} onChange={e => setBusqueda(e.target.value)} />
+          <input type="search" className="form-control form-control-sm mb-2" placeholder={`Buscar ${nombreTipo}...`}
+            aria-label={`Buscar ${nombreTipo}`} value={busqueda} onChange={e => setBusqueda(e.target.value)} />
           <div className="list-group desc-lista">
             {filtrados.map(p => (
-              <button key={p.idProducto} type="button"
-                className={`list-group-item list-group-item-action py-2 ${p.idProducto === seleccionadoId ? 'active' : ''}`}
-                onClick={() => seleccionar(p.idProducto)}>
+              <button key={idDe(p)} type="button"
+                className={`list-group-item list-group-item-action py-2 ${idDe(p) === seleccionadoId ? 'active' : ''}`}
+                onClick={() => seleccionar(idDe(p))}>
                 <div className="fw-semibold small">{p.nombre}</div>
-                <div className="small opacity-75">{p.marca} · {p.idProducto}</div>
+                <div className="small opacity-75">{p.marca} · {idDe(p)}</div>
               </button>
             ))}
             {filtrados.length === 0 && <div className="list-group-item small text-muted">Sin resultados.</div>}
@@ -148,13 +158,13 @@ export default function EditorDescripcionProducto({ productos, onNotificar }) {
 
         <div className="col-lg-9">
           {!seleccionado ? (
-            <div className="border rounded p-5 text-center text-muted">Elige un producto de la lista para editar su descripción.</div>
+            <div className="border rounded p-5 text-center text-muted">Elige {esMaquina ? 'una máquina' : 'un producto'} de la lista para editar su descripción.</div>
           ) : (
             <>
               <div className="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
                 <strong>{seleccionado.nombre}</strong>
                 <span className={`small ${excedido ? 'text-danger fw-bold' : 'text-muted'}`}>
-                  {html.length} / {LIMITE_DESCRIPCION} caracteres
+                  {html.length}{esMaquina ? '' : ` / ${LIMITE_DESCRIPCION}`} caracteres
                 </span>
               </div>
               <div className="border rounded bg-white">

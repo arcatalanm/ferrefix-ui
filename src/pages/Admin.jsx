@@ -21,6 +21,7 @@ import EditorFichaTecnica from '../components/EditorFichaTecnica';
 import { convertirFichaTecnica, validarFichaTecnica } from '../utils/fichaTecnica';
 import GeneradorProductos from '../components/GeneradorProductos';
 import EditorDescripcionProducto from '../components/EditorDescripcionProducto';
+import { obtenerMaquinarias } from '../data/maquinarias';
 import { mostrarToast } from '../components/ToastNotificacion';
 import { validadores } from '../data/validaciones';
 import { obtenerContratosArriendo, EVENTO_MAQUINARIAS_ACTUALIZADAS, useEstadoArriendos, cargarContratosArriendo } from '../data/maquinarias';
@@ -56,6 +57,8 @@ function Admin() {
   const [ordenes, setOrdenes] = useState(obtenerOrdenes);
   const [arriendos, setArriendos] = useState(obtenerContratosArriendo);
   const [tabActiva, setTabActiva] = useState('dashboard');
+  const [tipoDescripcion, setTipoDescripcion] = useState('producto');
+  const [maquinasAdmin, setMaquinasAdmin] = useState(obtenerMaquinarias);
 
   const [busqueda, setBusqueda] = useState('');
   const [filtroCategoria, setFiltroCategoria] = useState('Todas');
@@ -75,7 +78,7 @@ function Admin() {
   useEffect(() => {
     const handleProductos = () => setProductos(obtenerProductos());
     const handleOrdenes = () => setOrdenes(obtenerOrdenes());
-    const handleArriendos = () => setArriendos(obtenerContratosArriendo());
+    const handleArriendos = () => { setArriendos(obtenerContratosArriendo()); setMaquinasAdmin(obtenerMaquinarias()); };
     const handleSesion = () => setSesion(obtenerSesionActiva());
 
     window.addEventListener(EVENTO_PRODUCTOS_ACTUALIZADOS, handleProductos);
@@ -814,7 +817,18 @@ function Admin() {
         )}
 
         {tabActiva === 'descripciones' && (
-          <EditorDescripcionProducto productos={productos} onNotificar={(mensaje) => mostrarToast({ titulo: 'Descripciones', mensaje })} />
+          <>
+            <div className="btn-group mb-3" role="group" aria-label="Tipo de descripción">
+              {[['producto', 'Productos'], ['maquina', 'Máquinas']].map(([valor, texto]) => (
+                <button key={valor} type="button" aria-pressed={tipoDescripcion === valor}
+                  className={`btn btn-sm ${tipoDescripcion === valor ? 'btn-dark' : 'btn-outline-dark'}`}
+                  onClick={() => setTipoDescripcion(valor)}>{texto}</button>
+              ))}
+            </div>
+            <EditorDescripcionProducto key={tipoDescripcion} tipo={tipoDescripcion}
+              items={tipoDescripcion === 'maquina' ? maquinasAdmin : productos}
+              onNotificar={(mensaje) => mostrarToast({ titulo: 'Descripciones', mensaje })} />
+          </>
         )}
 
         {tabActiva === 'generadores' && (

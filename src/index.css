@@ -2774,3 +2774,4 @@ body { min-width: 0; }
 .maq-detalle-seccion { background: #fff; border: 1px solid #e2e5e8; border-radius: 4px; padding: 1.25rem; }
 .maq-detalle-tabla th { width: 40%; font-weight: 600; color: #4b5563; background: var(--color-platino); }
 .maq-detalle-imagen { max-height: none; }
+.maq-detalle-seccion .descripcion-rica { margin-inline: 0; max-width: none; }

@@ -6,7 +6,7 @@ import Footer from './components/Footer';
 import ToastNotificacion from './components/ToastNotificacion';
 import { obtenerProductoPorId, cargarProductos, useEstadoCatalogo } from './data/productos';
 import EstadoCatalogo from './components/EstadoCatalogo';
-import { cargarMaquinarias, cargarContratosArriendo } from './data/maquinarias';
+import { cargarMaquinarias, cargarContratosArriendo, obtenerMaquinarias } from './data/maquinarias';
 import { useSesion } from './data/auth';
 import { cargarOrdenes } from './data/ordenes';
 import { cargarCarrito } from './data/carrito';
@@ -46,7 +46,7 @@ export default function App() {
     if (!enArriendos && !['/admin', '/cuenta', '/mi-cuenta', '/perfil'].includes(location.pathname)) return;
     const actualizar = () => {
       if (document.visibilityState === 'hidden') return;
-      if (enArriendos) cargarMaquinarias();
+      if (enArriendos || location.pathname === '/admin') cargarMaquinarias();
       cargarContratosArriendo();
       cargarOrdenes();
     };
@@ -58,7 +58,8 @@ export default function App() {
   useAccessibleDialogs();
   useEffect(() => {
     const producto = location.pathname.startsWith('/producto/') ? obtenerProductoPorId(location.pathname.split('/')[2]) : null;
-    const titulo = producto?.nombre || titulos[location.pathname] || 'Página no encontrada';
+    const maquina = location.pathname.startsWith('/arriendos/') ? obtenerMaquinarias().find((m) => m.idMaquina === decodeURIComponent(location.pathname.split('/')[2])) : null;
+    const titulo = producto?.nombre || maquina?.nombre || (location.pathname.startsWith('/arriendos/') ? 'Ficha de maquinaria' : null) || titulos[location.pathname] || 'Página no encontrada';
     document.title = `${titulo} | Ferrefix`;
     document.querySelector('meta[name="description"]')?.setAttribute('content', `${titulo}. Herramientas, materiales de construcción y arriendos de Ferrefix en Providencia.`);
     document.querySelector('meta[property="og:title"]')?.setAttribute('content', document.title);

@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import EspacioImagen from '../components/EspacioImagen';
+import DescripcionProducto from '../components/DescripcionProducto';
+import { obtenerDescripcionMaquina } from '../data/descripcionesMaquina';
 import { obtenerMaquinarias, EVENTO_MAQUINARIAS_ACTUALIZADAS, useEstadoArriendos } from '../data/maquinarias';
 
 const CLP = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 });
@@ -18,7 +20,10 @@ function DetalleMaquina() {
   }, []);
 
   const maquina = maquinas.find((m) => m.idMaquina === id);
-  const cargando = estado.cargandoMaquinas && maquinas.length === 0;
+  // "Cargando" hasta que termine la primera carga, para no mostrar "no encontrada" por un instante
+  const [vioCarga, setVioCarga] = useState(false);
+  if (estado.cargandoMaquinas && !vioCarga) setVioCarga(true);
+  const cargando = maquinas.length === 0 && !estado.errorMaquinas && (!vioCarga || estado.cargandoMaquinas);
 
   if (!maquina) {
     return (
@@ -33,6 +38,7 @@ function DetalleMaquina() {
 
   const disponible = maquina.estado === 'Disponible';
   const especificaciones = Object.entries(maquina.especificaciones || {});
+  const descripcion = obtenerDescripcionMaquina(maquina.idMaquina);
   const incluye = (maquina.incluye || '').split(/,\s*|\sy\s/).map((t) => t.trim()).filter(Boolean);
 
   return (
@@ -53,10 +59,6 @@ function DetalleMaquina() {
           </div>
 
           <div className="col-12 col-md-6">
-            <div className="maq-fila-meta mb-1">
-              <span className="maq-fila-categoria">{maquina.categoria}</span>
-              <span className="maq-fila-codigo">cód: {maquina.idMaquina}</span>
-            </div>
             <h1 className="maq-detalle-titulo">{maquina.nombre}</h1>
             <p className="maq-fila-marca">{maquina.marca}</p>
 
@@ -82,6 +84,13 @@ function DetalleMaquina() {
             )}
           </div>
         </div>
+
+        {descripcion && (
+          <section className="maq-detalle-seccion mt-4" aria-labelledby="maq-descripcion-titulo">
+            <h2 id="maq-descripcion-titulo" className="maq-detalle-subtitulo">Descripción</h2>
+            <DescripcionProducto texto={descripcion} />
+          </section>
+        )}
 
         {especificaciones.length > 0 && (
           <section className="maq-detalle-seccion mt-4">

@@ -11,7 +11,7 @@ const datosOrdenes = vi.hoisted(() => ({ ordenes: [] }));
 vi.mock('../services/api', () => ({ clienteApi: { http: api } }));
 vi.mock('../data/auth', () => ({ obtenerSesionActiva: () => ({ rol: 'admin', email: 'admin@example.com' }), iniciarSesion: vi.fn(), cerrarSesion: vi.fn(), EVENTO_SESION_ACTUALIZADA: 'sesion-prueba' }));
 vi.mock('../data/ordenes', () => ({ obtenerOrdenes: () => datosOrdenes.ordenes, useEstadoOrdenes: () => ({}), cargarOrdenes: vi.fn(), EVENTO_ORDENES_ACTUALIZADAS: 'ordenes-prueba' }));
-vi.mock('../data/maquinarias', () => ({ obtenerContratosArriendo: () => [], useEstadoArriendos: () => ({}), cargarContratosArriendo: vi.fn(), EVENTO_MAQUINARIAS_ACTUALIZADAS: 'arriendos-prueba' }));
+vi.mock('../data/maquinarias', () => ({ obtenerContratosArriendo: () => [], obtenerMaquinarias: () => [], useEstadoArriendos: () => ({}), cargarContratosArriendo: vi.fn(), EVENTO_MAQUINARIAS_ACTUALIZADAS: 'arriendos-prueba' }));
 vi.mock('../data/carrito', () => ({ sincronizarCarrito: vi.fn(), agregarAlCarrito: vi.fn() }));
 vi.mock('../components/GeneradorProductos', () => ({ default: () => null }));
 vi.mock('../components/ImagenProductoUploader', () => ({ default: ({ onSeleccionar }) => <button type="button" onClick={() => onSeleccionar(new File(['imagen'], 'producto.webp', { type: 'image/webp' }))}>Seleccionar imagen de prueba</button> }));
