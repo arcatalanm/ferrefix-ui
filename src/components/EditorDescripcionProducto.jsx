@@ -136,8 +136,7 @@ export default function EditorDescripcionProducto({ items, tipo = 'producto', on
   return (
     <section aria-labelledby="desc-titulo">
       <div className="mb-3">
-        <h2 id="desc-titulo" className="h5 mb-1">Descripciones enriquecidas</h2>
-        <p className="text-muted small mb-0">{esMaquina ? 'Selecciona una máquina y edita su descripción con formato (Tiptap). Se muestra en su ficha técnica. Por ahora se guarda solo en este navegador.' : 'Selecciona un producto y edita su descripción con formato (Tiptap). Se muestra en la página de detalle.'}</p>
+        <h2 id="desc-titulo" className="h5 mb-0">Descripciones enriquecidas</h2>
       </div>
       <div className="row g-3">
         <div className="col-lg-3">
