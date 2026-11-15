@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { obtenerProductos, EVENTO_PRODUCTOS_ACTUALIZADOS, useEstadoCatalogo } from '../data/productos';
 import { agregarAlCarrito } from '../data/carrito';
 import { mostrarToast } from '../components/ToastNotificacion';
+import DescripcionProducto from '../components/DescripcionProducto';
 import SelectorCantidad from '../components/SelectorCantidad';
 import { unidadVenta, cantidadPresentaciones } from '../utils/presentacionProducto';
 
@@ -172,7 +173,7 @@ function DetalleProducto() {
 
         <section className="detalle-descripcion" aria-labelledby="descripcion-titulo">
           <h2 id="descripcion-titulo">Descripción del producto</h2>
-          <p className="marca-parrafo detalle-texto mb-0">{producto.descripcionLarga || producto.descripcionCorta || 'No hay una descripción adicional disponible.'}</p>
+          <DescripcionProducto texto={producto.descripcionLarga || producto.descripcionCorta} />
         </section>
         <section className="detalle-ficha-seccion" aria-labelledby="especificaciones-titulo">
           <h2 id="especificaciones-titulo">Especificaciones</h2>

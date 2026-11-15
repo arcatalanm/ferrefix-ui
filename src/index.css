@@ -2692,3 +2692,12 @@ body { min-width: 0; }
 .skip-link:not(:focus) { clip-path: inset(50%); width: 1px; height: 1px; overflow: hidden; white-space: nowrap; padding: 0; }
 .skip-link:focus { clip-path: none; width: auto; height: auto; }
 .categoria-badge-pill { padding-inline: 3px !important; white-space: nowrap; overflow-wrap: normal; color: #1c2226; }
+
+/* Tiptap */
+.tiptap-wrapper .tiptap { min-height: 280px; padding: 1rem; border: 0; outline: none; }
+.tiptap-wrapper .tiptap h1 { font-size: 1.6rem; } .tiptap-wrapper .tiptap h2 { font-size: 1.3rem; } .tiptap-wrapper .tiptap h3 { font-size: 1.1rem; }
+.tiptap-wrapper .tiptap img, .descripcion-rica img { max-width: 100%; height: auto; display: block; margin: 1rem auto; }
+.tiptap-wrapper .tiptap a, .descripcion-rica a { color: #0d6efd; text-decoration: underline; }
+.desc-lista { max-height: 520px; overflow-y: auto; }
+.descripcion-rica { max-width: 760px; margin-inline: auto; line-height: 1.6; }
+.descripcion-rica h1, .descripcion-rica h2, .descripcion-rica h3 { margin: 1.2rem 0 .6rem; }

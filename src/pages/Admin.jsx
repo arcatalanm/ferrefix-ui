@@ -20,6 +20,8 @@ import ImagenProductoUploader from '../components/ImagenProductoUploader';
 import EditorFichaTecnica from '../components/EditorFichaTecnica';
 import { convertirFichaTecnica, validarFichaTecnica } from '../utils/fichaTecnica';
 import GeneradorProductos from '../components/GeneradorProductos';
+import EditorDescripcionProducto from '../components/EditorDescripcionProducto';
+import { mostrarToast } from '../components/ToastNotificacion';
 import { validadores } from '../data/validaciones';
 import { obtenerContratosArriendo, EVENTO_MAQUINARIAS_ACTUALIZADAS, useEstadoArriendos, cargarContratosArriendo } from '../data/maquinarias';
 import { obtenerMensajeApi } from '../services/crearClienteApi';
@@ -368,6 +370,8 @@ function Admin() {
               >
                 Generadores
               </button>
+              <button type="button" className={`admin-nav-btn ${tabActiva === 'descripciones' ? 'active' : ''}`}
+                onClick={() => setTabActiva('descripciones')}>Descripciones</button>
               <button type="button" className={`admin-nav-btn ${tabActiva === 'arriendos' ? 'active' : ''}`}
                 onClick={() => setTabActiva('arriendos')}>Arriendos</button>
             </div>
@@ -807,6 +811,10 @@ function Admin() {
               </div>
             )}
           </section>
+        )}
+
+        {tabActiva === 'descripciones' && (
+          <EditorDescripcionProducto productos={productos} onNotificar={(mensaje) => mostrarToast({ titulo: 'Descripciones', mensaje })} />
         )}
 
         {tabActiva === 'generadores' && (
