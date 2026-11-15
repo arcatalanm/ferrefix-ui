@@ -2701,3 +2701,16 @@ body { min-width: 0; }
 .desc-lista { max-height: 520px; overflow-y: auto; }
 .descripcion-rica { max-width: 760px; margin-inline: auto; line-height: 1.6; }
 .descripcion-rica h1, .descripcion-rica h2, .descripcion-rica h3 { margin: 1.2rem 0 .6rem; }
+
+/* Home: línea decorativa bajo el título y carril de ofertas */
+.titulo-linea { display: block; width: 72px; height: 3px; margin: .4rem auto .75rem; border-radius: 2px; background: #f0a20a; transform-origin: center; }
+.banner-tira-wrapper { overflow: hidden; }
+
+/* Móvil: las ofertas son una fila deslizable con el dedo (scroll-snap) */
+@media (max-width: 767.98px) {
+  .oferta-destacada .oferta-fila {
+    flex-wrap: nowrap; overflow-x: auto; scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch; padding-bottom: .5rem; scrollbar-width: thin;
+  }
+  .oferta-destacada .oferta-col { flex: 0 0 64%; max-width: 64%; scroll-snap-align: start; }
+}

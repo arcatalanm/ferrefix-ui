@@ -1,4 +1,7 @@
-﻿import { useState, useEffect } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { useGSAP } from '@gsap/react';
 import { Link } from 'react-router-dom';
 import CarruselHome from '../components/CarruselHome';
 import OfertaDestacada from '../components/OfertaDestacada';
@@ -25,6 +28,8 @@ import ofertaLentes from '../assets/sales/lentes-de-protecci-n-card.webp';
 import ofertaChaleco from '../assets/sales/chaleco-reflectante-card.webp';
 import ofertaCasco from '../assets/sales/casco-de-construcci-n-est-ndar-card.webp';
 
+gsap.registerPlugin(useGSAP, ScrollTrigger);
+
 const categorias = [['Construcción', construccion], ['Maderas', maderas], ['Herramientas', herramientas], ['Fijaciones', fijaciones], ['Gasfitería', gasfiteria], ['Electricidad', electricidad], ['Pinturas', pinturas], ['Cerámicas', ceramicas], ['Seguridad', seguridad]];
 const tarjetasSeguridad = [['5422223228', ofertaGuantes], ['5422223229', ofertaLentes], ['5422223230', ofertaChaleco], ['5422223231', ofertaCasco]];
 const tarjetasMaderas = [['5422223224', ofertaMelamina], ['5422223225', ofertaOsb], ['5422223226', ofertaRanurado], ['5422223227', ofertaEstructural]];
@@ -46,6 +51,58 @@ export default function Home() {
     };
   }, []);
 
+  const contenedor = useRef(null);
+
+  useGSAP(() => {
+    if (typeof window.matchMedia !== 'function') return undefined; // entornos sin matchMedia (tests)
+    const mm = gsap.matchMedia();
+    const refrescar = () => ScrollTrigger.refresh();
+    contenedor.current.querySelectorAll('img').forEach(img => {
+      if (!img.complete) img.addEventListener('load', refrescar, { once: true });
+    });
+
+    const SIN_REDUCIR = '(prefers-reduced-motion: no-preference)';
+
+    // Todas las animaciones usan fromTo + clearProps: nunca quedan a medias ni dejan estilos puestos
+    mm.add(SIN_REDUCIR, () => {
+      const unaVez = (trigger, start = 'top 88%') => ({ trigger, start, once: true });
+
+      // Hero y categorías
+      gsap.fromTo('.carrousel-banner-card', { opacity: 0, y: 24 },
+        { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out', clearProps: 'opacity,transform' });
+      gsap.fromTo('#categorias-titulo, #categorias-titulo ~ p', { opacity: 0, y: 16 },
+        { opacity: 1, y: 0, duration: 0.5, stagger: 0.1, ease: 'power2.out', clearProps: 'opacity,transform',
+          scrollTrigger: unaVez('#categorias-titulo', 'top 92%') });
+      gsap.fromTo('.titulo-linea', { scaleX: 0 },
+        { scaleX: 1, duration: 0.8, ease: 'power3.out', scrollTrigger: unaVez('#categorias-titulo', 'top 92%') });
+      gsap.fromTo('.categoria-item-enlace', { opacity: 0, y: 24, scale: 0.9 }, {
+        opacity: 1, y: 0, scale: 1, duration: 0.45, stagger: 0.05, ease: 'power2.out', clearProps: 'opacity,transform',
+        scrollTrigger: unaVez('.category-grid', 'top 90%'),
+      });
+
+      // Bloques banner + ofertas
+      gsap.utils.toArray('.home-bloque').forEach(bloque => {
+        const banner = bloque.querySelector('.banner-tira-wrapper');
+        const img = bloque.querySelector('.banner-tira-img');
+        const tarjetas = bloque.querySelectorAll('.oferta-col');
+        const tl = gsap.timeline({ scrollTrigger: unaVez(bloque, 'top 80%') });
+        if (banner) tl.fromTo(banner, { clipPath: 'inset(0 100% 0 0)' },
+          { clipPath: 'inset(0 0% 0 0)', duration: 0.9, ease: 'power3.inOut', clearProps: 'clipPath' }, 0);
+        if (img) tl.fromTo(img, { scale: 1.15 }, { scale: 1, duration: 1.1, ease: 'power2.out', clearProps: 'transform' }, 0);
+        if (tarjetas.length) tl.fromTo(tarjetas, { opacity: 0, x: 60 },
+          { opacity: 1, x: 0, duration: 0.55, stagger: 0.12, ease: 'power2.out', clearProps: 'opacity,transform' }, 0.45);
+      });
+    });
+
+    return () => mm.revert();
+  }, { scope: contenedor, dependencies: [productos.length > 0] });
+
+  // Las tarjetas cargan después del catálogo: recalcular posiciones de ScrollTrigger
+  useEffect(() => {
+    const id = window.setTimeout(() => ScrollTrigger.refresh(), 400);
+    return () => window.clearTimeout(id);
+  }, [productos.length, ofertas.length]);
+
   const crearOfertas = (tarjetas, personalizadas = []) => tarjetas.map(([id, imagen], indice) => {
     const producto = productos.find(p => String(p.idProducto) === id);
     const generada = personalizadas[indice];
@@ -62,11 +119,12 @@ export default function Home() {
   }).filter(Boolean);
 
   return (
-    <div className="home-content">
+    <div className="home-content" ref={contenedor}>
       <CarruselHome />
       <section id="catalogo" className="container py-2 mb-3" aria-labelledby="categorias-titulo">
         <div className="marca-centro mb-4">
           <h2 className="cat-title mb-1" id="categorias-titulo">Categorías destacadas</h2>
+          <span className="titulo-linea" aria-hidden="true"></span>
           <p className="marca-parrafo mb-0">Todo lo que necesitas para tus proyectos, obras y reparaciones.</p>
         </div>
         <div className="categorias-banner-capsula rounded-4 bg-platino p-3 p-md-4">
@@ -82,10 +140,14 @@ export default function Home() {
           </div>
         </div>
       </section>
-      <BannerPromocional imagen={bannerSeguridad} alt="Protección para la construcción: equípate seguro" enlace="/catalogo?categoria=Seguridad" />
-      <OfertaDestacada ofertas={crearOfertas(tarjetasSeguridad)} />
-      <BannerPromocional imagen={bannerMaderas} alt="Maderas estructurales para tu construcción" enlace="/catalogo?categoria=Maderas" />
-      <OfertaDestacada ofertas={crearOfertas(tarjetasMaderas, ofertas)} />
+      <div className="home-bloque">
+        <BannerPromocional imagen={bannerSeguridad} alt="Protección para la construcción: equípate seguro" enlace="/catalogo?categoria=Seguridad" />
+        <OfertaDestacada ofertas={crearOfertas(tarjetasSeguridad)} />
+      </div>
+      <div className="home-bloque">
+        <BannerPromocional imagen={bannerMaderas} alt="Maderas estructurales para tu construcción" enlace="/catalogo?categoria=Maderas" />
+        <OfertaDestacada ofertas={crearOfertas(tarjetasMaderas, ofertas)} />
+      </div>
     </div>
   );
 }
