@@ -2714,3 +2714,28 @@ body { min-width: 0; }
   }
   .oferta-destacada .oferta-col { flex: 0 0 64%; max-width: 64%; scroll-snap-align: start; }
 }
+
+/* ===== Panel de filtros (Catálogo y Arriendos) ===== */
+.filtro-panel { background: #fff; border: 1px solid #e2e5e8; border-top: 3px solid var(--color-dorado); border-radius: 4px; padding: 1rem; }
+@media (max-width: 991.98px) { .filtro-panel { display: none; margin-bottom: 1rem; } .filtro-panel--abierto { display: block; } }
+@media (min-width: 992px) { .filtro-busqueda { position: sticky; top: 1rem; } }
+.filtro-cabecera { padding-bottom: .75rem; border-bottom: 1px solid #e2e5e8; }
+.filtro-titulo { font-family: "Oswald", sans-serif; font-size: 1rem; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: var(--color-oscuro); }
+.filtro-limpiar { background: none; border: 0; padding: 0; font-size: .8rem; font-weight: 600; color: var(--color-bronce); text-decoration: underline; }
+.filtro-seccion { padding: .9rem 0; border-bottom: 1px solid #eceff1; }
+.filtro-seccion:last-child { border-bottom: 0; padding-bottom: 0; }
+.filtro-etiqueta { display: block; margin: 0 0 .5rem; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #5b6670; }
+.filtro-ayuda { font-size: .78rem; color: #6b7280; }
+.filtro-buscar { position: relative; }
+.filtro-buscar i { position: absolute; left: .7rem; top: 50%; transform: translateY(-50%); color: #6b7280; }
+.filtro-buscar .form-control { padding-left: 2rem; font-size: .9rem; }
+.filtro-categoria { display: flex; width: 100%; justify-content: space-between; align-items: center; padding: .4rem .6rem; border: 0; background: none; border-radius: 3px; font-size: .88rem; color: var(--color-oscuro); text-align: left; }
+.filtro-categoria:hover { background: var(--color-platino); }
+.filtro-categoria--activa { background: rgba(242, 183, 5, .18); font-weight: 700; box-shadow: inset 3px 0 0 var(--color-dorado); }
+.filtro-cantidad { font-size: .75rem; color: #6b7280; }
+.filtro-lista .form-check { padding-left: 0; margin: .15rem 0; font-size: .88rem; }
+.filtro-lista .form-check-input { float: none; margin-left: 0; }
+.filtro-lista .form-check-input:checked, #filtro-disp:checked { background-color: var(--color-ambar); border-color: var(--color-ambar); }
+.filtro-precio { display: flex; align-items: center; gap: .4rem; }
+.filtro-precio .form-control { min-width: 0; }
+
