@@ -2730,3 +2730,76 @@ body { min-width: 0; }
 .editor-status { padding: 6px 12px; border-top: 1px solid #ddd; color: #555; font-size: 13px; }
 @media (hover: hover) { .editor-tool:not(:disabled):hover { background: #e7e7e7; color: #222; } }
 @media (max-width: 575px) { .editor-rico .tiptap-toolbar { gap: 1px; padding: 4px; } .editor-tool { width: 30px; height: 32px; font-size: 20px; } .editor-separator { margin: 0 2px; } }
+
+/* ===== Panel de filtros (Catálogo y Arriendos) ===== */
+.filtro-panel { background: #fff; border: 1px solid #e2e5e8; border-top: 3px solid var(--color-dorado); border-radius: 4px; padding: 1rem; }
+@media (max-width: 991.98px) { .filtro-panel { display: none; margin-bottom: 1rem; } .filtro-panel--abierto { display: block; } }
+@media (min-width: 992px) { .filtro-busqueda { position: sticky; top: 1rem; } }
+.filtro-cabecera { padding-bottom: .75rem; border-bottom: 1px solid #e2e5e8; }
+.filtro-titulo { font-family: "Oswald", sans-serif; font-size: 1rem; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: var(--color-oscuro); }
+.filtro-limpiar { background: none; border: 0; padding: 0; font-size: .8rem; font-weight: 600; color: var(--color-bronce); text-decoration: underline; }
+.filtro-seccion { padding: .9rem 0; border-bottom: 1px solid #eceff1; }
+.filtro-seccion:last-child { border-bottom: 0; padding-bottom: 0; }
+.filtro-etiqueta { display: block; margin: 0 0 .5rem; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #5b6670; }
+.filtro-ayuda { font-size: .78rem; color: #6b7280; }
+.filtro-buscar { position: relative; }
+.filtro-buscar i { position: absolute; left: .7rem; top: 50%; transform: translateY(-50%); color: #6b7280; }
+.filtro-buscar .form-control { padding-left: 2rem; font-size: .9rem; }
+.filtro-categoria { display: flex; width: 100%; justify-content: space-between; align-items: center; padding: .4rem .6rem; border: 0; background: none; border-radius: 3px; font-size: .88rem; color: var(--color-oscuro); text-align: left; }
+.filtro-categoria:hover { background: var(--color-platino); }
+.filtro-categoria--activa { background: rgba(242, 183, 5, .18); font-weight: 700; box-shadow: inset 3px 0 0 var(--color-dorado); }
+.filtro-cantidad { font-size: .75rem; color: #6b7280; }
+.filtro-lista .form-check { padding-left: 0; margin: .15rem 0; font-size: .88rem; }
+.filtro-lista .form-check-input { float: none; margin-left: 0; }
+.filtro-lista .form-check-input:checked, #filtro-disp:checked { background-color: var(--color-ambar); border-color: var(--color-ambar); }
+.filtro-precio { display: flex; align-items: center; gap: .4rem; }
+.filtro-precio .form-control { min-width: 0; }
+
+/* ===== Arriendos: listado en filas ===== */
+.maq-lista { display: flex; flex-direction: column; gap: 1rem; }
+.maq-fila { display: grid; grid-template-columns: 220px 1fr 200px; gap: 1.25rem; background: #fff; border: 1px solid #e2e5e8; border-radius: 4px; padding: 1rem; }
+.maq-fila--no-disponible { opacity: .85; }
+.maq-fila-imagen { display: block; }
+.maq-fila-imagen .espacio-imagen { max-height: none; height: 100%; min-height: 150px; }
+.maq-fila-imagen .espacio-imagen-img { width: 100%; height: 100%; object-fit: cover; }
+.maq-fila-meta { display: flex; flex-wrap: wrap; gap: .25rem .75rem; align-items: baseline; font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; }
+.maq-fila-categoria { font-weight: 700; color: var(--color-bronce); }
+.maq-fila-codigo { color: #6b7280; text-transform: none; letter-spacing: 0; }
+.maq-fila-nombre { font-family: "Oswald", sans-serif; font-size: 1.15rem; font-weight: 700; margin: .25rem 0 0; }
+.maq-fila-nombre a { color: var(--color-oscuro); text-decoration: none; }
+.maq-fila-nombre a:hover { color: var(--color-bronce); }
+.maq-fila-marca { margin: 0 0 .5rem; font-size: .85rem; color: #6b7280; }
+.maq-fila-incluye { margin: 0 0 .75rem; font-size: .85rem; color: #4b5563; }
+.maq-fila-specs { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: .5rem; margin: 0; padding: .6rem; background: var(--color-platino); border-radius: 3px; }
+.maq-fila-specs dt { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #6b7280; }
+.maq-fila-specs dd { margin: 0; font-size: .85rem; font-weight: 600; color: var(--color-oscuro); }
+.maq-fila-tarifa { display: flex; flex-direction: column; gap: .5rem; justify-content: center; border-left: 1px solid #eceff1; padding-left: 1.25rem; }
+.maq-fila-tarifa-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #6b7280; }
+.maq-fila-tarifa-valor { font-family: "Oswald", sans-serif; font-size: 1.6rem; font-weight: 700; line-height: 1; color: var(--color-oscuro); }
+.maq-fila-estado { font-size: .8rem; font-weight: 700; color: #6b7280; }
+.maq-vacio { text-align: center; padding: 3rem 1rem; background: #fff; border: 1px dashed #cbd5e1; border-radius: 4px; }
+.maq-vacio i { font-size: 2rem; color: #9ca3af; display: block; margin-bottom: .5rem; }
+@media (max-width: 991.98px) { .maq-fila { grid-template-columns: 180px 1fr; } .maq-fila-tarifa { grid-column: 1 / -1; flex-direction: row; flex-wrap: wrap; align-items: center; border-left: 0; border-top: 1px solid #eceff1; padding: .75rem 0 0; } .maq-fila-tarifa > .btn { width: auto !important; } }
+@media (max-width: 575.98px) { .maq-fila { grid-template-columns: 1fr; } }
+
+/* ===== Ficha técnica de la máquina ===== */
+.maq-detalle-titulo { font-family: "Oswald", sans-serif; font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 700; color: var(--color-oscuro); margin: .25rem 0; }
+.maq-detalle-tarifa { display: flex; flex-direction: column; gap: .35rem; padding: 1rem; background: #fff; border: 1px solid #e2e5e8; border-left: 3px solid var(--color-dorado); border-radius: 4px; }
+.maq-detalle-subtitulo { font-family: "Oswald", sans-serif; font-size: 1.1rem; font-weight: 700; color: var(--color-oscuro); }
+.maq-detalle-incluye { padding-left: 1.1rem; margin: 0; color: #4b5563; }
+.maq-detalle-seccion { background: #fff; border: 1px solid #e2e5e8; border-radius: 4px; padding: 1.25rem; }
+.maq-detalle-tabla th { width: 40%; font-weight: 600; color: #4b5563; background: var(--color-platino); }
+.maq-detalle-imagen { max-height: none; }
+.maq-detalle-seccion .descripcion-rica { margin-inline: 0; max-width: none; }
+
+/* Nosotros: tarjetas de cifras con elevación al pasar el mouse */
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .nosotros-stat-card { transition: transform .2s ease, box-shadow .2s ease; }
+  .nosotros-stat-card:hover { transform: translateY(-4px); box-shadow: 0 .5rem 1rem rgba(28, 34, 38, .12) !important; }
+}
+
+/* Contacto: canales con elevación al pasar el mouse */
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .cot-channel-card { transition: transform .2s ease, box-shadow .2s ease; }
+  .cot-channel-card:hover { transform: translateY(-4px); box-shadow: 0 .5rem 1rem rgba(28, 34, 38, .12) !important; }
+}

@@ -1,8 +1,40 @@
+import { useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { gsap } from 'gsap';
+import { useGSAP } from '@gsap/react';
+import { SIN_REDUCIR, entradaInicial, revelarAlScroll, rebotarAlScroll, contarAlScroll, formatearConteo } from '../utils/animaciones';
+
+gsap.registerPlugin(useGSAP);
+
+const CIFRAS = [
+  { valor: 12, formato: { prefijo: '+' }, etiqueta: 'Años de Trayectoria', desc: 'Abasteciendo faenas en Chile' },
+  { valor: 15000, formato: { prefijo: '+' }, etiqueta: 'Despachos Entregados', desc: 'En Santiago y regiones' },
+  { valor: 99.4, formato: { decimales: 1, sufijo: '%' }, etiqueta: 'Satisfacción de Clientes', desc: 'Garantía y soporte técnico' },
+  { valor: 100, formato: { sufijo: '%' }, etiqueta: 'Garantía Certificada', desc: 'Equipos y repuestos originales' },
+];
 
 function Nosotros() {
+  const pagina = useRef(null);
+
+  useGSAP(() => {
+    if (typeof window.matchMedia !== 'function') return undefined;
+    const mm = gsap.matchMedia();
+    mm.add(SIN_REDUCIR, () => {
+      // Al abrir: breadcrumb, título y texto del encabezado
+      entradaInicial('.nosotros-breadcrumb, .brand-hero-title, .brand-hero-text', { escalon: 0.15 });
+      // Cifras: rebote suave y conteo
+      rebotarAlScroll('.nosotros-stat-card', '.nos-cifras');
+      const restaurar = gsap.utils.toArray('.nosotros-stat-value').map((el, i) => contarAlScroll(el, CIFRAS[i].valor, CIFRAS[i].formato));
+      // Casa matriz: el texto aparece de a uno y el mapa entra desde el lado
+      revelarAlScroll('.nos-casa-texto > *', '.nos-casa', { escalon: 0.12 });
+      revelarAlScroll('.nos-casa-mapa', '.nos-casa', { y: 0, x: 40, duracion: 0.8 });
+      return () => restaurar.forEach((fn) => fn());
+    });
+    return () => mm.revert();
+  }, { scope: pagina });
+
   return (
-    <div className="nosotros-page py-4 py-lg-5">
+    <div className="nosotros-page py-4 py-lg-5" ref={pagina}>
       <div className="container">
 
         <nav aria-label="breadcrumb" className="mb-4">
@@ -21,60 +53,22 @@ function Nosotros() {
           </p>
         </div>
 
-        <div className="row g-3 mb-4">
-          <div className="col-12 col-sm-6 col-lg-3">
-            <div className="nosotros-stat-card bg-white rounded-1 p-4 shadow-sm h-100">
-              <div className="nosotros-stat-value">+12</div>
-              <div className="nosotros-stat-label mt-2">
-                Años de Trayectoria
+        <div className="row g-3 mb-4 nos-cifras">
+          {CIFRAS.map((c) => (
+            <div className="col-12 col-sm-6 col-lg-3" key={c.etiqueta}>
+              <div className="nosotros-stat-card bg-white rounded-1 p-4 shadow-sm h-100">
+                <div className="nosotros-stat-value">{formatearConteo(c.valor, c.formato)}</div>
+                <div className="nosotros-stat-label mt-2">{c.etiqueta}</div>
+                <p className="nosotros-stat-desc mb-0 mt-1">{c.desc}</p>
               </div>
-              <p className="nosotros-stat-desc mb-0 mt-1">
-                Abasteciendo faenas en Chile
-              </p>
             </div>
-          </div>
-
-          <div className="col-12 col-sm-6 col-lg-3">
-            <div className="nosotros-stat-card bg-white rounded-1 p-4 shadow-sm h-100">
-              <div className="nosotros-stat-value">+15.000</div>
-              <div className="nosotros-stat-label mt-2">
-                Despachos Entregados
-              </div>
-              <p className="nosotros-stat-desc mb-0 mt-1">
-                En Santiago y regiones
-              </p>
-            </div>
-          </div>
-
-          <div className="col-12 col-sm-6 col-lg-3">
-            <div className="nosotros-stat-card bg-white rounded-1 p-4 shadow-sm h-100">
-              <div className="nosotros-stat-value">99.4%</div>
-              <div className="nosotros-stat-label mt-2">
-                Satisfacción de Clientes
-              </div>
-              <p className="nosotros-stat-desc mb-0 mt-1">
-                Garantía y soporte técnico
-              </p>
-            </div>
-          </div>
-
-          <div className="col-12 col-sm-6 col-lg-3">
-            <div className="nosotros-stat-card bg-white rounded-1 p-4 shadow-sm h-100">
-              <div className="nosotros-stat-value">100%</div>
-              <div className="nosotros-stat-label mt-2">
-                Garantía Certificada
-              </div>
-              <p className="nosotros-stat-desc mb-0 mt-1">
-                Equipos y repuestos originales
-              </p>
-            </div>
-          </div>
+          ))}
         </div>
 
-        <div className="bg-white border rounded-1 shadow-sm p-4 p-md-5 mb-4">
+        <div className="bg-white border rounded-1 shadow-sm p-4 p-md-5 mb-4 nos-casa">
           <div className="row g-4 align-items-center">
 
-            <div className="col-12 col-lg-5">
+            <div className="col-12 col-lg-5 nos-casa-texto">
               <h2 className="nosotros-section-title mb-2">
                 Visítanos en Nuestra Casa Matriz
               </h2>
@@ -99,7 +93,7 @@ function Nosotros() {
               </div>
             </div>
 
-            <div className="col-12 col-lg-7">
+            <div className="col-12 col-lg-7 nos-casa-mapa">
               <div className="nosotros-map-container border rounded-1 overflow-hidden shadow-sm">
                 <iframe
                   title="Ubicación Ferrefix Providencia"

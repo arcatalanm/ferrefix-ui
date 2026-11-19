@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useMemo } from 'react';
+import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { mostrarToast } from '../components/ToastNotificacion';
 import {
   obtenerMaquinarias,
@@ -10,8 +10,9 @@ import {
   calcularFechaTermino,
   fechaHoyChile
 } from '../data/maquinarias';
-import EspacioImagen from '../components/EspacioImagen';
-import DescripcionProducto from '../components/DescripcionProducto';
+import FiltroBusqueda from '../components/FiltroBusqueda';
+import TarjetaMaquina from '../components/TarjetaMaquina';
+import { contarPor, rangoPrecios, filtrarItems, ordenarItems, leerFiltros, escribirFiltros, hayFiltrosActivos } from '../utils/filtros';
 import { obtenerSesionActiva, useSesion, EVENTO_SESION_ACTUALIZADA } from '../data/auth';
 import { nombreCompleto } from '../utils/usuario';
 import { REGIONES_CHILE, normalizarRegion, obtenerComunas } from '../data/chile';
@@ -40,6 +41,8 @@ const REGLAS_VALIDACION = {
 
 function Arriendos() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const sesion = useSesion();
   const estadoArriendos = useEstadoArriendos();
   const [guardando, setGuardando] = useState(false);
@@ -82,6 +85,16 @@ function Arriendos() {
       window.removeEventListener(EVENTO_SESION_ACTUALIZADA, handleSesion);
     };
   }, []);
+
+  const filtros = leerFiltros(searchParams);
+  const cambiarFiltros = (cambios) => setSearchParams(escribirFiltros(searchParams, cambios), { replace: true });
+  const rangoTarifas = useMemo(() => rangoPrecios(maquinarias, 'tarifaDia'), [maquinarias]);
+  const maquinasFiltradas = useMemo(() => ordenarItems(
+    filtrarItems(maquinarias, filtros, {
+      campoPrecio: 'tarifaDia', camposTexto: ['nombre', 'marca', 'categoria', 'idMaquina'], disponible: (m) => m.estado === 'Disponible',
+    }), filtros.orden, 'tarifaDia'),
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  [maquinarias, searchParams]);
 
   const formatearCLP = (valor) => {
     return new Intl.NumberFormat('es-CL', {
@@ -129,6 +142,17 @@ function Arriendos() {
     setErrores({});
     setTouched({});
   };
+
+  // Al llegar desde la ficha técnica con "Arrendar", se abre el formulario de esa máquina
+  useEffect(() => {
+    const id = location.state?.arrendar;
+    if (!id) return;
+    const maq = maquinarias.find((m) => m.idMaquina === id);
+    if (!maq) return;
+    navigate(location.pathname + location.search, { replace: true, state: null });
+    queueMicrotask(() => abrirModalArriendo(maq));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [maquinarias, location.state]);
 
   const cerrarModal = () => {
     if (guardando) return;
@@ -222,83 +246,65 @@ function Arriendos() {
           </p>
         </div>
 
-        <div id="catalogo-maquinas" className="mb-4">
-          <div className="mb-3">
-            <h2 className="arriendos-section-title mb-1">
-              Equipos y Maquinarias en Arriendo
-            </h2>
-            <span className="arriendos-section-sub">Tarifas diarias transparentes con mantención oficial de fábrica</span>
-          </div>
-
+        <div id="catalogo-maquinas" className="mb-5">
           {estadoArriendos.errorMaquinas && <div className="alert alert-danger" role="alert">
             {estadoArriendos.errorMaquinas}
             <button type="button" className="btn btn-outline-dark btn-sm ms-2" onClick={cargarMaquinarias}>Reintentar</button>
           </div>}
           {estadoArriendos.cargandoMaquinas && maquinarias.length === 0 && <p role="status">Cargando maquinaria…</p>}
           {!estadoArriendos.cargandoMaquinas && !estadoArriendos.errorMaquinas && maquinarias.length === 0 && <p>No hay maquinaria disponible en el catálogo.</p>}
-          <div className="row g-4">
-            {maquinarias.map((maq) => {
-              const estaDisponible = maq.estado === 'Disponible';
-              const imagenMaquina = maq.imagen;
 
-              return (
-                <div key={maq.idMaquina} className="col-12 col-md-6">
-                  <div className={`arriendo-card shadow-sm h-100 d-flex flex-column ${estaDisponible ? 'arriendo-card--disponible' : 'arriendo-card--arrendada'}`}>
+          {maquinarias.length > 0 && (
+            <div className="row g-4">
+              <div className="col-12 col-lg-3">
+                <FiltroBusqueda
+                  busqueda={{ valor: filtros.q, onChange: (v) => cambiarFiltros({ q: v }), placeholder: 'Ej: Betonera, generador…', etiqueta: 'Buscar maquinaria' }}
+                  categorias={{ opciones: contarPor(maquinarias, 'categoria'), seleccionada: filtros.categoria, onChange: (v) => cambiarFiltros({ categoria: v }) }}
+                  disponibilidad={{ activo: filtros.soloDisponibles, onChange: (v) => cambiarFiltros({ soloDisponibles: v }), etiqueta: 'Solo equipos disponibles' }}
+                  precio={{ ...rangoTarifas, valorMin: filtros.precioMin, valorMax: filtros.precioMax, titulo: 'Tarifa diaria',
+                    onChange: (min, max) => cambiarFiltros({ precioMin: min, precioMax: max }) }}
+                  marcas={{ opciones: contarPor(maquinarias, 'marca'), seleccionadas: filtros.marcas, onChange: (v) => cambiarFiltros({ marcas: v }) }}
+                  hayFiltros={hayFiltrosActivos(filtros)}
+                  onLimpiar={() => setSearchParams({}, { replace: true })}
+                />
+              </div>
 
-                    <EspacioImagen
-                      src={imagenMaquina}
-                      alt={`${maq.nombre} - ${maq.marca}`}
-                      proporcion="16x9"
-                      icono="bi-tools"
-                      etiqueta={`Maquinaria ${maq.marca}`}
-                      className="arriendo-card-imagen"
-                    />
-
-                    <div className="p-4 d-flex flex-column justify-content-between flex-grow-1">
-                      <div>
-                        <div className="mb-2">
-                          <span className={`arriendo-estado-badge ${estaDisponible ? 'arriendo-estado-badge--disponible' : 'arriendo-estado-badge--arrendada'}`}>
-                            {maq.estado}
-                          </span>
-                        </div>
-
-                        <h3 className="arriendo-nombre mb-1">
-                          {maq.nombre}
-                        </h3>
-                        <div className="arriendo-meta mb-2">{maq.marca} | {maq.categoria}</div>
-
-                        <div className="arriendo-specs-list mb-3">
-                          <ul className="list-unstyled mb-0">
-                            <li className="arriendo-descripcion-detalle"><DescripcionProducto texto={maq.descripcionDetalle} vacio="Consulta los detalles del equipo." /></li>
-                          </ul>
-                        </div>
-                      </div>
-
-                      <div className="arriendo-card-footer d-flex justify-content-between align-items-center">
-                        <div>
-                          <span className="arriendo-rate-label d-block">Tarifa por día:</span>
-                          <span className="arriendo-rate-value">
-                            {formatearCLP(maq.tarifaDia)}
-                          </span>
-                        </div>
-
-                        <button
-                          type="button"
-                          className={`btn btn-sm rounded-1 px-3 ${estaDisponible ? 'btn-ambar arriendo-btn' : 'btn-outline-secondary'}`}
-                          disabled={!estaDisponible}
-                          onClick={() => abrirModalArriendo(maq)}
-                        >
-                          {estaDisponible ? 'Arrendar' : 'No Disponible'}
-                        </button>
-                      </div>
-
-                    </div>
-
+              <div className="col-12 col-lg-9">
+                <div className="maq-barra d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                  <div>
+                    <h2 className="arriendos-section-title mb-0">Maquinarias disponibles</h2>
+                    <span className="arriendos-section-sub" role="status">
+                      Mostrando {maquinasFiltradas.length} de {maquinarias.length} {maquinarias.length === 1 ? 'equipo' : 'equipos'}
+                    </span>
+                  </div>
+                  <div className="d-flex align-items-center gap-2">
+                    <label htmlFor="orden-maquinas" className="marca-label mb-0">Ordenar:</label>
+                    <select id="orden-maquinas" className="form-select form-select-sm shadow-none" value={filtros.orden}
+                      onChange={(e) => cambiarFiltros({ orden: e.target.value })}>
+                      <option value="default">Recomendados</option>
+                      <option value="nombre-asc">Nombre: A - Z</option>
+                      <option value="precio-asc">Tarifa: menor a mayor</option>
+                      <option value="precio-desc">Tarifa: mayor a menor</option>
+                    </select>
                   </div>
                 </div>
-              );
-            })}
-          </div>
+
+                {maquinasFiltradas.length === 0 ? (
+                  <div className="maq-vacio">
+                    <i className="bi bi-search" aria-hidden="true"></i>
+                    <p className="mb-3">Ninguna maquinaria coincide con los filtros seleccionados.</p>
+                    <button type="button" className="btn btn-ambar" onClick={() => setSearchParams({}, { replace: true })}>Restablecer filtros</button>
+                  </div>
+                ) : (
+                  <div className="maq-lista">
+                    {maquinasFiltradas.map((maq) => (
+                      <TarjetaMaquina key={maq.idMaquina} maquina={maq} onArrendar={abrirModalArriendo} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
       </div>

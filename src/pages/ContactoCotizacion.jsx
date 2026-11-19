@@ -1,6 +1,9 @@
 import { mostrarToast } from "../components/ToastNotificacion";
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { gsap } from 'gsap';
+import { useGSAP } from '@gsap/react';
+import { SIN_REDUCIR, entradaInicial, revelarAlScroll } from '../utils/animaciones';
 import { useSesion } from '../data/auth';
 import { nombreCompleto } from '../utils/usuario';
 import { clienteApi } from '../services/api';
@@ -21,7 +24,11 @@ const REGLAS_VALIDACION = {
   detalle: validadores.detalle
 };
 
+gsap.registerPlugin(useGSAP);
+
 function ContactoCotizacion() {
+  const pagina = useRef(null);
+
   const sesion = useSesion();
 
   const valorInicial = {
@@ -91,8 +98,23 @@ function ContactoCotizacion() {
     } finally { setEnviando(false); }
   };
 
+  useGSAP(() => {
+    if (typeof window.matchMedia !== 'function') return undefined;
+    const mm = gsap.matchMedia();
+    mm.add(SIN_REDUCIR, () => {
+      // Al abrir: breadcrumb, título y texto del encabezado
+      entradaInicial('.cot-breadcrumb, .brand-hero-title, .brand-hero-text', { escalon: 0.15 });
+      // Canales de contacto: aparecen en cascada
+      revelarAlScroll('.cot-channel-card', '.cot-canales', { escalon: 0.12 });
+      // Formulario: primero la tarjeta y luego sus campos, una sola vez
+      revelarAlScroll('.cot-form-card', '.cot-form-card', { y: 32, duracion: 0.7, start: 'top 90%' });
+      revelarAlScroll('.cot-form-header, .cot-form-card form .row > *', '.cot-form-card', { y: 16, duracion: 0.45, escalon: 0.05, start: 'top 80%' });
+    });
+    return () => mm.revert();
+  }, { scope: pagina });
+
   return (
-    <div className="contacto-cotizacion-page py-4 py-lg-5">
+    <div className="contacto-cotizacion-page py-4 py-lg-5" ref={pagina}>
       <div className="container">
 
         <nav aria-label="breadcrumb" className="mb-4">
@@ -111,7 +133,7 @@ function ContactoCotizacion() {
           </p>
         </div>
 
-        <div className="row g-3 mb-4">
+        <div className="row g-3 mb-4 cot-canales">
           <div className="col-12 col-md-4">
             <div className="cot-channel-card rounded-1 p-4 shadow-sm h-100">
               <div className="cot-channel-title mb-1">Mesa Central y Cotizaciones</div>

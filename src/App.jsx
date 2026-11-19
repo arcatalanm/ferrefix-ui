@@ -6,7 +6,7 @@ import Footer from './components/Footer';
 import ToastNotificacion from './components/ToastNotificacion';
 import { obtenerProductoPorId, cargarProductos, useEstadoCatalogo } from './data/productos';
 import EstadoCatalogo from './components/EstadoCatalogo';
-import { cargarMaquinarias, cargarContratosArriendo } from './data/maquinarias';
+import { cargarMaquinarias, cargarContratosArriendo, obtenerMaquinarias } from './data/maquinarias';
 import { useSesion } from './data/auth';
 import { cargarOrdenes } from './data/ordenes';
 import { cargarCarrito } from './data/carrito';
@@ -16,6 +16,7 @@ import Home from './pages/Home';
 import Catalogo from './pages/Catalogo';
 import DetalleProducto from './pages/DetalleProducto';
 import Arriendos from './pages/Arriendos';
+import DetalleMaquina from './pages/DetalleMaquina';
 import Nosotros from './pages/Nosotros';
 import Contacto from './pages/ContactoCotizacion';
 import Carrito from './pages/Carrito';
@@ -41,10 +42,11 @@ export default function App() {
   useEffect(() => { cargarOfertas(); }, []);
   useEffect(() => { cargarCarrito(); }, [sesion]);
   useEffect(() => {
-    if (!['/arriendos', '/admin', '/cuenta', '/mi-cuenta', '/perfil'].includes(location.pathname)) return;
+    const enArriendos = location.pathname === '/arriendos' || location.pathname.startsWith('/arriendos/');
+    if (!enArriendos && !['/admin', '/cuenta', '/mi-cuenta', '/perfil'].includes(location.pathname)) return;
     const actualizar = () => {
       if (document.visibilityState === 'hidden') return;
-      if (location.pathname === '/arriendos') cargarMaquinarias();
+      if (enArriendos || location.pathname === '/admin') cargarMaquinarias();
       cargarContratosArriendo();
       cargarOrdenes();
     };
@@ -56,7 +58,8 @@ export default function App() {
   useAccessibleDialogs();
   useEffect(() => {
     const producto = location.pathname.startsWith('/producto/') ? obtenerProductoPorId(location.pathname.split('/')[2]) : null;
-    const titulo = producto?.nombre || titulos[location.pathname] || 'Página no encontrada';
+    const maquina = location.pathname.startsWith('/arriendos/') ? obtenerMaquinarias().find((m) => m.idMaquina === decodeURIComponent(location.pathname.split('/')[2])) : null;
+    const titulo = producto?.nombre || maquina?.nombre || (location.pathname.startsWith('/arriendos/') ? 'Ficha de maquinaria' : null) || titulos[location.pathname] || 'Página no encontrada';
     document.title = `${titulo} | Ferrefix`;
     document.querySelector('meta[name="description"]')?.setAttribute('content', `${titulo}. Herramientas, materiales de construcción y arriendos de Ferrefix en Providencia.`);
     document.querySelector('meta[property="og:title"]')?.setAttribute('content', document.title);
@@ -75,7 +78,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home />} /><Route path="/catalogo" element={<Catalogo />} />
           <Route path="/producto/:id" element={<DetalleProducto key={location.pathname} />} />
-          <Route path="/arriendos" element={<Arriendos />} /><Route path="/nosotros" element={<Nosotros />} />
+          <Route path="/arriendos" element={<Arriendos />} /><Route path="/arriendos/:id" element={<DetalleMaquina />} /><Route path="/nosotros" element={<Nosotros />} />
           <Route path="/contacto" element={<Contacto />} /><Route path="/cotizaciones" element={<Navigate to="/contacto" replace />} />
           <Route path="/carrito" element={<Carrito />} /><Route path="/login" element={<Login />} /><Route path="/registro" element={<Login />} /> <Route path="/pago/resultado" element={<PagoResultado />} />
           <Route path="/cuenta" element={<Cuenta />} /><Route path="/mi-cuenta" element={<Navigate to="/cuenta" replace />} /><Route path="/perfil" element={<Navigate to="/cuenta" replace />} />
