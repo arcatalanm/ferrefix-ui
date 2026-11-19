@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-function ImagenProductoUploader({ archivo, onSeleccionar, onQuitar, imagenActual }) {
+function ImagenProductoUploader({ archivo, onSeleccionar, onQuitar, imagenActual, nombre = 'producto', disabled = false }) {
   const inputRef = useRef(null);
   const previewRef = useRef('');
   const [arrastrando, setArrastrando] = useState(false);
@@ -21,11 +21,11 @@ function ImagenProductoUploader({ archivo, onSeleccionar, onQuitar, imagenActual
 
   const aceptarArchivo = useCallback(
     (file) => {
-      if (!file) return;
+      if (!file || disabled) return;
       reemplazarPrevisualizacion(file);
       onSeleccionar(file);
     },
-    [onSeleccionar, reemplazarPrevisualizacion]
+    [onSeleccionar, reemplazarPrevisualizacion, disabled]
   );
 
   const handleQuitar = useCallback(() => {
@@ -35,7 +35,7 @@ function ImagenProductoUploader({ archivo, onSeleccionar, onQuitar, imagenActual
 
   const imagenVisible = previsualizacion || imagenActual || '';
 
-  const abrirSelector = () => inputRef.current?.click();
+  const abrirSelector = () => { if (!disabled) inputRef.current?.click(); };
 
   const handleInputChange = (e) => {
     const file = e.target.files?.[0];
@@ -45,7 +45,7 @@ function ImagenProductoUploader({ archivo, onSeleccionar, onQuitar, imagenActual
 
   const handleDragOver = (e) => {
     e.preventDefault();
-    setArrastrando(true);
+    if (!disabled) setArrastrando(true);
   };
 
   const handleDragLeave = (e) => {
@@ -65,7 +65,7 @@ function ImagenProductoUploader({ archivo, onSeleccionar, onQuitar, imagenActual
       <input
         ref={inputRef}
         type="file"
-        accept="image/jpeg,image/png,image/webp" aria-label="Imagen del producto"
+        accept="image/jpeg,image/png,image/webp" aria-label={nombre === 'producto' ? 'Imagen del producto' : `Imagen de ${nombre}`} disabled={disabled}
         className="d-none"
         onChange={handleInputChange}
       />
@@ -78,7 +78,8 @@ function ImagenProductoUploader({ archivo, onSeleccionar, onQuitar, imagenActual
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         role="button"
-        tabIndex={0}
+        aria-disabled={disabled}
+        tabIndex={disabled ? -1 : 0}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
@@ -90,7 +91,7 @@ function ImagenProductoUploader({ archivo, onSeleccionar, onQuitar, imagenActual
           <div className="d-flex flex-column align-items-center gap-2 p-2">
             <img
               src={imagenVisible}
-              alt="Vista previa del producto"
+              alt={nombre === 'producto' ? 'Vista previa del producto' : `Vista previa de ${nombre}`}
               className="admin-upload-preview border rounded-1 bg-white object-fit-contain"
             />
             <span className="admin-muted">
@@ -118,6 +119,7 @@ function ImagenProductoUploader({ archivo, onSeleccionar, onQuitar, imagenActual
           </span>
           <button
             type="button"
+            disabled={disabled}
             className="btn btn-sm btn-outline-danger rounded-1 py-0 px-2"
             onClick={handleQuitar}
           >

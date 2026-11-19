@@ -11,6 +11,7 @@ import {
   fechaHoyChile
 } from '../data/maquinarias';
 import EspacioImagen from '../components/EspacioImagen';
+import DescripcionProducto from '../components/DescripcionProducto';
 import { obtenerSesionActiva, useSesion, EVENTO_SESION_ACTUALIZADA } from '../data/auth';
 import { nombreCompleto } from '../utils/usuario';
 import { REGIONES_CHILE, normalizarRegion, obtenerComunas } from '../data/chile';
@@ -268,9 +269,7 @@ function Arriendos() {
 
                         <div className="arriendo-specs-list mb-3">
                           <ul className="list-unstyled mb-0">
-                            {Object.entries(maq.especificaciones).slice(0, 3).map(([k, v]) => (
-                              <li key={k}><strong>{k}:</strong> {v}</li>
-                            ))}
+                            <li className="arriendo-descripcion-detalle"><DescripcionProducto texto={maq.descripcionDetalle} vacio="Consulta los detalles del equipo." /></li>
                           </ul>
                         </div>
                       </div>

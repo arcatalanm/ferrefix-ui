@@ -61,9 +61,8 @@ const escritura = p => ({
   nombre: p.nombre, marca: p.marca, categoria: p.categoria,
   precioVenta: Number(p.precioVenta), stock: Number(p.stock),
   unidadVenta: p.unidadVenta || 'unidad', contenidoPresentacion: p.contenidoPresentacion ?? '1 unidad',
-  descripcionCorta: p.descripcionCorta || '', descripcionLarga: p.descripcionLarga || '',
+  descripcionCorta: p.descripcionCorta || '', descripcionDetalle: p.descripcionDetalle || '',
   imagen: rutaImagen(p.imagen),
-  especificaciones: p.especificaciones || {},
 });
 
 export async function crearProducto(datos) {

@@ -17,13 +17,13 @@ import {
   EVENTO_SESION_ACTUALIZADA
 } from '../data/auth';
 import ImagenProductoUploader from '../components/ImagenProductoUploader';
-import EditorFichaTecnica from '../components/EditorFichaTecnica';
-import { convertirFichaTecnica, validarFichaTecnica } from '../utils/fichaTecnica';
 import GeneradorProductos from '../components/GeneradorProductos';
-import EditorDescripcionProducto from '../components/EditorDescripcionProducto';
+import DescripcionProducto from '../components/DescripcionProducto';
+import EditorTiptap from '../components/EditorTiptap';
+import EditorMaquinaria from '../components/EditorMaquinaria';
 import { mostrarToast } from '../components/ToastNotificacion';
 import { validadores } from '../data/validaciones';
-import { obtenerContratosArriendo, EVENTO_MAQUINARIAS_ACTUALIZADAS, useEstadoArriendos, cargarContratosArriendo } from '../data/maquinarias';
+import { obtenerContratosArriendo, obtenerMaquinarias, EVENTO_MAQUINARIAS_ACTUALIZADAS, useEstadoArriendos, cargarContratosArriendo, cargarMaquinarias } from '../data/maquinarias';
 import { obtenerMensajeApi } from '../services/crearClienteApi';
 import { UNIDADES_VENTA, unidadVenta, cantidadPresentaciones } from '../utils/presentacionProducto';
 
@@ -37,8 +37,7 @@ const FORM_INICIAL = {
   unidadVenta: 'unidad',
   contenidoPresentacion: '1 unidad',
   descripcionCorta: '',
-  descripcionLarga: '',
-  especificaciones: [],
+  descripcionDetalle: '',
   imagen: ''
 };
 
@@ -55,19 +54,22 @@ function Admin() {
   const [productos, setProductos] = useState(obtenerProductos);
   const [ordenes, setOrdenes] = useState(obtenerOrdenes);
   const [arriendos, setArriendos] = useState(obtenerContratosArriendo);
+  const [maquinarias, setMaquinarias] = useState(obtenerMaquinarias);
   const [tabActiva, setTabActiva] = useState('dashboard');
 
   const [busqueda, setBusqueda] = useState('');
   const [filtroCategoria, setFiltroCategoria] = useState('Todas');
   const [filtroStockCritico, setFiltroStockCritico] = useState(false);
 
-  const [modalAbierto, setModalAbierto] = useState(false);
+  const [tipoCrear, setTipoCrear] = useState('producto');
+  const [maquinaEditar, setMaquinaEditar] = useState(null);
+  const [busquedaMaquina, setBusquedaMaquina] = useState('');
+  const [estadoMaquina, setEstadoMaquina] = useState('Todos');
   const [modoEdicion, setModoEdicion] = useState(false);
   const [formData, setFormData] = useState(FORM_INICIAL);
   const [imagenArchivo, setImagenArchivo] = useState(null);
   const [subiendoImagen, setSubiendoImagen] = useState(false);
   const [errorProducto, setErrorProducto] = useState('');
-  const [validarFicha, setValidarFicha] = useState(false);
   const [productoAEliminar, setProductoAEliminar] = useState(null);
   const [ordenSeleccionada, setOrdenSeleccionada] = useState(null);
   const [mensajeAlerta, setMensajeAlerta] = useState(null);
@@ -75,12 +77,13 @@ function Admin() {
   useEffect(() => {
     const handleProductos = () => setProductos(obtenerProductos());
     const handleOrdenes = () => setOrdenes(obtenerOrdenes());
-    const handleArriendos = () => setArriendos(obtenerContratosArriendo());
+    const handleArriendos = () => { setArriendos(obtenerContratosArriendo()); setMaquinarias(obtenerMaquinarias()); };
     const handleSesion = () => setSesion(obtenerSesionActiva());
 
     window.addEventListener(EVENTO_PRODUCTOS_ACTUALIZADOS, handleProductos);
     window.addEventListener(EVENTO_ORDENES_ACTUALIZADAS, handleOrdenes);
     window.addEventListener(EVENTO_MAQUINARIAS_ACTUALIZADAS, handleArriendos);
+    cargarMaquinarias();
     window.addEventListener(EVENTO_SESION_ACTUALIZADA, handleSesion);
 
     return () => {
@@ -133,25 +136,23 @@ function Admin() {
     });
   }, [productos, busqueda, filtroCategoria, filtroStockCritico]);
 
-  const abrirModalCrear = () => {
+  const maquinariasFiltradas = maquinarias.filter(m => `${m.nombre} ${m.marca} ${m.idMaquina}`.toLowerCase().includes(busquedaMaquina.trim().toLowerCase()) && (estadoMaquina === 'Todos' || m.estado === estadoMaquina));
+
+  const abrirCrearProducto = () => {
     setErrorProducto('');
-    setValidarFicha(false);
     setModoEdicion(false);
     setImagenArchivo(null);
     setFormData({ ...FORM_INICIAL });
-    setModalAbierto(true);
+    setTipoCrear('producto');
+    setTabActiva('crear');
   };
 
-  const abrirModalEditar = (prod) => {
+  const abrirEditarProducto = (prod) => {
     setErrorProducto('');
-    setValidarFicha(false);
     setModoEdicion(true);
     setImagenArchivo(null);
     setFormData({
       idProducto: prod.idProducto,
-      especificaciones: Object.entries(prod.especificaciones || {}).map(([atributo, valor]) => ({
-        id: crypto.randomUUID(), atributo, valor: String(valor),
-      })),
       nombre: prod.nombre,
       marca: prod.marca,
       categoria: prod.categoria,
@@ -160,14 +161,15 @@ function Admin() {
       unidadVenta: unidadVenta(prod),
       contenidoPresentacion: prod.contenidoPresentacion ?? '1 unidad',
       descripcionCorta: prod.descripcionCorta || '',
-      descripcionLarga: prod.descripcionLarga || '',
+      descripcionDetalle: prod.descripcionDetalle || '',
       imagen: prod.imagen || ''
     });
-    setModalAbierto(true);
+    setTipoCrear('producto');
+    setTabActiva('crear');
   };
 
-  const cerrarModal = () => {
-    setModalAbierto(false);
+  const cerrarEditorProducto = () => {
+    setTabActiva('productos');
     setImagenArchivo(null);
     setFormData(FORM_INICIAL);
   };
@@ -176,11 +178,8 @@ function Admin() {
     e.preventDefault();
     if (subiendoImagen) return;
     setErrorProducto('');
-    setValidarFicha(true);
-    const erroresFicha = validarFichaTecnica(formData.especificaciones);
-    if (Object.keys(erroresFicha).length) {
-      const [id, campos] = Object.entries(erroresFicha)[0];
-      document.getElementById(`${campos.atributo ? 'atributo' : 'valor'}-${id}`)?.focus();
+    if (!formData.descripcionDetalle?.trim()) {
+      setErrorProducto('Completa la descripción detallada y la ficha técnica.');
       return;
     }
     setSubiendoImagen(true);
@@ -192,11 +191,11 @@ function Admin() {
         setImagenArchivo(null);
       }
       if (!imagen) throw new Error('Selecciona una imagen para el producto.');
-      const datos = { ...formData, imagen, especificaciones: convertirFichaTecnica(formData.especificaciones) };
+      const datos = { ...formData, imagen };
       if (modoEdicion) await actualizarProducto(formData.idProducto, datos);
       else await crearProducto(datos);
       mostrarMensaje(modoEdicion ? 'Producto actualizado.' : 'Producto creado.');
-      cerrarModal();
+      cerrarEditorProducto();
     } catch (error) {
       setErrorProducto(error.response ? obtenerMensajeApi(error) : error.message);
     } finally {
@@ -342,52 +341,13 @@ function Admin() {
           <div className="d-flex align-items-center gap-3">
 
             <div className="d-flex flex-wrap align-items-center gap-1 ms-2">
-              <button
-                type="button"
-                className={`admin-nav-btn ${tabActiva === 'dashboard' ? 'active' : ''}`}
-                onClick={() => setTabActiva('dashboard')}
-              >
-                Dashboard
-              </button>
-              <button
-                type="button"
-                className={`admin-nav-btn ${tabActiva === 'productos' ? 'active' : ''}`}
-                onClick={() => setTabActiva('productos')}
-              >
-                Productos
-              </button>
-              <button
-                type="button"
-                className={`admin-nav-btn ${tabActiva === 'ordenes' ? 'active' : ''}`}
-                onClick={() => setTabActiva('ordenes')}
-              >
-                Órdenes
-              </button>
-              <button
-                type="button"
-                className={`admin-nav-btn ${tabActiva === 'generadores' ? 'active' : ''}`}
-                onClick={() => setTabActiva('generadores')}
-              >
-                Generadores
-              </button>
-              <button type="button" className={`admin-nav-btn ${tabActiva === 'descripciones' ? 'active' : ''}`}
-                onClick={() => setTabActiva('descripciones')}>Descripciones</button>
-              <button type="button" className={`admin-nav-btn ${tabActiva === 'arriendos' ? 'active' : ''}`}
-                onClick={() => setTabActiva('arriendos')}>Arriendos</button>
+              {[['dashboard', 'Dashboard'], ['productos', 'Productos'], ['maquinaria', 'Maquinaria'], ['ordenes', 'Órdenes'], ['arriendos', 'Arriendos'], ['generadores', 'Generadores'], ['crear', 'Crear']].map(([id, nombre]) => (
+                <button key={id} type="button" className={`admin-nav-btn ${tabActiva === id ? 'active' : ''}`} aria-current={tabActiva === id ? 'page' : undefined} onClick={() => { if (id === 'crear') { abrirCrearProducto(); setMaquinaEditar(null); } else setTabActiva(id); }}>{nombre}</button>
+              ))}
             </div>
           </div>
 
           <div className="d-flex align-items-center gap-2">
-            <button
-              type="button"
-              className="btn btn-ambar admin-btn-strong btn-sm rounded-1 px-3"
-              onClick={abrirModalCrear}
-            >
-              + Agregar Producto
-            </button>
-
-            <div className="vr admin-vr mx-1 d-none d-md-block"></div>
-
             <span className="admin-user-email d-none d-md-inline">
               {sesion.email}
             </span>
@@ -548,7 +508,7 @@ function Admin() {
                                   <button
                                     type="button"
                                     className="btn btn-sm btn-outline-dark rounded-1 py-0 px-2"
-                                    onClick={() => abrirModalEditar(p)}
+                                    onClick={() => abrirEditarProducto(p)}
                                   >
                                     Editar Stock
                                   </button>
@@ -601,15 +561,7 @@ function Admin() {
                 </button>
               </div>
 
-              <div className="col-12 col-md-2 admin-ta-md-end">
-                <button
-                  type="button"
-                  className="btn btn-ambar admin-btn-strong btn-sm w-100 rounded-1"
-                  onClick={abrirModalCrear}
-                >
-                  + Agregar Producto
-                </button>
-              </div>
+
             </div>
 
             <div className="table-responsive">
@@ -673,7 +625,7 @@ function Admin() {
                               <button
                                 type="button"
                                 className="btn btn-outline-dark rounded-1 px-2 py-0 me-1"
-                                onClick={() => abrirModalEditar(prod)}
+                                onClick={() => abrirEditarProducto(prod)}
                                 title="Editar producto"
                               >
                                 Editar
@@ -813,8 +765,23 @@ function Admin() {
           </section>
         )}
 
-        {tabActiva === 'descripciones' && (
-          <EditorDescripcionProducto productos={productos} onNotificar={(mensaje) => mostrarToast({ titulo: 'Descripciones', mensaje })} />
+        {tabActiva === 'maquinaria' && (
+          <section className="admin-box p-3" aria-labelledby="maquinaria-titulo">
+            <h2 id="maquinaria-titulo" className="admin-section-title mb-3">Listado de maquinaria</h2>
+            <div className="row g-2 mb-3 pb-3 border-bottom">
+              <div className="col-md-8"><input type="search" className="form-control form-control-sm" aria-label="Buscar maquinaria" placeholder="Buscar por nombre, marca o código…" value={busquedaMaquina} onChange={e => setBusquedaMaquina(e.target.value)} /></div>
+              <div className="col-md-4"><select className="form-select form-select-sm" aria-label="Filtrar estado de maquinaria" value={estadoMaquina} onChange={e => setEstadoMaquina(e.target.value)}>{['Todos', 'Disponible', 'Arrendada', 'Mantención'].map(estado => <option key={estado}>{estado}</option>)}</select></div>
+            </div>
+            {estadoArriendos.cargandoMaquinas && <p role="status">Cargando maquinaria…</p>}
+            {estadoArriendos.errorMaquinas && <div className="alert alert-danger" role="alert">{estadoArriendos.errorMaquinas}<button type="button" className="btn btn-sm btn-outline-dark ms-2" onClick={cargarMaquinarias}>Reintentar</button></div>}
+            <div className="table-responsive"><table className="table admin-table align-middle mb-0">
+              <thead><tr><th aria-label="Imagen"></th><th>Código</th><th>Nombre</th><th>Marca</th><th>Categoría</th><th className="admin-ta-end">Tarifa diaria</th><th>Estado</th><th className="admin-ta-end">Acciones</th></tr></thead>
+              <tbody>{maquinariasFiltradas.map(m => (
+                <tr key={m.idMaquina}><td><img src={m.imagen || '/banner-web.webp'} alt={m.nombre} className="admin-prod-thumb border rounded-1 bg-white object-fit-contain" /></td><td className="admin-cell-code">#{m.idMaquina}</td><td className="admin-cell-strong">{m.nombre}</td><td>{m.marca}</td><td><span className="admin-badge-soft">{m.categoria}</span></td><td className="admin-ta-end admin-cell-price">{formatearCLP(m.tarifaDia)}</td><td><span className="admin-badge-soft">{m.estado}</span></td><td className="admin-ta-end"><button type="button" className="btn btn-sm btn-outline-dark" onClick={() => { setMaquinaEditar(m); setTipoCrear('maquinaria'); setTabActiva('crear'); }}>Editar</button></td></tr>
+              ))}{!estadoArriendos.cargandoMaquinas && !estadoArriendos.errorMaquinas && !maquinariasFiltradas.length && <tr><td colSpan="8" className="admin-ta-center admin-muted py-4">No se encontraron maquinarias con los filtros aplicados.</td></tr>}</tbody>
+            </table></div>
+            <div className="admin-muted mt-3 pt-3 border-top">Mostrando {maquinariasFiltradas.length} de {maquinarias.length} equipos</div>
+          </section>
         )}
 
         {tabActiva === 'generadores' && (
@@ -823,23 +790,16 @@ function Admin() {
           </div>
         )}
 
-      </main>
-
-      {modalAbierto && (
-        <div className="modal modal-backdrop-custom fade show d-block" tabIndex="-1">
-          <div className="modal-dialog modal-lg modal-dialog-centered">
-            <div className="modal-content rounded-1 border-0 shadow">
-
-              <div className="modal-header admin-modal-head border-bottom py-2 px-3">
-                <h5 className="modal-title admin-modal-title mb-0">
-                  {modoEdicion ? 'Editar Producto' : 'Agregar Nuevo Producto'}
-                </h5>
-                <button type="button" className="btn-close btn-close-sm" onClick={cerrarModal} aria-label="Cerrar"></button>
-              </div>
-
+        {tabActiva === 'crear' && (
+          <section className="admin-box p-3 p-md-4" aria-labelledby="crear-titulo">
+            <div className="d-flex flex-wrap justify-content-between align-items-end gap-3 pb-3 border-bottom">
+              <div><h2 id="crear-titulo" className="admin-section-title mb-1">{(tipoCrear === 'producto' ? modoEdicion : !!maquinaEditar) ? 'Editar' : 'Crear'} {tipoCrear === 'producto' ? 'producto' : 'maquinaria'}</h2><p className="admin-muted mb-0">Completa los datos, la descripción y la ficha técnica.</p></div>
+              <div><label htmlFor="crear-tipo" className="form-label admin-label">Tipo de artículo</label><select id="crear-tipo" className="form-select form-select-sm" value={tipoCrear} disabled={subiendoImagen} onChange={e => { setTipoCrear(e.target.value); setMaquinaEditar(null); setModoEdicion(false); setFormData({ ...FORM_INICIAL }); setImagenArchivo(null); setErrorProducto(''); }}><option value="producto">Producto</option><option value="maquinaria">Maquinaria</option></select></div>
+            </div>
+            {tipoCrear === 'maquinaria' ? <EditorMaquinaria key={maquinaEditar?.idMaquina || 'nueva'} maquina={maquinaEditar} onCancelar={() => setTabActiva('maquinaria')} onNotificar={mensaje => { mostrarToast({ titulo: 'Maquinaria', mensaje }); setTabActiva('maquinaria'); }} /> : (
               <form onSubmit={handleSubmitForm}>
                 {errorProducto && <div className="alert alert-danger m-3" role="alert">{errorProducto}</div>}
-                <div className="modal-body p-3">
+                <div className="py-3">
                   <div className="row g-3">
                     <div className="col-12 col-md-4">
                       <label className="form-label admin-label mb-1">Código ID</label>
@@ -947,7 +907,7 @@ function Admin() {
 
                     <div className="col-12">
                       <label className="form-label admin-label mb-1">
-                        Imagen del Producto {!imagenArchivo && !formData.imagen ? '(Opcional)' : ''}
+                        Imagen del producto *
                       </label>
                       <ImagenProductoUploader
                         archivo={imagenArchivo}
@@ -962,7 +922,7 @@ function Admin() {
                             className="btn btn-sm btn-outline-secondary rounded-1 py-0 px-2"
                             onClick={() => setFormData({ ...formData, imagen: '' })}
                           >
-                            Usar imagen por defecto
+                            Quitar imagen
                           </button>
                         </div>
                       )}
@@ -982,31 +942,18 @@ function Admin() {
                     </div>
 
                     <div className="col-12">
-                      <label htmlFor="producto-descripcion-larga" className="form-label admin-label mb-1">Descripción larga</label>
-                      <textarea
-                        id="producto-descripcion-larga"
-                        className="form-control form-control-sm rounded-1"
-                        rows="6"
-                        maxLength={4000}
-                        placeholder="Descripción completa del producto (hasta 4000 caracteres)..."
-                        value={formData.descripcionLarga}
-                        onChange={(e) => setFormData({ ...formData, descripcionLarga: e.target.value })}
-                      ></textarea>
-                    </div>
-                    <div className="col-12">
-                      <EditorFichaTecnica filas={formData.especificaciones}
-                        onChange={especificaciones => setFormData(prev => ({ ...prev, especificaciones }))}
-                        errores={validarFicha ? validarFichaTecnica(formData.especificaciones) : {}}
-                        disabled={subiendoImagen} />
+                      <label className="form-label admin-label mb-1">Descripción detalle y ficha técnica *</label>
+                      <EditorTiptap value={formData.descripcionDetalle} onSubirImagen={subirImagenProducto} onOcupadoChange={setSubiendoImagen} disabled={subiendoImagen} onChange={descripcionDetalle => setFormData(prev => ({ ...prev, descripcionDetalle }))} nombreImagen={formData.nombre} />
+                      <h3 className="h6 mt-3">Vista previa</h3><DescripcionProducto texto={formData.descripcionDetalle} vacio="Escribe la descripción del producto." />
                     </div>
                   </div>
                 </div>
 
-                <div className="modal-footer admin-modal-foot border-top py-2 px-3">
+                <div className="d-flex justify-content-end gap-2 border-top pt-3">
                   <button
                     type="button"
                     className="btn btn-sm btn-outline-secondary rounded-1"
-                    onClick={cerrarModal}
+                    onClick={cerrarEditorProducto}
                     disabled={subiendoImagen}
                   >
                     Cancelar
@@ -1022,11 +969,11 @@ function Admin() {
                   </button>
                 </div>
               </form>
+            )}
+          </section>
+        )}
 
-            </div>
-          </div>
-        </div>
-      )}
+      </main>
 
       {productoAEliminar && (
         <div className="modal modal-backdrop-custom fade show d-block" tabIndex="-1">

@@ -2714,3 +2714,19 @@ body { min-width: 0; }
   }
   .oferta-destacada .oferta-col { flex: 0 0 64%; max-width: 64%; scroll-snap-align: start; }
 }
+
+/* Barra compacta del editor compartido de productos y maquinaria. */
+.editor-rico { border: 1px solid #b6b6b6; border-radius: 2px; background: #fff; overflow: hidden; }
+.editor-rico:focus-within { border-color: #787878; box-shadow: 0 0 0 2px rgb(217 164 6 / 18%); }
+.editor-rico .tiptap-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 2px; padding: 5px 7px; background: #f5f5f5; border-bottom: 1px solid #cecece; }
+.editor-tool { display: inline-flex; justify-content: center; align-items: center; width: 32px; height: 32px; padding: 0; border: 1px solid transparent; border-radius: 2px; background: transparent; color: #686868; font-size: 22px; line-height: 1; }
+.editor-tool.is-active { background: #e7e7e7; border-color: #c1c1c1; color: #333; }
+.editor-tool:disabled { opacity: .35; cursor: not-allowed; }
+.editor-tool:focus-visible, .editor-block-select:focus-visible { outline: 2px solid #8b6500; outline-offset: 1px; }
+.editor-block-select { width: 88px; height: 32px; padding: 3px; border: 1px solid transparent; border-radius: 2px; background: transparent; color: #555; font-size: 13px; }
+.editor-separator { width: 1px; height: 22px; margin: 0 3px; background: #d9d9d9; }
+.editor-rico .tiptap-wrapper .tiptap { min-height: 280px; padding: 12px; color: #222; font-size: 15px; line-height: 1.6; }
+.editor-rico .tiptap p { margin-bottom: .75rem; }
+.editor-status { padding: 6px 12px; border-top: 1px solid #ddd; color: #555; font-size: 13px; }
+@media (hover: hover) { .editor-tool:not(:disabled):hover { background: #e7e7e7; color: #222; } }
+@media (max-width: 575px) { .editor-rico .tiptap-toolbar { gap: 1px; padding: 4px; } .editor-tool { width: 30px; height: 32px; font-size: 20px; } .editor-separator { margin: 0 2px; } }

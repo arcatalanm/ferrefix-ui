@@ -20,6 +20,16 @@ const suscribir = (callback) => {
 export const useEstadoArriendos = () => useSyncExternalStore(suscribir, () => estado, () => estado);
 export const obtenerMaquinarias = () => maquinarias;
 export const obtenerContratosArriendo = () => contratos;
+export async function guardarMaquinaria(id, datos) {
+  const payload = { ...datos, imagen: datos.imagen?.startsWith(mediaBase + '/') ? '/media/' + datos.imagen.slice(mediaBase.length + 1) : datos.imagen };
+  const { data } = id
+    ? await clienteApi.http.put(`/arriendos/maquinas/${encodeURIComponent(id)}`, payload)
+    : await clienteApi.http.post('/arriendos/maquinas', payload);
+  const item = { ...data, imagen: data.imagen?.startsWith('/media/') ? mediaBase + data.imagen.slice(6) : data.imagen };
+  maquinarias = id ? maquinarias.map(m => m.idMaquina === id ? item : m) : [...maquinarias, item];
+  actualizarEstado({});
+  return item;
+}
 
 window.addEventListener(EVENTO_SESION_ACTUALIZADA, () => {
   revisionContratos += 1;

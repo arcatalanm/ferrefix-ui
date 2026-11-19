@@ -6,8 +6,6 @@ import { unidadVenta, cantidadPresentaciones } from '../utils/presentacionProduc
 const moneda = new Intl.NumberFormat('es-CL', {
   style: 'currency', currency: 'CLP', maximumFractionDigits: 0,
 });
-const atributosClave = /voltaje|potencia|medida|diámetro|largo|longitud|piezas|cantidad|material|formato|capacidad/i;
-
 function ProductCard({ producto }) {
   if (!producto) return null;
 
@@ -17,12 +15,7 @@ function ProductCard({ producto }) {
   const precioAnterior = Number(producto.precioAnterior);
   const descuento = Number.isFinite(precioAnterior) && precioAnterior > precioVenta && precioVenta >= 0
     ? Math.floor((1 - precioVenta / precioAnterior) * 100) : 0;
-  const atributos = Object.entries(producto.especificaciones || {})
-    .filter(([, valor]) => String(valor ?? '').trim())
-    .sort(([a], [b]) => Number(atributosClave.test(b)) - Number(atributosClave.test(a)));
-  const especificaciones = (producto.contenidoPresentacion
-    ? [['Presentación', producto.contenidoPresentacion], ...atributos.filter(([clave]) => clave !== 'Presentación')]
-    : atributos).slice(0, 3);
+  const especificaciones = producto.contenidoPresentacion ? [['Presentación', producto.contenidoPresentacion]] : [];
 
   const handleAgregarCarrito = async () => {
     try {

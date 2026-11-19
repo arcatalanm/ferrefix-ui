@@ -173,17 +173,7 @@ function DetalleProducto() {
 
         <section className="detalle-descripcion" aria-labelledby="descripcion-titulo">
           <h2 id="descripcion-titulo">Descripción del producto</h2>
-          <DescripcionProducto texto={producto.descripcionLarga || producto.descripcionCorta} />
-        </section>
-        <section className="detalle-ficha-seccion" aria-labelledby="especificaciones-titulo">
-          <h2 id="especificaciones-titulo">Especificaciones</h2>
-          {Object.keys(producto.especificaciones || {}).length > 0 ? (
-            <dl className="detalle-especificaciones">
-              {Object.entries(producto.especificaciones).map(([clave, valor]) => (
-                <div className="detalle-especificacion" key={clave}><dt>{clave}</dt><dd>{valor}</dd></div>
-              ))}
-            </dl>
-          ) : <p className="marca-muted">No hay especificaciones adicionales registradas.</p>}
+          <DescripcionProducto texto={producto.descripcionDetalle || producto.descripcionCorta} />
         </section>
       </div>
     </div>

@@ -22,3 +22,11 @@ describe('DescripcionProducto: sanitización', () => {
     expect(html('Cemento <b>x')).toMatch(/Cemento/);
   });
 });
+
+it('conserva subrayado, tachado y alineacion descartando otros estilos', () => {
+  const r = html('<p style="text-align:center;position:fixed;color:red"><u>Subrayado</u> <s>Tachado</s></p><img src="/media/x.webp" style="position:fixed">');
+  expect(r).toContain('text-align: center');
+  expect(r).toContain('<u>Subrayado</u>');
+  expect(r).toContain('<s>Tachado</s>');
+  expect(r).not.toMatch(/position|color:/);
+});
